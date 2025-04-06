@@ -1,0 +1,160 @@
+header {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Role Container */
+.role-container {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    height: 64px;
+    background-color: #F48E2E;
+    padding: 0px 30px;
+}
+
+.role-container ul li {
+    list-style: none;
+}
+
+/* Navigation Bar */
+.nav-bar {
+    display: flex;
+    background-color: white;
+    justify-content: space-between;
+    align-items: center;
+    gap: 52px;
+    z-index: 1;
+    padding: 0px 30px;
+}
+
+.nav-bar ul {
+    display: flex;
+    gap: 52px;
+    padding: 0;
+}
+
+.nav-bar ul li {
+    list-style: none;
+}
+
+.nav-bar-action-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-action {
+    margin: 0;
+    padding: 10px 0;
+}
+
+.nav-action .btn {
+    text-decoration: none;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    position: relative;
+    transition: all 0.3s ease;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background: none;
+    font-weight: normal;
+    display: inline-flex;
+    line-height: 1.5;
+    min-width: 120px;
+}
+
+
+.nav-action .btn.active {
+    color: #F48E2E;
+    border: 2px solid #F48E2E;
+    background-color: rgba(244, 142, 46, 0.0);
+    font-weight: 600;
+}
+
+
+.nav-action .btn:not(.active):hover {
+    color: #F48E2E;
+    background-color: rgba(244, 142, 46, 0.0);
+    transform: translateY(-1px);
+}
+
+
+.nav-action .btn::after {
+    display: none;
+}
+
+
+.nav-action li {
+    display: inline-block;
+    padding: 0;
+    margin: 0 5px;
+}
+
+.search-bar { 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-image: linear-gradient(to right, #ECE3DB, white, white);
+    padding: 0px 30px;
+}
+
+.title {
+    display: flex;
+    width: 500px;
+    padding-left: 10px;
+    animation: slideInFromLeft 0.8s ease-out;
+}
+
+.title h1 {
+    animation: slideInFromLeft 0.8s ease-out;
+}
+
+
+.action-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.icon-action {
+    font-style: none;
+    text-decoration: none;
+    color: black;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .nav-bar {
+        gap: 20px;
+    }
+    
+    .nav-bar ul {
+        gap: 20px;
+    }
+    
+    .search-bar, .serach-bar {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 10px;
+    }
+    
+    .title {
+        width: 100%;
+    }
+    
+    .action-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .search-bar input[type="text"],
+    .serach-bar input[type="text"] {
+        width: 100%;
+    }
+}

@@ -1,68 +1,14 @@
+@import url("../components/animation.css");
+
 .content-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
 }
 
-.department-card {
-    background-color: white;
-    border: 6px solid white;
-    border-radius: 5px;
-    box-shadow: 0px 4px 4px 0px #00000040;
-    animation: fadeInUp 0.5s ease-out;
-    aspect-ratio: 16/11;
-    width: 100%;
-}
-
-.department-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-}
-
-.card-edit {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px;
-    gap: 0.5rem;
-}
-
-.card-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-/* Add these new animations and styles */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-100px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.title h1 {
-    animation: slideInFromLeft 0.8s ease-out;
-}
 
 .icon-action {
     text-decoration: none;
@@ -115,11 +61,6 @@
     box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
     width: 300px;
 }
-
-/* Add stagger effect to cards */
-.department-card:nth-child(1) { animation-delay: 0.1s; }
-.department-card:nth-child(2) { animation-delay: 0.3s; }
-.department-card:nth-child(3) { animation-delay: 0.5s; }
 
 /* Popup Styles */
 .popup-overlay {
@@ -199,66 +140,6 @@
     margin-top: 1rem;
 }
 
-.btn-save {
-    background: #F48E2E;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-    font-weight: bold;
-}
-
-.btn-save:hover {
-    background: #d97a1e;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(244, 142, 46, 0.3);
-}
-
-.btn-delete {
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-}
-
-.btn-delete:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
-}
-
-/* Additional Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { 
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Responsive Popup */
-@media (max-width: 480px) {
-    .popup-content {
-        width: 90%;
-        margin: 0 20px;
-    }
-}
-
 /* Add these new styles */
 .action-container {
     display: flex;
@@ -278,39 +159,12 @@
     box-shadow: 0 5px 15px rgba(244, 142, 46, 0.3);
 }
 
-/* Animation for new cards */
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+
 
 .department-card.new {
     animation: addCard 0.5s ease-out;
 }
 
-@keyframes addCard {
-    from {
-        opacity: 0;
-        transform: scale(0.8) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-/* Add animation for updated cards */
-@keyframes updateFlash {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
 
 .department-card.updated {
     animation: updateFlash 0.3s ease-out;
@@ -331,12 +185,7 @@
     box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
 }
 
-/* Add animation for successful update */
-@keyframes successUpdate {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
+
 
 .department-card.updated {
     animation: successUpdate 0.3s ease-out;
@@ -370,34 +219,14 @@
 }
 
 /* Responsive grid */
-@media (max-width: 1200px) {
-    .content-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
 
-@media (max-width: 768px) {
-    .content-container {
-        grid-template-columns: 1fr;
-    }
-}
 
 /* Remove the old create button from header */
 .action-container .create-btn {
     display: none;
 }
 
-/* Delete animation */
-@keyframes fadeOut {
-    from { 
-        opacity: 1;
-        transform: scale(1);
-    }
-    to { 
-        opacity: 0;
-        transform: scale(0.8);
-    }
-}
+
 
 .department-card.deleting {
     animation: fadeOut 0.3s ease-out forwards;

@@ -1,0 +1,84 @@
+.btn {
+    display: flex;
+    font-style: none;
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    padding: 13px 39px;
+    border-radius: 12px;
+    font-weight: 600;
+    line-height: 30px;
+    justify-content: center;
+    align-items: center;
+    width: 210px;
+    height: 20px;
+    border: 1.5px solid #797979;
+}
+
+.btn-orange {
+    display: flex;
+    font-style: none;
+    text-decoration: none;
+    color: white;
+    background-color: #F48E2E;
+    padding: 13px 39px;
+    border-radius: 12px;
+    font-weight: 600;
+    line-height: 30px;
+    justify-content: center;
+    align-items: center;
+    width: 210px;
+    height: 20px;
+    border: 3px solid #ffffff;
+    box-shadow: 0px 4px 4px 0px #00000040;
+    cursor: pointer;
+}
+
+.btn:hover {
+    border-style: solid;
+    border-color: #F48E2E;
+}
+
+/* Add these utility classes */
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save {
+    background: #F48E2E;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    font-weight: bold;
+}
+
+.btn-save:hover {
+    background: #d97a1e;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(244, 142, 46, 0.3);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+}
