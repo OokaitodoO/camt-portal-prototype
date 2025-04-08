@@ -3,6 +3,10 @@ console.log('Department JS loaded');
 let currentCard = null;
 let departmentToDelete = null;
 
+function Testing() {
+    console.log('Hello world!');
+}
+
 function openEditPopup(element) {
     console.log('Opening edit popup...');
     const popup = document.getElementById('editPopup');

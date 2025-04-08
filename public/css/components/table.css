@@ -1,0 +1,39 @@
+table {
+    background-color: white;
+    border-radius: 20px;
+    min-width: 1030px;
+    width: 100%;
+    padding: 20px 10px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+th, td {
+    position: relative;
+    padding: 8px;
+    text-align: left;
+}
+
+th:not(:first-child)::after, td:not(:first-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 50%;
+    width: 2px;
+    background-color: #BFBFBF;
+    transform: translateY(-50%);
+}
+
+th {
+    font-weight: normal; 
+}
+
+tr {
+    gap: 10px;
+}
+
+.border-top {
+    border-top: 2px solid #BFBFBF; 
+    position: relative;
+}

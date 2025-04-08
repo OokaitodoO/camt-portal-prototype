@@ -1,28 +1,51 @@
-/* Inherit base styles from department.css and customize for members */
 .content-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    grid-template: 
+    'leftNav content' / 360px;
 }
 
-.member-card {
+.side-nav-container{
+    grid-area: leftNav;
     background-color: white;
-    border: 6px solid white;
-    border-radius: 5px;
-    box-shadow: 0px 4px 4px 0px #00000040;
-    transition: all 0.3s ease-out;
-    aspect-ratio: 3/4; /* Taller than department cards to accommodate profile info */
+    height: 100%;
+}
+
+.side-nav {
+    display: grid;
+    background-image: linear-gradient(to right, #F48E2E, #F6B271);
+    color: white;
+    padding: 10px;
+    gap: 6px;
+}
+
+.department {
     width: 100%;
+    padding-bottom: 30px;
 }
 
-.member-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+.card-leader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+.content {
+    grid-area: content;
+    display: flexbox;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    gap: 15px;
+}
+
+.cards-member {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    justify-content: center;
+    align-content: center;
+    padding: 30px;
+    gap: 15px;
+}
 
 /* Profile picture styles */
 .profile-picture {

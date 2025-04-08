@@ -7,131 +7,94 @@
     <title>ภาระงาน</title>
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/task.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/task.css') }}">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="body-bg">
     <!-- Header -->
     <header>
         <div class="role-container">
             <ul>
-                <li><a href="" class="btn-orange">ตำแหน่ง</a></li>
+                <li><a href="" class="btn-status btn-text">ตำแหน่ง</a></li>
             </ul>
         </div>
         <nav class="nav-bar">
-            <span class="camt-logo">Logo Camt</span>
-            <ul class="nav-action">
-                <li><a href="{{route('departments.index')}}" class="btn">หน่วยงาน</a></li>
-                <li><a href="{{ route('members.index') }}" class="btn">เพิ่มบุคลากร</a></li>
-                <li><a href="{{ route('tasks.index') }}" class="btn active">ภาระงาน</a></li>
-            </ul>
-        </nav>
-        <div class="search-bar">
-            <div class="title">
-                <h1><i class="fas"></i> ภาระงาน</h1>
+            <div class="nav-bar-action-container">
+                <img src="https://placehold.co/200x50" alt="">
+                <ul class="nav-action">
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text">หน่วยงาน</a></li>
+                    <li><a href="{{ route('members.index') }}" class="btn-nav btn-text">บุคลากร</a></li>
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text">ภาระงาน</a></li>
+                </ul>
             </div>
-            <div class="action-container">
-                <input type="text" placeholder="ค้นหาภาระงาน...">
-                <!-- <button type="button" class="btn-orange create-btn" onclick="openCreatePopup()">
+            <div class="btn-create btn-text">
                     <i class="fas fa-plus"></i> เพิ่มภาระงาน
-                </button> -->
+            </div>
+        </nav>
+        <div class="search-tab">
+            <div class="title slide-in">
+                <h1 class="page-title">ภาระงาน</h1>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="ค้นหา">
             </div>
         </div>
     </header>
 
     <!-- Content -->
     <section class="content-container">
-        <table class="task-table">
-            <thead>
-                <tr>
-                    <th>ภาระงาน</th>
-                    <th>ผู้สร้าง</th>
-                    <th>ผู้รับผิดชอบ</th>
-                    <th>หน่วยงาน</th>
-                    <th>กำหนดส่ง</th>
-                    <th>แก้ไข</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Sample Task 1 -->
-                <tr>
-                    <td>
-                        <div class="task-details">
-                            <h4>จัดทำรายงานประจำปี</h4>
-                            <ul class="subtasks">
-                                <li>รวบรวมข้อมูล</li>
-                                <li>วิเคราะห์ผล</li>
-                                <li>สรุปรายงาน</li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td>สมชาย ใจดี</td>
-                    <td>สมหญิง รักงาน</td>
-                    <td>ฝ่ายบริหาร</td>
-                    <td>31 มี.ค. 2567</td>
-                    <td>
-                        <button class="edit-btn" onclick="openEditPopup(1)">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <!-- Sample Task 2 -->
-                <tr>
-                    <td>
-                        <div class="task-details">
-                            <h4>พัฒนาระบบใหม่</h4>
-                            <ul class="subtasks">
-                                <li>ออกแบบระบบ</li>
-                                <li>พัฒนาโค้ด</li>
-                                <li>ทดสอบระบบ</li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td>วิชัย เก่งกาจ</td>
-                    <td>มานี คนเก่ง</td>
-                    <td>ฝ่ายไอที</td>
-                    <td>15 เม.ย. 2567</td>
-                    <td>
-                        <button class="edit-btn" onclick="openEditPopup(2)">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <!-- Sample Task 3 -->
-                <tr>
-                    <td>
-                        <div class="task-details">
-                            <h4>จัดอบรมพนักงาน</h4>
-                            <ul class="subtasks">
-                                <li>เตรียมเอกสาร</li>
-                                <li>จองห้องประชุม</li>
-                                <li>ประสานวิทยากร</li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td>สุดา มั่นคง</td>
-                    <td>ประเสริฐ ตั้งใจ</td>
-                    <td>ฝ่ายบุคคล</td>
-                    <td>1 พ.ค. 2567</td>
-                    <td>
-                        <button class="edit-btn" onclick="openEditPopup(3)">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+
+        <div class="side-nav-container slide-right">
+            <div class="side-nav">
+                <h3>หน่วยงานทั้งหมด</h3>   
+                <!-- button --> 
+                @for($i = 0; $i < 5; $i++)
+                <div class="btn-side-nav">
+                    <img src="https://placehold.co/25" class="nav-logo-img" alt="logo">
+                    <div class="btn-side-nav-text">
+                        หน่วยงาน
+                    </div>
+                </div>
+                @endfor               
+            </div> 
+        </div>
+
+        <!-- task table -->
+        <div class="content">
+            <div class="task-remain slide-in">
+                <h3>จำนวนภาระงาน</h3>
+                <p>XX</p>
+            </div>
+
+            <!-- task table -->
+            @for($x = 0; $x < 3 ; $x++)
+            <div class="task-department">
+                <h1 class="page-title slide-in">หน่วยงาน</h1>
+                <table class="fade-in">
+                    <tr class="table-title">
+                        <th>ภาระงาน</th>
+                        <th>หน่วยงาน</th>
+                        <th>ผู้รับผิดชอบ</th>
+                        <th>มอบหมายโดย</th>
+                        <th>วันครบกำหนด</th>
+                        <th>แก้ไข</th>
+                    </tr>
+                    @for($i = 0; $i < 5 ; $i++)
+                    <tr class="table-task">
+                        <td class="border-top">ภาระงาน</td>
+                        <td class="border-top">ชื่อหน่วยงาน</td>
+                        <td class="border-top">ชื่อบุคลากร</td>
+                        <td class="border-top">ชื่อบุคลากร</td>
+                        <td class="border-top">วันครบกำหนด</td>
+                        <td class="border-top"><a href="">Q</a></td>
+                    </tr>
+                    @endfor
+                </table>
+            </div>
+            @endfor
+        </div>
+
     </section>
-
-    <!-- Edit Task Popup -->
-    <div class="popup-overlay" id="editPopup">
-        <!-- Popup content will be added by JavaScript -->
-    </div>
-
-    <!-- Add your compiled JS -->
-    @vite(['resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="{{ asset('js/task.js') }}"></script>
 </body>
 </html>

@@ -9,7 +9,6 @@
     margin: 0 auto;
 }
 
-
 .icon-action {
     text-decoration: none;
     color: #F48E2E;
@@ -18,32 +17,6 @@
 
 .icon-action:hover {
     color: #d97a1e;
-}
-
-.nav-action .btn {
-    text-decoration: none;
-    color: #333;
-    position: relative;
-    transition: color 0.3s ease;
-}
-
-.nav-action .btn::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: -5px;
-    left: 0;
-    background-color: #F48E2E;
-    transition: width 0.3s ease;
-}
-
-.nav-action .btn:hover {
-    color: #F48E2E;
-}
-
-.nav-action .btn:hover::after {
-    width: 100%;
 }
 
 /* Style the search input */
@@ -159,8 +132,6 @@
     box-shadow: 0 5px 15px rgba(244, 142, 46, 0.3);
 }
 
-
-
 .department-card.new {
     animation: addCard 0.5s ease-out;
 }
@@ -184,8 +155,6 @@
     border-color: #F48E2E;
     box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
 }
-
-
 
 .department-card.updated {
     animation: successUpdate 0.3s ease-out;
@@ -218,10 +187,7 @@
     margin-bottom: 1rem;
 }
 
-/* Responsive grid */
 
-
-/* Remove the old create button from header */
 .action-container .create-btn {
     display: none;
 }

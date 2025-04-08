@@ -1,3 +1,5 @@
+@import url("../components/animation.css");
+
 header {
     display: flex;
     flex-direction: column;
@@ -8,9 +10,10 @@ header {
     display: flex;
     justify-content: right;
     align-items: center;
-    height: 64px;
+    height: 50px;
     background-color: #F48E2E;
-    padding: 0px 30px;
+    padding: 5px 30px;
+    gap: 10px;
 }
 
 .role-container ul li {
@@ -26,11 +29,12 @@ header {
     gap: 52px;
     z-index: 1;
     padding: 0px 30px;
+    height: 60px;
 }
 
 .nav-bar ul {
     display: flex;
-    gap: 52px;
+    gap: 24px;
     padding: 0;
 }
 
@@ -42,6 +46,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 24px;
 }
 
 .nav-action {
@@ -49,68 +54,25 @@ header {
     padding: 10px 0;
 }
 
-.nav-action .btn {
-    text-decoration: none;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    color: #666;
-    position: relative;
-    transition: all 0.3s ease;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: 2px solid transparent;
-    background: none;
-    font-weight: normal;
-    display: inline-flex;
-    line-height: 1.5;
-    min-width: 120px;
-}
-
-
-.nav-action .btn.active {
-    color: #F48E2E;
-    border: 2px solid #F48E2E;
-    background-color: rgba(244, 142, 46, 0.0);
-    font-weight: 600;
-}
-
-
-.nav-action .btn:not(.active):hover {
-    color: #F48E2E;
-    background-color: rgba(244, 142, 46, 0.0);
-    transform: translateY(-1px);
-}
-
-
-.nav-action .btn::after {
-    display: none;
-}
-
-
 .nav-action li {
     display: inline-block;
     padding: 0;
     margin: 0 5px;
 }
 
-.search-bar { 
+.search-tab { 
     display: flex;
     align-items: center;
     justify-content: space-between;
     background-image: linear-gradient(to right, #ECE3DB, white, white);
     padding: 0px 30px;
+    height: 60px;
 }
 
 .title {
     display: flex;
     width: 500px;
     padding-left: 10px;
-    animation: slideInFromLeft 0.8s ease-out;
-}
-
-.title h1 {
-    animation: slideInFromLeft 0.8s ease-out;
 }
 
 
