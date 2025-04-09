@@ -1,3 +1,2 @@
-import './bootstrap';
-import './department.js';
+import './component/button'
 

@@ -95,6 +95,9 @@
             @endfor
         </div>
 
+        <!-- script -->
+        <script src="{{ asset('js/app.js') }}"></script>
+        
     </section>
 </body>
 </html>

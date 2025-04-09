@@ -27,7 +27,7 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text">
+            <div class="btn-create btn-text" id="popupButton">
                     <i class="fas fa-plus"></i> เพิ่มหน่วยงาน
             </div>
         </nav>
@@ -45,6 +45,9 @@
     <section class = "content-container">
         @for($i = 0; $i < 10; $i++)
             <div class = "card-container fade-in">
+                <div class="card-edit">
+                    <img src="https://placehold.co/30" alt="">
+                </div>
                 <div class = "card-logo">
                     <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
                 </div>    
@@ -56,7 +59,40 @@
         @endfor
     </section>
 
-    <script src="{{ asset('js/department.js') }}"></script>
-
+    <!-- popup create new department-->
+    <div id="popup" class="popup-container">
+        <div class="create-popup-department">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="btn-close close-popup"> <!-- close button -->
+                        <   
+                    </div>
+                    <div class="popup-name">
+                        <h1 class="page-title">เพิ่มหน่วยงาน</h1>
+                    </div>
+                </div>
+                <div class="popup-image">
+                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                </div>
+                <div class="popup-input-container">
+                    <h2>ชื่อหน่วยงาน</h2>
+                    <input type="text" placeholder="เพิ่มหน่วยงาน..." class="input-text-name">
+                </div>
+            </div>
+            <div class="popup-btn-wrapper">
+                <div class="btn btn-cancel close-popup">
+                    <p>ยกเลิก</p>
+                </div>
+                <div class="btn btn-confirm" id="confirmButton">
+                    <p>ตกลง</p>
+                </div>
+            </div>
+        </div>
+    </div>  
+    
+    <div id="overlay"></div>
+    <!-- script -->
+    @vite('resources/js/app.js')
 </body>
+
 </html>

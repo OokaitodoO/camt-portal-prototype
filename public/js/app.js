@@ -1,0 +1,1 @@
+import '../../resources/js/component/button.js'
