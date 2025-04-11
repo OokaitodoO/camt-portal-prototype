@@ -23,17 +23,29 @@ function createNewDepartment() {
     closeCreatePopup();
 }
 
-closePopupButton.forEach( button => {
-    button.addEventListener('click', () => {
-        closeCreatePopup();
+if(closePopupButton){
+    closePopupButton.forEach( button => {
+        button.addEventListener('click', () => {
+            closeCreatePopup();
+        })
+    
+        window.closeCreatePopup = closeCreatePopup;
     })
+}
+else {
+    console.error("Not found close popup button");
+}
 
-    window.closeCreatePopup = closeCreatePopup;
-})
+if(confirmButton){
+    confirmButton.addEventListener('click', () => {
+        createNewDepartment();
+    })
+}
+else {
+    console.error("Not found confirm button element");
+}
 
-confirmButton.addEventListener('click', () => {
-    createNewDepartment();
-})
+
 
 document.addEventListener('DOMContentLoaded', () => {    
     if(openPopupButton){

@@ -25,6 +25,7 @@ th:not(:first-child)::after, td:not(:first-child)::after {
     transform: translateY(-50%);
 }
 
+
 th {
     font-weight: normal; 
 }

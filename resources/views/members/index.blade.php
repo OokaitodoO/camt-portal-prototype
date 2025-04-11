@@ -27,7 +27,7 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text">
+            <div class="btn-create btn-text" id="popupButton">
                     <i class="fas fa-plus"></i> เพิ่มบุคลากร
             </div>
         </nav>
@@ -88,8 +88,8 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- members -->
-                
                 <div class="cards-member">
                     @for($j = 0; $j < 4; $j++)
                     <div class="card-wrapper">
@@ -120,7 +120,18 @@
             </div>
             @endfor
         </div>
-        
     </section>
+
+    <!-- popup -->
+    <div id="popup" class="popup-container">
+        <div class="create-popup-department">
+        </div>
+    </div>
+
+    <!-- overlay -->
+    <div id="overlay"></div>
+
+    <!-- script -->
+    @vite('resources/js/app.js')
 </body>
 </html> 
