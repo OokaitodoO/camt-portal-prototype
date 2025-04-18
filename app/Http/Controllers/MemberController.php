@@ -139,4 +139,9 @@ class MemberController extends Controller
 
         return response()->json($members);
     }
+
+    public function show(Member $member)
+    {
+        return view('individual', compact('member'));
+    }
 } 

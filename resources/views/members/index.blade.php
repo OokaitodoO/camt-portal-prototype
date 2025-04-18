@@ -27,7 +27,7 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text" id="popupButton">
+            <div class="btn-create btn-text" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มบุคลากร
             </div>
         </nav>
@@ -43,30 +43,13 @@
 
     <!-- Content -->
     <section class="content-container">
-
-        <div class="side-nav-container slide-right">
-            <div class="side-nav">
-                <h3>หน่วยงานทั้งหมด</h3>   
-                <!-- button --> 
-                @for($i = 0; $i < 5; $i++)
-                <div class="btn-side-nav">
-                    <img src="https://placehold.co/25" class="nav-logo-img" alt="logo">
-                    <div class="btn-side-nav-text">
-                        หน่วยงาน
-                    </div>
-                </div>
-                @endfor               
-            </div> 
-        </div>
-
-        <!-- Member card -->
         <div class="content">
-            @for($i = 0; $i < 2; $i++)
             <div class="department">
-                <h1 class="page-title">หน่วยงาน</h1>
+                <h1 class="page-title slide-in">หน่วยงาน</h1>
+                
                 <!-- leader -->
                 <div class="card-leader">
-                    <div class="card-container fade-in">
+                    <a href="{{ route('members.show', 1) }}" class="card-container fade-in">
                         <div class="card-logo">
                             <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
                         </div>
@@ -78,7 +61,6 @@
                             <div class="card-description">
                                 <p><b>ตำแหน่งงาน</b> ชื่อตำแหน่งงาน</p>
                                 <p><b>หน่วยงาน</b> ชื่อหน่วยงาน</p>
-                                <p><b>หน่วยงาน</b> ชื่อหน่วยงานย่อย</p>
                             </div>
                         </div>
                         <hr class="divider">
@@ -86,14 +68,13 @@
                             <p>name_S@cmu.ac.th</p>
                             <p>0XX-XXX-XXXX</p>
                         </div>
-                    </div>
+                    </a>
                 </div>
 
                 <!-- members -->
                 <div class="cards-member">
-                    @for($j = 0; $j < 4; $j++)
                     <div class="card-wrapper">
-                        <div class="card-container fade-in">
+                        <a href="{{ route('members.show', 1) }}" class="card-container fade-in">
                             <div class="card-logo">
                                 <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
                             </div>
@@ -105,7 +86,6 @@
                                 <div class="card-description">
                                     <p><b>ตำแหน่งงาน</b> ชื่อตำแหน่งงาน</p>
                                     <p><b>หน่วยงาน</b> ชื่อหน่วยงาน</p>
-                                    <p><b>หน่วยงาน</b> ชื่อหน่วยงานย่อย</p>
                                 </div>
                             </div>
                             <hr class="divider">
@@ -113,18 +93,81 @@
                                 <p>name_S@cmu.ac.th</p>
                                 <p>0XX-XXX-XXXX</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
-                    @endfor
                 </div>
             </div>
-            @endfor
         </div>
     </section>
 
-    <!-- popup -->
-    <div id="popup" class="popup-container">
+    <!-- popup create new member-->
+    <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="btn-close close-popup" onclick="closeCreatePopup()"> <!-- close button -->
+                        <   
+                    </div>
+                    <div class="popup-name">
+                        <h1 class="page-title">เพิ่มบุคลากร</h1>
+                    </div>
+                </div>
+                <div class="popup-image">
+                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                </div>
+                <div class="popup-input-container">
+                    <div class="popup-member-name">
+                        <div class="popup-input-wrapper">
+                            <h2>ชื่อ</h2>
+                            <input type="text" placeholder="ชื่อ..." class="input-text">
+                        </div>
+                        <div class="popup-input-wrapper">
+                            <h2>นามสกุล</h2>
+                            <input type="text" placeholder="นามสกุล..." class="input-text">
+                        </div>
+                    </div>
+                    <div class="popup-input-wrapper">
+                        <h2>ตำแหน่ง</h2>
+                        <input type="text" placeholder="ตำแหน่ง..." class="input-text">
+                    </div>
+                    <div class="popup-input-wrapper">
+                        <h2>หน่วยงาน</h2>
+                        <div class="dropdown">
+                            <div class="dropdown-btn" onclick="toggleDropdownDepartment()">
+                                <span class="selected-text">เลือกหน่วยงาน</span>
+                                <button>▼</button>
+                            </div>
+                            <div class="dropdown-content" id="dropdownMenuDepartment">
+                                <a href="#" onclick="selectDepartment(this)">หน่วยงาน 1</a>
+                                <a href="#" onclick="selectDepartment(this)">หน่วยงาน 2</a>
+                                <a href="#" onclick="selectDepartment(this)">หน่วยงาน 3</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="popup-input-wrapper">
+                        <h2>หน่วยงานย่อย</h2>
+                        <input type="text" placeholder="หน่วยงาน..." class="input-text">
+                    </div>
+                    <div class="popup-member-name">
+                        <div class="popup-input-wrapper">
+                            <h2>อีเมล</h2>
+                            <input type="text" placeholder="อีเมล..." class="input-text">
+                        </div>
+                        <div class="popup-input-wrapper">
+                            <h2>เบอร์โทรศัพท์</h2>
+                            <input type="text" placeholder="เบอร์โทรศัพท์..." class="input-text">
+                        </div>
+                    </div>
+                    <div class="popup-btn-wrapper">
+                        <div class="btn btn-cancel close-popup" onclick="closeCreatePopup()">
+                            <p>ยกเลิก</p>
+                        </div>
+                        <div class="btn btn-confirm" id="confirmButton" onclick="createNewMember()">
+                            <p>ตกลง</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

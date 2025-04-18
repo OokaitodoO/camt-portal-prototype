@@ -27,7 +27,7 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text" id="popupButton">
+            <div class="btn-create btn-text" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มหน่วยงาน
             </div>
         </nav>
@@ -60,11 +60,11 @@
     </section>
 
     <!-- popup create new department-->
-    <div id="popup" class="popup-container">
+    <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
                 <div class="popup-header">
-                    <div class="btn-close close-popup"> <!-- close button -->
+                    <div class="btn-close close-popup" onclick="closeCreatePopup()"> <!-- close button -->
                         <   
                     </div>
                     <div class="popup-name">
@@ -80,10 +80,10 @@
                 </div>
             </div>
             <div class="popup-btn-wrapper">
-                <div class="btn btn-cancel close-popup">
+                <div class="btn btn-cancel close-popup" onclick="closeCreatePopup()">
                     <p>ยกเลิก</p>
                 </div>
-                <div class="btn btn-confirm" id="confirmButton">
+                <div class="btn btn-confirm" id="confirmButton" onclick="createNewDepartment()">
                     <p>ตกลง</p>
                 </div>
             </div>

@@ -1,10 +1,6 @@
-const openPopupButton = document.getElementById('popupButton');
-const confirmButton = document.getElementById('confirmButton');
-const closePopupButton = document.querySelectorAll('.close-popup');
-
 function openCreatePopup() {
     console.log("Opening...createPopup");
-    const popup = document.getElementById('popup');
+    const popup = document.getElementById('popupCreate');
     const overlay = document.getElementById('overlay');
     popup.classList.add('active');
     overlay.classList.add('active');
@@ -12,7 +8,7 @@ function openCreatePopup() {
 
 function closeCreatePopup() {
     console.log("Closing...createPopup");
-    const popup = document.getElementById('popup')
+    const popup = document.getElementById('popupCreate')
     const overlay = document.getElementById('overlay');
     popup.classList.remove('active');
     overlay.classList.remove('active');
@@ -23,29 +19,16 @@ function createNewDepartment() {
     closeCreatePopup();
 }
 
-if(closePopupButton){
-    closePopupButton.forEach( button => {
-        button.addEventListener('click', () => {
-            closeCreatePopup();
-        })
-    
-        window.closeCreatePopup = closeCreatePopup;
-    })
-}
-else {
-    console.error("Not found close popup button");
+function createNewMember() {
+    console.log("Created new member");
+    closeCreatePopup();
 }
 
-if(confirmButton){
-    confirmButton.addEventListener('click', () => {
-        createNewDepartment();
-    })
+function createNewTask() {
+    console.log("Created new task");
+    closeCreatePopup();
 }
-else {
-    console.error("Not found confirm button element");
-}
-
-
+  
 
 document.addEventListener('DOMContentLoaded', () => {    
     if(openPopupButton){
@@ -53,7 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
             openCreatePopup();
         })
     }
-    
-    window.openCreatePopup = openCreatePopup;  
-    window.createNewDepartment = createNewDepartment;  
 });
+
+window.openCreatePopup = openCreatePopup;  
+window.closeCreatePopup = closeCreatePopup;
+window.createNewDepartment = createNewDepartment;
+window.createNewMember = createNewMember;
+window.createNewTask = createNewTask;  

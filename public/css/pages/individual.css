@@ -1,0 +1,38 @@
+.content-container {
+    display: grid;
+    grid-template: 
+    'leftNav content' / 360px;
+}
+
+.content {
+    grid-area: content;    ;
+}
+
+.content-task {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.side-nav-container{
+    grid-area: leftNav;
+    background-color: white;   
+    max-width: 360px;
+    height: 100%;
+    min-height: 100vh; 
+    padding: 25px;
+    gap: 20px;
+}
+
+.side-nav-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.side-nav-info-name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
