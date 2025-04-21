@@ -45,8 +45,8 @@
     <section class = "content-container">
         @for($i = 0; $i < 10; $i++)
             <div class = "card-container fade-in">
-                <div class="card-edit">
-                    <img src="https://placehold.co/30" alt="">
+                <div class="card-edit" onclick="openEditPopup()">
+                    <i class="fas fa-edit"></i>
                 </div>
                 <div class = "card-logo">
                     <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
@@ -89,7 +89,69 @@
             </div>
         </div>
     </div>  
-    
+
+    <!-- popup edit department -->
+    <div id="popupEdit" class="popup-container">
+        <div class="edit-popup-department">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="btn-close close-popup" onclick="closeEditPopup()">
+                        <
+                    </div>
+                    <div class="popup-name">
+                        <h1 class="page-title">แก้ไขหน่วยงาน</h1>
+                    </div>
+                    <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+                <div class="popup-image">
+                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                </div>
+                <div class="popup-input-container">
+                    <h2>ชื่อหน่วยงาน</h2>
+                    <input type="text" placeholder="เพิ่มหน่วยงาน..." class="input-text-name">
+                </div>
+            </div>
+            <div class="popup-btn-wrapper">
+                <div class="btn btn-cancel close-popup" onclick="closeEditPopup()">
+                    <p>ยกเลิก</p>
+                </div>
+                <div class="btn btn-confirm" id="confirmButton" onclick="confirmEditDepartment()">
+                    <p>ตกลง</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Popup -->
+    <div id="deleteConfirmationPopup" class="popup-container">
+        <div class="confirmation-popup scale-in">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="popup-name">
+                        <h1 class="page-title">ต้องการลบหน่วยงานนี้หรือไม่?</h1>
+                    </div>
+                </div>
+                <div class = "card-logo">
+                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                </div>  
+                <div class="divider"></div>
+                <div class = "card-name">
+                    <h3>งานบริหารทั่วไป</h3>
+                </div>
+                <div class="popup-btn-wrapper">
+                    <div class="btn btn-cancel" onclick="closeDeleteConfirmation()">
+                        <p>ยกเลิก</p>
+                    </div>
+                    <div class="btn btn-confirm" onclick="deleteDepartment()">
+                        <p>ยืนยัน</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="overlay"></div>
     <!-- script -->
     @vite('resources/js/app.js')

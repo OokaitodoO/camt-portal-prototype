@@ -34,6 +34,17 @@ tr {
     gap: 10px;
 }
 
+.table-task {
+    transition: all 0.3s ease;
+}
+
+.table-task:hover {
+    background-color: #ECE3DB;
+    cursor: pointer;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .border-top {
     border-top: 2px solid #BFBFBF; 
     position: relative;

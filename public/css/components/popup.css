@@ -109,6 +109,22 @@
     gap: 15px;
 }
 
+.popup-member-infoamation {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: left;
+    gap: 15px;
+}
+
+.popup-member-infoamation-item {
+    display:grid;
+    width: 100%;
+    align-items: center;
+    justify-content: left;
+    text-align: left;
+}
+
 .popup-input-wrapper {
     display: flexbox;
     width: 100%;
@@ -142,5 +158,22 @@
     width: fit-content;
     height: 100%;
     padding-bottom: 6px;
+}
+
+.confirmation-popup {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    width: 400px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.popup-message {
+    margin: 20px 0;
+    font-size: 16px;
+    color: #333;
 }
 

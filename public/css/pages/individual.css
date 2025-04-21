@@ -5,22 +5,28 @@
 }
 
 .content {
-    grid-area: content;    ;
+    grid-area: content;
+    padding: 30px;
 }
 
 .content-task {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
 .side-nav-container{
     grid-area: leftNav;
     background-color: white;   
     max-width: 360px;
-    height: 100%;
+    height: fit-content;
     min-height: 100vh; 
-    padding: 25px;
+    padding-top: 25px;
     gap: 20px;
+}
+
+.side-nav-container .divider {
+    width: 100%;
 }
 
 .side-nav-logo {
@@ -33,6 +39,24 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.side-nav-info-item {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    padding: 0px 25px;
+}
+
+.side-nav-pin {
+    background-image: linear-gradient(to right, #F48E2E, #F6B271);
+    color: white;
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
 }
 
 

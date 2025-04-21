@@ -124,3 +124,11 @@
     cursor: pointer;
     background: linear-gradient(#FAFBFC33, #FAFBFC33), #F48E2E;
 }
+
+.btn-edit {
+    cursor: pointer;
+}
+
+.btn-pointer {
+    cursor: pointer;
+}
