@@ -10,8 +10,9 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $departments = Department::all();
-        return view('task', compact('departments'));
+        // $departments = Department::all();
+        // return view('task', compact('departments'));
+        return view('task');
     }
     
 }

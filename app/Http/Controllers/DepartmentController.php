@@ -10,8 +10,9 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = Department::all(); // Get all departments from database
-        return view('department', compact('departments'));
+        // $departments = Department::all(); // Get all departments from database
+        // return view('department', compact('departments'));
+        return view('department');
     }
 
     public function update(Request $request)

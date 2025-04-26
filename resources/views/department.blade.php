@@ -153,8 +153,11 @@
     </div>
 
     <div id="overlay"></div>
+
     <!-- script -->
     @vite('resources/js/app.js')
+
+
 </body>
 
 </html>

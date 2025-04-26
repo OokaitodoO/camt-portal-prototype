@@ -11,8 +11,9 @@ class MemberController extends Controller
 {
     public function create()
     {
-        $departments = Department::orderBy('name')->get();
-        return view('members.create', compact('departments'));
+        // $departments = Department::orderBy('name')->get();
+        // return view('members.create', compact('departments'));
+        return view('members.create');
     }
 
     public function store(Request $request)
@@ -116,9 +117,10 @@ class MemberController extends Controller
 
     public function index()
     {
-        $members = Member::with('department')->orderBy('first_name')->get();
-        $departments = Department::orderBy('name')->get();
-        return view('members.index', compact('members', 'departments'));
+        // $members = Member::with('department')->orderBy('first_name')->get();
+        // $departments = Department::orderBy('name')->get();
+        // return view('members.index', compact('members', 'departments'));
+        return view('members.index');
     }
 
     public function search(Request $request)
