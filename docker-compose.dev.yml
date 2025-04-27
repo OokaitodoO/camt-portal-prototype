@@ -23,7 +23,7 @@ services:
     networks:
       - development
     depends_on:
-      - traefik
+      - mysql      
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.laravel.rule=HostRegexp(`localhost`)"
@@ -46,5 +46,43 @@ services:
       ports:
         - "8025:8025"
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    networks:
+      - development
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    networks:
+      - development
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}      
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.phpmyadmin.rule=Host(`pma.localhost`)"
+      - "traefik.http.routers.phpmyadmin.entrypoints=web"
+      - "traefik.http.services.phpmyadmin.loadbalancer.server.port=8080"
+    
 networks:
   development:
+    name: development
+    driver: bridge
+
+volumes:
+  mysql_data:
