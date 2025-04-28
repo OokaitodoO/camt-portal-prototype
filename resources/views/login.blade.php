@@ -3,23 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - CAMT Portal</title>
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/login.css') }}">
     <!-- Add Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fas fa-user-circle"></i> Login page</h1>
-        <div class="login-card">
-            <div class="login-icon">
-                <i class="fas fa-user fa-4x"></i>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <i class="fas fa-user-circle fa-3x"></i>
+                <h1>Welcome to CAMT Portal</h1>
+                <p>Please sign in to continue</p>
             </div>
-            <div class="login-action">
-                <a href="{{route('department')}}" class="btn">
-                    <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
-                </a>
+            
+            <form method="GET" action="{{route('department')}}" class="login-form">
+                @csrf
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+                
+                <button type="submit" class="login-button">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="login-footer">
+                <a href="#" class="forgot-password">Forgot Password?</a>
+                <p>Don't have an account? <a href="#">Contact Administrator</a></p>
             </div>
         </div>
     </div>

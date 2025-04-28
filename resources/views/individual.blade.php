@@ -15,25 +15,25 @@
     <header>
         <div class="role-container">
             <ul>
-                <li><a href="" class="btn-status btn-text">ตำแหน่ง</a></li>
+                <li><a href="" class="btn-status btn-text sarabun-20">ตำแหน่ง</a></li>
             </ul>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
                 <img src="https://placehold.co/200x50" alt="">
                 <ul class="nav-action">
-                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text">หน่วยงาน</a></li>
-                    <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text">บุคลากร</a></li>
-                    <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text">ภาระงาน</a></li>
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text" id="popupButton" onclick="openCreatePopup()">
+            <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มเนื้อหา
             </div>
         </nav>
         <div class="search-tab">
             <div class="title slide-in">
-                <h1 class="page-title">ข้อมูลบุคลากร</h1>
+                <h1 class="page-title sarabun-36">ข้อมูลบุคลากร</h1>
             </div>
         </div>
     </header>
@@ -50,43 +50,48 @@
             </div>
             <div class="side-nav-info">
                 <div class="side-nav-info-name">
-                    <h2>ชื่อ - นามสกุล</h2>
+                    <h2 class="sarabun-24">ชื่อ - นามสกุล</h2>
                 </div>   
-                <div class="side-nav-info-item">
-                    <h2>ตำแหน่งงาน</h2>
+                <div class="side-nav-info-item ">
+                    <h2 class="sarabun-18">ตำแหน่งงาน</h2>
                 </div>         
                 <div class="side-nav-info-item">
-                    <h2>หน่วยงาน</h2>
+                    <h2 class="sarabun-18">หน่วยงาน</h2>
                 </div>
-                <div class="side-nav-info-item">
-                    <h2>หน่วยงานย่อย</h2>
+                <div class="side-nav-info-item ">
+                    <h2 class="sarabun-18">หน่วยงานย่อย</h2>
                 </div>
-                <div class="side-nav-info-item">
-                    <h2>บทบาท</h2>
+                <div class="side-nav-info-item ">
+                    <h2 class="sarabun-18">บทบาท</h2>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
                 </div>
-                <div class="side-nav-info-item">
-                    <h2>อีเมล</h2>
+                <div class="side-nav-info-item ">
+                    <h2 class="sarabun-18">อีเมล</h2>
                     <p>....@cmu.ac.th</p>
                 </div>
-                <div class="side-nav-info-item">
-                    <h2>เบอร์โทร</h2>
-                    <p>0XX-XXX-XXXX</p>
+                <div class="side-nav-info-item ">
+                    <h2 class="sarabun-18">เบอร์โทร</h2>
+                    <p class="sarabun-18">0XX-XXX-XXXX</p>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
                 </div>
             </div>
             <div class="side-nav-pin">
-                <h3>ภาระงานที่ใช้บ่อย</h3>
-                <div class="btn-side-nav">
-                    <img src="https://placehold.co/25" class="nav-logo-img" alt="logo">
-                    <div class="btn-side-nav-text">
-                        หน่วยงาน
+                <h3 class="sarabun-20">ภาระงานที่ใช้บ่อย</h3>
+                <div class="dropdown">
+                    <div class="dropdown-btn" onclick="toggleDropdownDepartment()">
+                        <span class="selected-text sarabun-16">เลือกภาระงาน</span>
+                        <button>▼</button>
                     </div>
-                </div> 
+                    <div class="dropdown-content sarabun-16" id="dropdownMenuDepartment">
+                        <a href="#" onclick="selectDepartment(this)">ภาระงาน 1</a>
+                        <a href="#" onclick="selectDepartment(this)">ภาระงาน 2</a>
+                        <a href="#" onclick="selectDepartment(this)">ภาระงาน 3</a>
+                    </div>
+                </div>
             </div>  
         </div>
         
@@ -104,16 +109,16 @@
                         <div class="card-container-info">
                             <div class="card-container-info-item">
                                 <div class="card-name">
-                                    <h3>ภาระงาน</h3> 
+                                    <h3 class="sarabun-24">ภาระงาน</h3> 
                                 </div>
                             </div>
                             <div class="card-container-info-item">
                                 <div class="card-details">
-                                    <p>รายละเอียด</p>
+                                    <p class="sarabun-16">รายละเอียด</p>
                                 </div>
                                 <div class="card-details">
-                                    <p class="card-date-title">วันครบกำหนด</p>
-                                    <p>ไม่มีกำหนด</p>
+                                    <p class="card-date-title sarabun-16">วันครบกำหนด</p>
+                                    <p class="sarabun-16">ไม่มีกำหนด</p>
                                 </div>
                             </div>
                             <div class="card-container-info-item">
@@ -135,7 +140,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title">เพิ่มบุคลากร</h1>
+                            <h1 class="page-title sarabun-36">เพิ่มบุคลากร</h1>
                         </div>
                     </div>
                     <div class="popup-image">
@@ -143,21 +148,21 @@
                     </div>
                     <div class="popup-input-container">
                         <div class="popup-input-wrapper">
-                            <h2>ชื่อภาระงาน</h2>
+                            <h2 class="sarabun-16">ชื่อภาระงาน</h2>
                             <input type="text" placeholder="ภาระงาน..." class="input-text">
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2>รายละเอียด</h2>
+                            <h2 class="sarabun-16">รายละเอียด</h2>
                             <input type="text" placeholder="รายละเอียด..." class="input-text">
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2>หน่วยงาน</h2>
+                            <h2 class="sarabun-16">หน่วยงาน</h2>
                             <div class="dropdown">
                                 <div class="dropdown-btn" onclick="toggleDropdownDepartment()">
-                                    <span class="selected-text">เลือกหน่วยงาน</span>
+                                    <span class="selected-text sarabun-16">เลือกหน่วยงาน</span>
                                     <button>▼</button>
                                 </div>
-                                <div class="dropdown-content" id="dropdownMenuDepartment">
+                                <div class="dropdown-content sarabun-16" id="dropdownMenuDepartment">
                                     <a href="#" onclick="selectDepartment(this)">หน่วยงาน 1</a>
                                     <a href="#" onclick="selectDepartment(this)">หน่วยงาน 2</a>
                                     <a href="#" onclick="selectDepartment(this)">หน่วยงาน 3</a>
@@ -165,17 +170,17 @@
                             </div>
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2>ลิ้งก์</h2>
+                            <h2 class="sarabun-16">ลิ้งก์</h2>
                             <input type="text" placeholder="ลิ้งก์..." class="input-text">
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2>มอบหมายภาระงานให้</h2>
+                            <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
                             <div class="dropdown">
                                 <div class="dropdown-btn" onclick="toggleDropdownMember()">
-                                    <span class="selected-text">เลือกบุคลากร</span>
+                                    <span class="selected-text sarabun-16">เลือกบุคลากร</span>
                                     <button>▼</button>
                                 </div>
-                                <div class="dropdown-content" id="dropdownMenuMember">
+                                <div class="dropdown-content sarabun-16" id="dropdownMenuMember">
                                     <a href="#" onclick="selectMember(this)">บุคลากร 1</a>
                                     <a href="#" onclick="selectMember(this)">บุคลากร 2</a>
                                     <a href="#" onclick="selectMember(this)">บุคลากร 3</a>
@@ -184,7 +189,7 @@
                         </div>
                         <div class="popup-input-wrapper">
                             <div class="date-picker">
-                                <h2>วันครบกำหนด</h2>
+                                <h2 class="sarabun-16">วันครบกำหนด</h2>
                                 <input type="date" id="deadline" name="deadline">
                             </div>
                         </div>
@@ -194,11 +199,11 @@
                         <div class="popup-sub-task">
                             <div class="popup-sub-task-detail">
                                 <div class="popup-input-wrapper">
-                                    <h2>ภาระงานย่อย 1</h2>
+                                    <h2 class="sarabun-16">ภาระงานย่อย 1</h2>
                                     <input type="text" placeholder="ภาระงาน..." class="input-text">
                                 </div>
                                 <div class="popup-input-wrapper">
-                                    <h2>ลิ้งก์</h2>
+                                    <h2 class="sarabun-16">ลิ้งก์</h2>
                                     <input type="text" placeholder="ลิ้งก์..." class="input-text">
                                 </div>
                             </div>
@@ -209,10 +214,10 @@
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup" onclick="closeCreatePopup()">
-                            <p>ยกเลิก</p>
+                            <p class="sarabun-20">ยกเลิก</p>
                         </div>
                         <div class="btn btn-confirm" id="confirmButton" onclick="createNewTask()">
-                            <p>ตกลง</p>
+                            <p class="sarabun-20">ตกลง</p>
                         </div>
                     </div>
                 </div>
