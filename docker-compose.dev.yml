@@ -70,8 +70,11 @@ services:
       - PMA_HOST=mysql
       - PMA_PORT=3306
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}      
+      - MYSQL_DATABASE=${DB_DATABASE:-laravel}
     depends_on:
       - mysql
+    ports:
+      - "8080:80"
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
