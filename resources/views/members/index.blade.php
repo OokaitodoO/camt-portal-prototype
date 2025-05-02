@@ -15,12 +15,22 @@
     <header>
         <div class="role-container">
             <ul>
-                <li><a href="" class="btn-status btn-text sarabun-20">ตำแหน่ง</a></li>
+                <li class="btn-status btn-text sarabun-20">
+                    @php
+                        $roleLabels = [
+                            'admin' => 'ผู้ดูแลระบบ',
+                            'manager' => 'ผู้บริหาร',
+                            'headstaff' => 'หัวหน้างาน',
+                            'staff' => 'บุคลากร'
+                        ];
+                    @endphp
+                    {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                </li>
             </ul>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
-            <img src="/Image/CamtLogo.png" alt="">
+                <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
                     <li><a href="{{route('department')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
@@ -47,56 +57,109 @@
         <div class="side-nav-container slide-right">
             <div class="side-nav">
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
-                @foreach($departments as $department)
-                <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }})">
-                    <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
-                    <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
+                <div class="btn-side-nav" onclick="filterByDepartment('all'); updateURL('{{ route('members.index') }}')">
+                    <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="all">
+                    <div class="btn-side-nav-text sarabun-18">ทั้งหมด</div>
                 </div>
+                @foreach($departments as $department)
+                    <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }}); updateURL('{{ route('members.index') }}')">
+                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
+                    </div>
                 @endforeach               
             </div> 
         </div>
 
         <!-- Content area -->
         <div class="content">
-            <div class="department">
-                @if(count($members) > 0)
-                    <h1 class="page-title slide-in sarabun-36">{{ $members->first()->department->name }}</h1>                
-                @endif
-                
-                <!-- Cards container -->
-                <div class="cards-member" id="memberCardsContainer">
-                    @foreach($members as $member)
-                    <div class="card-wrapper">
-                        <div class="card-container fade-in">
-                            <div class="card-edit" onclick="openEditPopup(this)" 
-                                data-member-id="{{ $member->id }}"
-                                data-first-name="{{ $member->first_name }}"
-                                data-last-name="{{ $member->last_name }}"
-                                data-position="{{ $member->position }}"
-                                data-department-id="{{ $member->department_id }}">
-                                <i class="fas fa-edit"></i>
+
+            <!-- Department sections -->
+            <div id="departmentSections">
+                <!-- All members section (grouped by department) -->
+                <div class="department-section" data-department="all">
+                    @foreach($departments as $department)
+                        @php
+                            $departmentMembers = $members->where('department_id', $department->id);
+                        @endphp
+                        
+                        @if($departmentMembers->count() > 0)
+                            <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
+                            <div class="cards-member">
+                                @foreach($departmentMembers as $member)
+                                    <div class="card-wrapper fade-in" data-department-id="{{ $member->department_id }}">
+                                        <div class="card-container">
+                                            <div class="card-edit" onclick="openEditPopup(this)" 
+                                                data-member-id="{{ $member->id }}"
+                                                data-first-name="{{ $member->first_name }}"
+                                                data-last-name="{{ $member->last_name }}"
+                                                data-position="{{ $member->position }}"
+                                                data-department-id="{{ $member->department_id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                            
+                                            <a href="{{ route('members.show', $member->id) }}">
+                                                <div class="card-logo">
+                                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                                                         class="card-logo-img" alt="logo">
+                                                </div>
+                                                <hr class="divider">
+                                                <div class="card-container-info">
+                                                    <div class="card-name sarabun-20">
+                                                        {{ $member->first_name }} {{ $member->last_name }}
+                                                    </div>
+                                                    <div class="card-description sarabun-16">
+                                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
+                                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                            
-                            <a href="{{ route('members.show', $member->id) }}">
-                                <div class="card-logo">
-                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                         class="card-logo-img" alt="logo">
-                                </div>
-                                <hr class="divider">
-                                <div class="card-container-info">
-                                    <div class="card-name sarabun-20">
-                                        {{ $member->first_name }} {{ $member->last_name }}
-                                    </div>
-                                    <div class="card-description sarabun-16">
-                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
+                        @endif
                     @endforeach
                 </div>
+
+                <!-- Individual department sections -->
+                @foreach($departments as $department)
+                    <div class="department-section" data-department="{{ $department->id }}" style="display: none;">
+                        <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
+                        <div class="cards-member">
+                            @foreach($members->where('department_id', $department->id) as $member)
+                                <div class="card-wrapper fade-in">
+                                    <div class="card-container">
+                                        <div class="card-edit" onclick="openEditPopup(this)" 
+                                            data-member-id="{{ $member->id }}"
+                                            data-first-name="{{ $member->first_name }}"
+                                            data-last-name="{{ $member->last_name }}"
+                                            data-position="{{ $member->position }}"
+                                            data-department-id="{{ $member->department_id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        
+                                        <a href="{{ route('members.show', $member->id) }}">
+                                            <div class="card-logo">
+                                                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                                                     class="card-logo-img" alt="logo">
+                                            </div>
+                                            <hr class="divider">
+                                            <div class="card-container-info">
+                                                <div class="card-name sarabun-20">
+                                                    {{ $member->first_name }} {{ $member->last_name }}
+                                                </div>
+                                                <div class="card-description sarabun-16">
+                                                    <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
+                                                    <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>

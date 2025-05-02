@@ -12,13 +12,12 @@ class CreateTasksTable extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->foreignId('department_id')->constrained()->onDelete('cascade');
-            $table->foreignId('assigned_to')->nullable()->constrained('members')->onDelete('set null');
-            $table->foreignId('assigned_by')->nullable()->constrained('members')->onDelete('set null');
-            $table->string('status')->default('pending');
+            $table->foreignId('department_id')->constrained('departments');
+            $table->string('link')->nullable();
+            $table->foreignId('assigned_to')->nullable()->constrained('members');
+            $table->foreignId('assigned_by')->nullable()->constrained('members');
             $table->date('deadline');
             $table->string('logo_path')->nullable();
-            $table->string('link')->nullable();
             $table->timestamps();
         });
 

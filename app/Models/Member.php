@@ -2,23 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Member extends Model
+class Member extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, Notifiable;
 
     protected $fillable = [
+        'email',
+        'password',
         'first_name',
         'last_name',
         'position',
         'department_id',
-        'sub_department',
         'role',
-        'email',
-        'phone',
         'profile_picture'
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
     public function department()
@@ -26,8 +31,31 @@ class Member extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function tasks()
+    // Helper methods for role checking
+    public function isAdmin()
     {
-        return $this->hasMany(Task::class);
+        return $this->role === 'admin';
+    }
+
+    public function isManager()
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isMember()
+    {
+        return $this->role === 'member';
+    }
+
+    // Query scope for filtering by role
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    // Query scope for department managers
+    public function scopeDepartmentManagers($query)
+    {
+        return $query->where('role', 'manager');
     }
 } 

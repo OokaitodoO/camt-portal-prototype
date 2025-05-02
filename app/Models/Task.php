@@ -13,15 +13,30 @@ class Task extends Model
         'title',
         'description',
         'department_id',
+        'link',
         'assigned_to',
         'assigned_by',
-        'status',
         'deadline',
-        'logo_path',
-        'link'
+        'logo_path'
     ];
 
-    protected $dates = ['deadline'];
+    protected $dates = [
+        'deadline',
+        'created_at',
+        'updated_at'
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function($task) {
+            // The cascade delete will handle sub_tasks automatically
+            if ($task->logo_path) {
+                \Storage::disk('public')->delete($task->logo_path);
+            }
+        });
+    }
 
     public function department()
     {
@@ -38,8 +53,8 @@ class Task extends Model
         return $this->belongsTo(Member::class, 'assigned_by');
     }
 
-    public function subtasks()
+    public function subTasks()
     {
-        return $this->hasMany(Subtask::class);
+        return $this->hasMany(SubTask::class);
     }
 }

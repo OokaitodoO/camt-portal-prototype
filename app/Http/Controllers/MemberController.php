@@ -117,43 +117,11 @@ class MemberController extends Controller
         ]);
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        try {
-            $query = Member::with('department');
-            $selectedDepartment = null;
-
-            // If department_id is provided, filter members
-            if ($request->has('department_id')) {
-                $departmentId = $request->department_id;
-                $query->where('department_id', $departmentId);
-                $selectedDepartment = Department::findOrFail($departmentId);
-            }
-
-            $members = $query->get();
-            $departments = Department::all();
-
-            // If it's an AJAX request, return JSON
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'members' => $members,
-                    'selectedDepartment' => $selectedDepartment
-                ]);
-            }
-
-            // Otherwise return the view
-            return view('members.index', compact('members', 'departments', 'selectedDepartment'));
-
-        } catch (\Exception $e) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'เกิดข้อผิดพลาดในการแสดงข้อมูล'
-                ], 500);
-            }
-            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการแสดงข้อมูล');
-        }
+        $members = Member::with('department')->get();
+        $departments = Department::all();
+        return view('members.index', compact('members', 'departments'));
     }
 
     public function search(Request $request)
@@ -201,33 +169,10 @@ class MemberController extends Controller
         }
     }
 
-    public function filterByDepartment($departmentId)
+    public function filterByDepartment(Department $department)
     {
-        try {
-            $members = Member::where('department_id', $departmentId)
-                            ->with('department')
-                            ->get();
-            $departments = Department::all();
-            $selectedDepartment = Department::findOrFail($departmentId);
-
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'members' => $members,
-                    'selectedDepartment' => $selectedDepartment
-                ]);
-            }
-
-            return view('members.index', compact('members', 'departments', 'selectedDepartment'));
-        } catch (\Exception $e) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'เกิดข้อผิดพลาดในการกรองข้อมูล'
-                ], 500);
-            }
-            return redirect()->route('members.index')
-                    ->with('error', 'เกิดข้อผิดพลาดในการกรองข้อมูล');
-        }
+        $members = Member::with('department')->get(); // Get all for the "all" view
+        $departments = Department::all();
+        return view('members.index', compact('members', 'departments', 'department'));
     }
 } 

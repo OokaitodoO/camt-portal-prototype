@@ -22,15 +22,16 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/member', [MemberController::class, 'index'])->name('member');
     Route::get('/members', [MemberController::class, 'index'])->name('members.index');
-    Route::get('/members/filter/{departmentId}', [MemberController::class, 'filterByDepartment'])->name('members.filter');
+    Route::get('/members/filter/{department}', [MemberController::class, 'filterByDepartment'])
+        ->name('members.filter');
 
     Route::get('/members/create', [MemberController::class, 'create'])->name('members.create');
     Route::post('/members', [MemberController::class, 'store'])->name('members.store');
+    Route::get('/members/{member}', [MemberController::class, 'show'])->name('members.show');
     Route::get('/members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
     Route::put('/members/{member}', [MemberController::class, 'update'])->name('members.update');
     Route::delete('/members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
     Route::get('/members/search', [MemberController::class, 'search'])->name('members.search');
-    Route::get('/members/{member}', [MemberController::class, 'show'])->name('members.show');
 
     // // Add new route for individual member view
     // Route::get('/members/{id}/individual', [MemberController::class, 'individual'])->name('members.individual');
@@ -56,6 +57,21 @@ Route::middleware(['auth'])->group(function () {
         // Delete task
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     });
+
+    // Add these new routes
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    // Admin only routes
+});
+
+Route::middleware(['auth', 'role:admin,manager'])->group(function () {
+    // Admin and manager routes
 });
 
 // Get all departments (for dropdown)

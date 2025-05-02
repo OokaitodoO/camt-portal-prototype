@@ -494,63 +494,86 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Department filtering
-async function filterByDepartment(departmentId) {
-    try {
-        console.log('Filtering by department:', departmentId);
+// Add this new function to handle URL updates
+function updateURL(url) {
+    window.history.pushState({}, '', url);
+}
 
-        // Make an AJAX request to get filtered members
-        const response = await axios.get(`/members/filter/${departmentId}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+function filterByDepartment(departmentId) {
+    try {
+        // Reset display for all sections
+        document.querySelectorAll('.department-section').forEach(section => {
+            section.style.display = 'none';
         });
 
-        if (!response.data || !response.data.members) {
-            throw new Error('Invalid response data');
-        }
-
-        // Update the members list
-        const memberCardsContainer = document.getElementById('memberCardsContainer');
-        if (!memberCardsContainer) {
-            throw new Error('Member cards container not found');
-        }
-
-        // Clear existing members
-        memberCardsContainer.innerHTML = '';
-
-        // Add filtered members
-        if (response.data.members.length > 0) {
-            response.data.members.forEach(member => {
-                const memberCard = createMemberCard(member);
-                memberCardsContainer.appendChild(memberCard);
-            });
+        // Show appropriate section
+        if (departmentId === 'all') {
+            // Show the "all" section that contains all departments
+            const allSection = document.querySelector('.department-section[data-department="all"]');
+            if (allSection) {
+                allSection.style.display = 'block';
+            }
         } else {
-            memberCardsContainer.innerHTML = `
-                <div class="no-members-message">
-                    <p class="sarabun-20">ไม่พบบุคลากรในหน่วยงานนี้</p>
-                </div>
-            `;
+            // For specific department, show either the filtered section or the "all" section's relevant part
+            const departmentSection = document.querySelector(`.department-section[data-department="${departmentId}"]`);
+            if (departmentSection) {
+                departmentSection.style.display = 'block';
+            } else {
+                // If specific section not found, show relevant part from "all" section
+                const allSection = document.querySelector('.department-section[data-department="all"]');
+                if (allSection) {
+                    allSection.style.display = 'block';
+                    // Hide irrelevant department sections within "all"
+                    allSection.querySelectorAll('.cards-member').forEach(cardSection => {
+                        const cards = cardSection.querySelectorAll('.card-wrapper');
+                        let hasMatchingCards = false;
+                        cards.forEach(card => {
+                            if (card.getAttribute('data-department-id') == departmentId) {
+                                hasMatchingCards = true;
+                            }
+                        });
+                        if (!hasMatchingCards) {
+                            cardSection.closest('div').style.display = 'none';
+                        }
+                    });
+                }
+            }
         }
 
-        // Update department filter dropdown if it exists
-        const departmentSelect = document.querySelector('select[name="department_filter"]');
-        if (departmentSelect) {
-            departmentSelect.value = departmentId;
+        // Update active state of side navigation buttons
+        document.querySelectorAll('.btn-side-nav').forEach(btn => {
+            btn.classList.remove('active', 'btn-side-nav-active');
+        });
+
+        const activeBtn = document.querySelector(`.btn-side-nav[onclick*="filterByDepartment(${departmentId === 'all' ? "'all'" : departmentId})"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'btn-side-nav-active');
+        }
+
+        // Update member count
+        const visibleMembers = document.querySelectorAll('.department-section:not([style*="display: none"]) .card-wrapper:not([style*="display: none"])').length;
+        const memberCount = document.querySelector('.member-count p');
+        if (memberCount) {
+            memberCount.textContent = visibleMembers;
         }
 
     } catch (error) {
         console.error('Error filtering members:', error);
-        
-        // If it's a navigation error (from department card click), redirect
-        if (error.response && error.response.status === 404) {
-            window.location.href = `/members/filter/${departmentId}`;
-            return;
-        }
-        
-        alert('เกิดข้อผิดพลาดในการกรองข้อมูล');
     }
 }
+
+// Function to initialize filtering if URL contains department ID
+function initializeFiltering() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const departmentId = window.location.pathname.split('/').pop();
+    
+    if (departmentId && !isNaN(departmentId)) {
+        filterByDepartment(parseInt(departmentId));
+    }
+}
+
+// Run initialization on page load
+document.addEventListener('DOMContentLoaded', initializeFiltering);
 
 // Helper function to create member card HTML
 function createMemberCard(member) {
@@ -625,4 +648,5 @@ window.deleteMember = deleteMember;
 window.updateMember = updateMember;
 window.previewImage = previewImage;
 window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
+window.updateURL = updateURL;
 

@@ -15,12 +15,22 @@
     <header>
         <div class="role-container">
             <ul>
-                <li><a href="" class="btn-status btn-text sarabun-20">ตำแหน่ง</a></li>
+                <li class="btn-status btn-text sarabun-20">
+                    @php
+                        $roleLabels = [
+                            'admin' => 'ผู้ดูแลระบบ',
+                            'manager' => 'ผู้บริหาร',
+                            'headstaff' => 'หัวหน้างาน',
+                            'staff' => 'บุคลากร'
+                        ];
+                    @endphp
+                    {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                </li>
             </ul>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
-                <img src="/Image/CamtLogo.png" alt="">
+                <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
                     <li><a href="{{route('department')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
