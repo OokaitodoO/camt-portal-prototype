@@ -23,6 +23,7 @@ class Department extends Model
      */
     protected $fillable = [
         'name',
+        'description',
         'icon_path'
     ];
 
@@ -35,4 +36,10 @@ class Department extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-} 
+
+    // Add relationship with users
+    public function users()
+    {
+        return $this->hasMany(User::class, 'department_name', 'name');
+    }
+}

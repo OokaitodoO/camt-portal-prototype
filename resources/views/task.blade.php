@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ asset('css/pages/task.css') }}">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="body-bg">
     <!-- Header -->
@@ -23,7 +24,7 @@
             <div class="nav-bar-action-container">
                 <img src="https://placehold.co/200x50" alt="">
                 <ul class="nav-action">
-                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{ route('department') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
@@ -48,15 +49,14 @@
         <div class="side-nav-container slide-right">
             <div class="side-nav">
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
-                <!-- button --> 
-                @for($i = 0; $i < 5; $i++)
-                <div class="btn-side-nav">
-                    <img src="https://placehold.co/25" class="nav-logo-img" alt="logo">
-                    <div class="btn-side-nav-text sarabun-18">
-                        หน่วยงาน
+                @foreach($departments as $department)
+                    <div class="btn-side-nav" onclick="filterTasksByDepartment({{ $department->id }})">
+                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">
+                            {{ $department->name }}
+                        </div>
                     </div>
-                </div>
-                @endfor               
+                @endforeach
             </div> 
         </div>
 
@@ -64,129 +64,126 @@
         <div class="content">
             <div class="task-remain slide-in">
                 <h3 class="sarabun-20">จำนวนภาระงาน</h3>
-                <p class="sarabun-20">XX</p>
+                <p class="sarabun-20">{{ $tasks->count() }}</p>
             </div>
 
             <!-- task table -->
-            @for($x = 0; $x < 3 ; $x++)
             <div class="task-department">
-                <h1 class="page-title slide-in sarabun-36">หน่วยงาน</h1>
+                <h1 class="page-title slide-in sarabun-36">{{ $selectedDepartment->name ?? 'ทั้งหมด' }}</h1>
                 <table class="fade-in">
                     <tr class="table-title sarabun-16">
                         <th>ภาระงาน</th>
                         <th>หน่วยงาน</th>
                         <th>ผู้รับผิดชอบ</th>
                         <th>มอบหมายโดย</th>
-                        <th>วันครบกำหนด</th>
+                        <th onclick="sortByDeadline()" style="cursor: pointer">
+                            วันครบกำหนด 
+                            <i class="fas fa-sort"></i>
+                        </th>
                         <th>แก้ไข</th>
                     </tr>
-                    @for($i = 0; $i < 5 ; $i++)
-                    <tr class="table-task">
-                        <td class="border-top sarabun-16">ภาระงาน</td>
-                        <td class="border-top sarabun-16">ชื่อหน่วยงาน</td>
-                        <td class="border-top sarabun-16">ชื่อบุคลากร</td>
-                        <td class="border-top sarabun-16">ชื่อบุคลากร</td>
-                        <td class="border-top sarabun-16">วันครบกำหนด</td>
-                        <td class="border-top" onclick="openEditPopup()"> <i class="fas fa-gear btn-edit"></i></td>
-                    </tr>
-                    @endfor
+                    <tbody id="taskTableBody">
+                        @foreach($tasks->sortBy('deadline') as $task)
+                            <tr class="table-task">
+                                <td class="border-top sarabun-16">{{ $task->title }}</td>
+                                <td class="border-top sarabun-16">{{ $task->department->name }}</td>
+                                <td class="border-top sarabun-16">{{ optional($task->assignedTo)->first_name ?? '-' }}</td>
+                                <td class="border-top sarabun-16">{{ optional($task->assignedBy)->first_name ?? '-' }}</td>
+                                <td class="border-top sarabun-16">
+                                    @if($task->deadline)
+                                        {{ \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="border-top" onclick="openEditPopup({{ $task->id }})">
+                                    <i class="fas fa-gear btn-edit"></i>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
                 </table>
             </div>
-            @endfor
         </div>
 
         <!-- popup create new task -->
         <div id="popupCreate" class="popup-container">
             <div class="create-popup-department">
                 <div class="popup-content">
-                    <div class="popup-header">
-                        <div class="btn-close close-popup" onclick="closeCreatePopup()"> <!-- close button -->
-                            <   
+                    <form id="createTaskForm">
+                        <div class="popup-header">
+                            <div class="btn-close close-popup" onclick="closeCreatePopup()">
+                                <   
+                            </div>
+                            <div class="popup-name">
+                                <h1 class="page-title sarabun-36">เพิ่มภาระงาน</h1>
+                            </div>
                         </div>
-                        <div class="popup-name">
-                            <h1 class="page-title sarabun-36">เพิ่มภาระงาน</h1>
+                        <div class="popup-image">
+                            <img src="https://placehold.co/128" alt="" class="card-logo-img" id="taskLogoPreview">
+                            <input type="file" name="logo" id="taskLogo" accept="image/*" style="display: none;">
+                            <label for="taskLogo" class="btn-upload">อัพโหลดรูปภาพ</label>
                         </div>
-                    </div>
-                    <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
-                    </div>
-                    <div class="popup-input-container">
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">ชื่อภาระงาน</h2>
-                            <input type="text" placeholder="ภาระงาน..." class="input-text sarabun-16">
-                        </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">รายละเอียด</h2>
-                            <input type="text" placeholder="รายละเอียด..." class="input-text sarabun-16">
-                        </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">หน่วยงาน</h2>
-                            <div class="dropdown">
-                                <div class="dropdown-btn" onclick=toggleDropdownDepartment('dropdownMenuDepartmentCreate')>
-                                    <span class="selected-text sarabun-16">เลือกหน่วยงาน</span>
-                                    <button>▼</button>
+                        <div class="popup-input-container">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ชื่อภาระงาน</h2>
+                                <input type="text" name="title" placeholder="ภาระงาน..." class="input-text sarabun-16" required>
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">รายละเอียด</h2>
+                                <input type="text" name="description" placeholder="รายละเอียด..." class="input-text sarabun-16">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">หน่วยงาน</h2>
+                                <div class="dropdown">
+                                    <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentCreate')">
+                                        <span class="selected-text" data-department-id="">เลือกหน่วยงาน</span>
+                                        <button type="button">▼</button>
+                                    </div>
+                                    <div class="dropdown-content sarabun-16" id="dropdownMenuDepartmentCreate">
+                                        <!-- Departments will be loaded here -->
+                                    </div>
                                 </div>
-                                <div class="dropdown-content sarabun-16" id="dropdownMenuDepartmentCreate">
-                                    <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 1</a>
-                                    <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 2</a>
-                                    <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 3</a>
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ลิ้งก์</h2>
+                                <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
+                                <div class="dropdown">
+                                    <div class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberCreate')">
+                                        <span class="selected-text" data-member-id="">เลือกบุคลากร</span>
+                                        <button type="button">▼</button>
+                                    </div>
+                                    <div class="dropdown-content sarabun-16" id="dropdownMenuMemberCreate">
+                                        <!-- Members will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <div class="date-picker">
+                                    <h2 class="sarabun-16">วันครบกำหนด</h2>
+                                    <input type="date" name="deadline" required>
                                 </div>
                             </div>
                         </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">ลิ้งก์</h2>
-                            <input type="text" placeholder="ลิ้งก์..." class="input-text sarabun-16">
+                        <hr class="divider">
+                        <div class="popup-sub-task-wrapper">
+                            <!-- Subtasks will be added here -->
                         </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                            <div class="dropdown">
-                                <div class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberCreate')">
-                                    <span class="selected-text sarabun-16">เลือกบุคลากร</span>
-                                    <button>▼</button>
-                                </div>
-                                <div class="dropdown-content sarabun-16" id="dropdownMenuMemberCreate">
-                                    <a href="#" onclick="selectMember(this, 'dropdownMenuMemberCreate')">บุคลากร 1</a>
-                                    <a href="#" onclick="selectMember(this, 'dropdownMenuMemberCreate')">บุคลากร 2</a>
-                                    <a href="#" onclick="selectMember(this, 'dropdownMenuMemberCreate')">บุคลากร 3</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="popup-input-wrapper">
-                            <div class="date-picker">
-                                <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                <input type="date" id="deadline" name="deadline">
-                            </div>
-                        </div>
-                    </div>
-                    <hr class="divider">
-                    <div class="popup-sub-task-wrapper">
-                        <div class="popup-sub-task">
-                            <div class="popup-sub-task-detail">
-                                <div class="popup-input-wrapper">
-                                    <h2 class="sarabun-16">ภาระงานย่อย 1</h2>
-                                    <input type="text" placeholder="ภาระงาน..." class="input-text sarabun-16">
-                                </div>
-                                <div class="popup-input-wrapper">
-                                    <h2 class="sarabun-16">ลิ้งก์</h2>
-                                    <input type="text" placeholder="ลิ้งก์..." class="input-text sarabun-16">
-                                </div>
-                            </div>
-                            <div class="popup-sub-task-delete btn-pointer" onclick="deleteSubTask()">
-                                <i class="fas fa-trash-can"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="add-subtask-btn btn-pointer" onclick="addNewSubTask()">
+                        <div class="add-subtask-btn btn-pointer" onclick="addNewSubTask()">
                             <i class="fas fa-plus"></i>
                         </div>
-                    <div class="popup-btn-wrapper">
-                        <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
-                            <p>ยกเลิก</p>
+                        <div class="popup-btn-wrapper">
+                            <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
+                                <p>ยกเลิก</p>
+                            </div>
+                            <div class="btn btn-confirm sarabun-20" onclick="createNewTask()">
+                                <p>ตกลง</p>
+                            </div>
                         </div>
-                        <div class="btn btn-confirm sarabun-20" id="confirmButton" onclick="createNewTask()">
-                            <p>ตกลง</p>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -359,6 +356,7 @@
 
         <!-- script -->
         @vite('resources/js/app.js')
+        @vite('resources/js/task.js')
         
     </section>
 </body>

@@ -4,66 +4,99 @@ function openCreatePopup() {
     console.log("Opening...createPopup");
     const popup = document.getElementById('popupCreate');
     const overlay = document.getElementById('overlay');
-    resetDropdownSelection(popup);
-    resetTextInput(popup);
-    toggleScrollbar(popup);
-    popup.classList.add('active');
-    overlay.classList.add('active');
+    if (popup) {
+        resetForm(popup);
+        toggleScrollbar(popup);
+        popup.classList.add('active');
+        overlay.classList.add('active');
+    } else {
+        console.error('Create popup not found');
+    }
 }
 
 function closeCreatePopup() {
     console.log("Closing...createPopup");
     const popup = document.getElementById('popupCreate')
     const overlay = document.getElementById('overlay');
-    toggleScrollbar(popup);
-    popup.classList.remove('active');
-    overlay.classList.remove('active');
+    if (popup) {
+        toggleScrollbar(popup);
+        popup.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+function resetForm(popup) {
+    // Reset text inputs
+    const textInputs = popup.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]');
+    if (textInputs) {
+        textInputs.forEach(input => {
+            input.value = '';
+        });
+    }
+
+    // Reset select elements
+    const selects = popup.querySelectorAll('select');
+    if (selects) {
+        selects.forEach(select => {
+            select.selectedIndex = 0;
+        });
+    }
+
+    // Reset file input and preview image
+    const fileInput = popup.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    const previewImage = popup.querySelector('#createPreviewImage');
+    if (previewImage) {
+        previewImage.src = 'https://placehold.co/128';
+    }
 }
 
 function openEditPopup() {
     console.log("Opening...editPopup");
     const popup = document.getElementById('popupEdit');
     const overlay = document.getElementById('overlay');
-    toggleScrollbar(popup);
-    popup.classList.add('active');
-    overlay.classList.add('active');
+    if (popup) {
+        toggleScrollbar(popup);
+        popup.classList.add('active');
+        overlay.classList.add('active');
+    }
 }
 
 function closeEditPopup() {
     console.log("Closing...editPopup");
     const popup = document.getElementById('popupEdit');
     const overlay = document.getElementById('overlay');
-    popup.classList.remove('active');
-    overlay.classList.remove('active');
+    if (popup) {
+        popup.classList.remove('active');
+        overlay.classList.remove('active');
+    }
 }
 
 function openDeleteConfirmationPopup() {
     const deletePopup = document.getElementById('deleteConfirmationPopup');
     const overlay = document.getElementById('overlay');
-    closeEditPopup();
-    deletePopup.classList.add('active');
-    overlay.classList.add('active');
-}
-
-function deleteDepartment() {
-    const deletePopup = document.getElementById('deleteConfirmationPopup');
-    const overlay = document.getElementById('overlay');
-    closeDeleteConfirmation();
-    deletePopup.classList.remove('active');
-    overlay.classList.remove('active');
+    if (deletePopup) {
+        closeEditPopup();
+        deletePopup.classList.add('active');
+        overlay.classList.add('active');
+    }
 }
 
 function closeDeleteConfirmation() {
     const deletePopup = document.getElementById('deleteConfirmationPopup'); 
     const overlay = document.getElementById('overlay');   
-    deletePopup.classList.remove('active');
-    overlay.classList.remove('active');
+    if (deletePopup) {
+        deletePopup.classList.remove('active');
+        overlay.classList.remove('active');
+    }
 }
 
-function createNewDepartment() {
-    console.log("Created new department");
-    closeCreatePopup();
-}
+// function createNewDepartment() {
+//     console.log("Created new department");
+//     closeCreatePopup();
+// }
 
 function confirmEditDepartment() {
     console.log("department edited");
@@ -100,44 +133,31 @@ function deleteTask() {
     closeDeleteConfirmation();
 }
 
-function resetTextInput(popup) {
-    // Clear all input fields in the popup
-    const inputs = popup.querySelectorAll('input[type="text"]');
-    if(inputs) {
-        console.log('reset text input');
-        inputs.forEach(input => {
-            input.value = '';
-        });
-    }
-}
-
-function resetDropdownSelection(popup) {
-    // Reset dropdown selections if any
-    const dropdowns = popup.querySelectorAll('.selected-text');
-    if(dropdowns){
-        console.log('reset dropdown selection');
-        dropdowns.forEach(dropdown => {
-            dropdown.textContent = 'เลือกหน่วยงาน';
-        });
-    }
-}
-
-
-window.openCreatePopup = openCreatePopup;  
+// Make functions available globally
+window.openCreatePopup = openCreatePopup;
 window.closeCreatePopup = closeCreatePopup;
-window.createNewDepartment = createNewDepartment;
-window.confirmEditDepartment = confirmEditDepartment;
-window.deleteDepartment = deleteDepartment;
-window.createNewMember = createNewMember;
-window.confirmEditMember = confirmEditMember;
-window.deleteMember = deleteMember;
-window.createNewTask = createNewTask;  
+// window.createNewDepartment = createNewDepartment;
+// window.confirmEditDepartment = confirmEditDepartment;
+// window.deleteDepartment = deleteDepartment;
+// window.createNewMember = createNewMember;
+// window.confirmEditMember = confirmEditMember;
+// window.deleteMember = deleteMember;
+// window.createNewTask = createNewTask;  
 window.openEditPopup = openEditPopup;
 window.closeEditPopup = closeEditPopup;
-window.confirmEditDepartment = confirmEditDepartment;  
-window.confirmEditTask = confirmEditTask;
-window.deleteTask = deleteTask;
+// window.confirmEditDepartment = confirmEditDepartment;  
+// window.confirmEditTask = confirmEditTask;
+// window.deleteTask = deleteTask;
 window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 window.closeDeleteConfirmation = closeDeleteConfirmation;
 
+// Export functions
+export {
+    openCreatePopup,
+    closeCreatePopup,
+    openEditPopup,
+    closeEditPopup,
+    openDeleteConfirmationPopup,
+    closeDeleteConfirmation
+}
 

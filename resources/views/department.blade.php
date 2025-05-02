@@ -4,25 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน่วยงาน</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/department.css') }}">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="body-bg">
     <!-- Header -->
     <header>
         <div class="role-container">
             <ul>
-                <li><a href="" class="btn-status btn-text sarabun-20">ตำแหน่ง</a></li>
+                <li class="btn-status btn-text sarabun-20" >ตำแหน่ง</li>
             </ul>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
             <img src="https://placehold.co/200x50" alt="">
                 <ul class="nav-action">
-                    <li><a href="{{route('departments.index')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{route('department')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
@@ -42,103 +44,97 @@
     </header>
 
     <!-- department card -->
-    <section class = "content-container">
-        @for($i = 0; $i < 10; $i++)
-            <div class = "card-container fade-in">
-                <div class="card-edit" onclick="openEditPopup()">
-                    <i class="fas fa-edit"></i>
-                </div>
-                <div class = "card-logo">
-                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
-                </div>    
-                <hr class="divider">
-                <div class = "card-name sarabun-20">
-                    <h3>งานบริหารทั่วไป</h3>
-                </div>
-            </div>
-        @endfor
+    <section class="content-container">        
+        @foreach($departments as $department)
+            @include('components.department-card', ['department' => $department])
+        @endforeach
     </section>
 
     <!-- popup create new department-->
     <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <div class="popup-header">
-                    <div class="btn-close close-popup" onclick="closeCreatePopup()"> <!-- close button -->
-                        <   
+                <form id="createDepartmentForm">
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeCreatePopup()">
+                            <   
+                        </div>
+                        <div class="popup-name">
+                            <h1 class="page-title sarabun-36">เพิ่มหน่วยงาน</h1>
+                        </div>
                     </div>
-                    <div class="popup-name">
-                        <h1 class="page-title sarabun-36">เพิ่มหน่วยงาน</h1>
+                    <div class="popup-image">
+                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
                     </div>
-                </div>
-                <div class="popup-image">
-                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
-                </div>
-                <div class="popup-input-container sarabun-24">
-                    <h2>ชื่อหน่วยงาน</h2>
-                    <input type="text" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
-                </div>
-            </div>
-            <div class="popup-btn-wrapper">
-                <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
-                    <p>ยกเลิก</p>
-                </div>
-                <div class="btn btn-confirm sarabun-20" id="confirmButton" onclick="createNewDepartment()">
-                    <p>ตกลง</p>
-                </div>
+                    <div class="popup-input-container sarabun-24">
+                        <h2>ชื่อหน่วยงาน</h2>
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
+                    </div>
+                    <div class="popup-btn-wrapper">
+                        <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
+                            <p>ยกเลิก</p>
+                        </div>
+                        <button type="submit" class="btn btn-confirm sarabun-20">
+                            <p>ตกลง</p>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>  
 
     <!-- popup edit department -->
     <div id="popupEdit" class="popup-container">
-        <div class="edit-popup-department">
+        <div class="create-popup-department">
             <div class="popup-content">
-                <div class="popup-header">
-                    <div class="btn-close close-popup" onclick="closeEditPopup()">
-                        <
+                <form id="editDepartmentForm">
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeEditPopup()">
+                            <
+                        </div>
+                        <div class="popup-name">
+                            <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
+                        </div>
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">
+                            <i class="fas fa-trash"></i>
+                        </div>
                     </div>
-                    <div class="popup-name">
-                        <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
+                    <input type="hidden" name="id" id="editDepartmentId">
+                    <div class="popup-image">
+                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
                     </div>
-                    <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">
-                        <i class="fas fa-trash"></i>
+                    <div class="popup-input-container sarabun-24">
+                        <h2>ชื่อหน่วยงาน</h2>
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
                     </div>
-                </div>
-                <div class="popup-image">
-                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
-                </div>
-                <div class="popup-input-container sarabun-24">
-                    <h2>ชื่อหน่วยงาน</h2>
-                    <input type="text" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
-                </div>
-            </div>
-            <div class="popup-btn-wrapper">
-                <div class="btn btn-cancel close-popup sarabun-20" onclick="closeEditPopup()">
-                    <p>ยกเลิก</p>
-                </div>
-                <div class="btn btn-confirm sarabun-20" id="confirmButton" onclick="confirmEditDepartment()">
-                    <p>ตกลง</p>
-                </div>
+                    <div class="popup-btn-wrapper">
+                        <div class="btn btn-cancel close-popup sarabun-20" onclick="closeEditPopup()">
+                            <p>ยกเลิก</p>
+                        </div>
+                        <button type="submit" class="btn btn-confirm sarabun-20">
+                            <p>ตกลง</p>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Delete Confirmation Popup -->
     <div id="deleteConfirmationPopup" class="popup-container">
-        <div class="confirmation-popup scale-in">
+        <div class="confirmation-popup">
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
                         <h1 class="page-title sarabun-36">ต้องการลบหน่วยงานนี้หรือไม่?</h1>
                     </div>
                 </div>
-                <div class = "card-logo">
+                <div class="card-logo">
                     <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
                 </div>  
                 <div class="divider"></div>
-                <div class = "card-name sarabun-24">
-                    <h3>งานบริหารทั่วไป</h3>
+                <div class="card-name sarabun-24">
+                    <h3><!-- Department name will be inserted here --></h3>
                 </div>
                 <div class="popup-btn-wrapper">
                     <div class="btn btn-cancel sarabun-20" onclick="closeDeleteConfirmation()">
@@ -156,7 +152,7 @@
 
     <!-- script -->
     @vite('resources/js/app.js')
-
+    @vite('resources/js/department.js')
 
 </body>
 

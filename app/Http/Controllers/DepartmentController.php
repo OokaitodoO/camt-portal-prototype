@@ -4,78 +4,140 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentController extends Controller
 {
     public function index()
     {
-        // $departments = Department::all(); // Get all departments from database
-        // return view('department', compact('departments'));
-        return view('department');
+        $departments = Department::all();
+        return view('department', compact('departments'));
     }
 
-    public function update(Request $request)
+    public function update(Request $request, $name)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'old_name' => 'required|string|max:255',
-            'icon' => 'nullable|image|max:2048'
+        Log::info('Update department request:', [
+            'old_name' => $name,
+            'new_name' => $request->input('name'),
+            'request_data' => $request->all()
         ]);
 
-        $department = Department::where('name', $request->old_name)->firstOrFail();
-        $department->name = $request->name;
-
-        if ($request->hasFile('icon')) {
-            // Delete old icon if exists
-            if ($department->icon_path) {
-                Storage::disk('public')->delete($department->icon_path);
-            }
+        try {
+            DB::beginTransaction();
             
-            $path = $request->file('icon')->store('department-icons', 'public');
-            $department->icon_path = $path;
+            // Find the department
+            $department = Department::where('name', $name)->first();
+            
+            if (!$department) {
+                Log::error('Department not found:', ['name' => $name]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Department not found'
+                ], 404);
+            }
+
+            // Validate request
+            $validated = $request->validate([
+                'name' => 'required|unique:departments,name,' . $department->id
+            ]);
+
+            Log::info('Updating department:', [
+                'department_id' => $department->id,
+                'old_name' => $name,
+                'new_name' => $validated['name']
+            ]);
+
+            // Update department first
+            $department->name = $validated['name'];
+            $department->save();
+
+            // The foreign key constraint with CASCADE will automatically update the users table
+
+            DB::commit();
+
+            Log::info('Department updated successfully');
+
+            return response()->json([
+                'success' => true,
+                'department' => $department
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Department update error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update department: ' . $e->getMessage()
+            ], 500);
         }
-
-        $department->save();
-
-        return response()->json([
-            'success' => true,
-            'icon_path' => $department->icon_path ? asset('storage/' . $department->icon_path) : null
-        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'icon' => 'nullable|image|max:2048' // 2MB max
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|unique:departments,name'
+            ]);
 
-        $department = new Department();
-        $department->name = $request->name;
+            $department = Department::create($validated);
 
-        if ($request->hasFile('icon')) {
-            $path = $request->file('icon')->store('department-icons', 'public');
-            $department->icon_path = $path;
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'department' => $department,
+                    'html' => view('components.department-card', compact('department'))->render()
+                ]);
+            }
+
+            return redirect()->route('departments.index')
+                ->with('success', 'Department created successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Department creation error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create department',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $department->save();
-
-        return response()->json([
-            'success' => true,
-            'icon_path' => $department->icon_path ? asset('storage/' . $department->icon_path) : null
-        ]);
     }
 
-    public function destroy($name)
+    public function destroy($id)
     {
         try {
-            $department = Department::where('name', $name)->firstOrFail();
+            Log::info('Attempting to delete department with ID: ' . $id);
+            
+            $department = Department::findOrFail($id);
+            
+            // Check if department has any members
+            if ($department->members()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่สามารถลบหน่วยงานได้ เนื่องจากมีบุคลากรในหน่วยงานนี้'
+                ], 422);
+            }
+
             $department->delete();
-            return response()->json(['success' => true, 'message' => 'Department deleted successfully']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ลบหน่วยงานสำเร็จ'
+            ]);
+
         } catch (\Exception $e) {
-            \Log::error('Error deleting department: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to delete department'], 500);
+            Log::error('Error deleting department: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการลบหน่วยงาน',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

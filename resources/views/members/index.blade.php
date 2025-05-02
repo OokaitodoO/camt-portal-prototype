@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เพิ่มบุคลากร</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/member.css') }}">
@@ -21,7 +22,7 @@
             <div class="nav-bar-action-container">
             <img src="https://placehold.co/200x50" alt="">
                 <ul class="nav-action">
-                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{route('department')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
@@ -42,78 +43,59 @@
 
     <!-- Content -->
     <section class="content-container">
-
         <!-- side nav -->
         <div class="side-nav-container slide-right">
             <div class="side-nav">
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
-                <!-- button --> 
-                @for($i = 0; $i < 5; $i++)
-                <div class="btn-side-nav">
-                    <img src="https://placehold.co/25" class="nav-logo-img" alt="logo">
-                    <div class="btn-side-nav-text sarabun-18">หน่วยงาน</div>
+                @foreach($departments as $department)
+                <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }})">
+                    <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
+                    <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
                 </div>
-                @endfor               
+                @endforeach               
             </div> 
         </div>
 
-
+        <!-- Content area -->
         <div class="content">
             <div class="department">
-                <h1 class="page-title slide-in sarabun-36">หน่วยงาน</h1>
+                @if(count($members) > 0)
+                    <h1 class="page-title slide-in sarabun-36">{{ $members->first()->department->name }}</h1>                
+                @endif
                 
-                <!-- leader -->
-                <div class="card-leader">
-                    <div class="card-container fade-in">
-                        <!-- Add edit button -->
-                        <div class="card-edit" onclick="openEditPopup()">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        
-                        <a href="{{ route('members.show', 1) }}">
-                            <div class="card-logo">
-                                <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
-                            </div>
-                            <hr class="divider">
-                            <div class="card-container-info">
-                                <div class="card-name sarabun-20">
-                                    ชื่อ - นามสกุล
-                                </div>
-                                <div class="card-description sarabun-16">
-                                    <p><b>ตำแหน่งงาน</b> ชื่อตำแหน่งงาน</p>
-                                    <p><b>หน่วยงาน</b> ชื่อหน่วยงาน</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- members -->
-                <div class="cards-member">
+                <!-- Cards container -->
+                <div class="cards-member" id="memberCardsContainer">
+                    @foreach($members as $member)
                     <div class="card-wrapper">
                         <div class="card-container fade-in">
-                            <!-- Add edit button -->
-                            <div class="card-edit" onclick="openEditPopup()">
+                            <div class="card-edit" onclick="openEditPopup(this)" 
+                                data-member-id="{{ $member->id }}"
+                                data-first-name="{{ $member->first_name }}"
+                                data-last-name="{{ $member->last_name }}"
+                                data-position="{{ $member->position }}"
+                                data-department-id="{{ $member->department_id }}">
                                 <i class="fas fa-edit"></i>
                             </div>
                             
-                            <a href="{{ route('members.show', 1) }}">
+                            <a href="{{ route('members.show', $member->id) }}">
                                 <div class="card-logo">
-                                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                                         class="card-logo-img" alt="logo">
                                 </div>
                                 <hr class="divider">
                                 <div class="card-container-info">
                                     <div class="card-name sarabun-20">
-                                        ชื่อ - นามสกุล
+                                        {{ $member->first_name }} {{ $member->last_name }}
                                     </div>
                                     <div class="card-description sarabun-16">
-                                        <p><b>ตำแหน่งงาน</b> ชื่อตำแหน่งงาน</p>
-                                        <p><b>หน่วยงาน</b> ชื่อหน่วยงาน</p>
+                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
+                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
                                     </div>
                                 </div>
                             </a>
                         </div>
                     </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -123,87 +105,80 @@
     <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <div class="popup-header">
-                    <div class="btn-close close-popup" onclick="closeCreatePopup()"> <!-- close button -->
-                        <   
-                    </div>
-                    <div class="popup-name">
-                        <h1 class="page-title sarabun-36">เพิ่มบุคลากร</h1>
-                    </div>
-                </div>
-                <div class="popup-image">
-                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
-                </div>
-                <div class="popup-input-container">
-                    <div class="popup-member-name">
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">ชื่อ</h2>
-                            <input type="text" placeholder="ชื่อ..." class="input-text sarabun-16">
+                <form id="createMemberForm" onsubmit="return createMember(event)">
+                    @csrf
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeCreatePopup()">
+                            <   
                         </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">นามสกุล</h2>
-                            <input type="text" placeholder="นามสกุล..." class="input-text sarabun-16">
+                        <div class="popup-name">
+                            <h1 class="page-title sarabun-36">เพิ่มบุคลากร</h1>
                         </div>
                     </div>
-                    <div class="popup-input-wrapper">
-                        <h2 class="sarabun-16">ตำแหน่ง</h2>
-                        <input type="text" placeholder="ตำแหน่ง..." class="input-text sarabun-16">
+                    <div class="popup-image">
+                        <img src="https://placehold.co/128" alt="" class="card-logo-img" id="previewImage">
+                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')">
                     </div>
-                    <div class="popup-input-wrapper">
-                        <h2 class="sarabun-16">หน่วยงาน</h2>
-                        <div class="dropdown">
-                            <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentCreate')">
-                                <span class="selected-text sarabun-16">เลือกหน่วยงาน</span>
-                                <button>▼</button>
+                    <div class="popup-input-container">
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ชื่อ</h2>
+                                <input type="text" name="first_name" placeholder="ชื่อ..." class="input-text sarabun-16" required>
                             </div>
-                            <div class="dropdown-content sarabun-16" id="dropdownMenuDepartmentCreate">
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 1</a>
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 2</a>
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentCreate')">หน่วยงาน 3</a>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">นามสกุล</h2>
+                                <input type="text" name="last_name" placeholder="นามสกุล..." class="input-text sarabun-16" required>
                             </div>
                         </div>
-                    </div>
-                    <div class="popup-member-name">
                         <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">หน่วยงานย่อย</h2>
-                            <input type="text" placeholder="หน่วยงาน..." class="input-text sarabun-16">
+                            <h2 class="sarabun-16">ตำแหน่ง</h2>
+                            <input type="text" name="position" placeholder="ตำแหน่ง..." class="input-text sarabun-16" required>
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">บทบาท</h2>
-                            <div class="dropdown">
-                                <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuRoleCreate')">
-                                    <span class="selected-text sarabun-16">เลือกบทบาท</span>
-                                    <button>▼</button>
-                                </div>
-                                <div class="dropdown-content sarabun-16" id="dropdownMenuRoleCreate">
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleCreate')">ผู้ดูแลระบบ</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleCreate')">ผู้บริหาร</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleCreate')">หัวหน้างาน</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleCreate')">บุคลากร</a>
-                                </div>
+                            <h2 class="sarabun-16">หน่วยงาน</h2>
+                            <select name="department_id" class="input-text sarabun-16" required>
+                                <option value="">เลือกหน่วยงาน</option>
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">หน่วยงานย่อย</h2>
+                                <input type="text" name="sub_department" placeholder="หน่วยงาน..." class="input-text sarabun-16">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">บทบาท</h2>
+                                <select name="role" class="input-text sarabun-16" required>
+                                    <option value="">เลือกบทบาท</option>
+                                    <option value="admin">ผู้ดูแลระบบ</option>
+                                    <option value="manager">ผู้บริหาร</option>
+                                    <option value="headstaff">หัวหน้างาน</option>
+                                    <option value="staff">บุคลากร</option>
+                                </select>
                             </div>
                         </div>
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">อีเมล</h2>
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
+                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                            </div>
+                        </div>
+                        <div class="popup-btn-wrapper">
+                            <button type="button" class="btn btn-cancel sarabun-20" onclick="closeCreatePopup()">
+                                ยกเลิก
+                            </button>
+                            <button type="submit" class="btn btn-confirm sarabun-20" onclick="createMember(event); closeCreatePopup()">
+                                ตกลง
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="popup-member-name">
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">อีเมล</h2>
-                            <input type="text" placeholder="อีเมล..." class="input-text sarabun-16">
-                        </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                            <input type="text" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
-                        </div>
-                    </div>
-                    <div class="popup-btn-wrapper">
-                        <div class="btn btn-cancel close-popup" onclick="closeCreatePopup()">
-                            <p class="sarabun-20">ยกเลิก</p>
-                        </div>
-                        <div class="btn btn-confirm" id="confirmButton" onclick="createNewMember()">
-                            <p class="sarabun-20">ตกลง</p>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -212,96 +187,91 @@
     <div id="popupEdit" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <div class="popup-header">
-                    <div class="btn-close close-popup" onclick="closeEditPopup()"> <!-- close button -->
-                        <   
-                    </div>
-                    <div class="popup-name">
-                        <h1 class="page-title">แก้ไขบุคลากร</h1>
-                    </div>
-                    <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">    
-                        <i class="fas fa-trash"></i>
-                    </div>
-                </div>
-                <div class="popup-image">
-                    <img src="https://placehold.co/128" alt="" class="card-logo-img">
-                </div>
-                <div class="popup-input-container">
-                    <div class="popup-member-name">
-                        <div class="popup-input-wrapper">
-                            <h2>ชื่อ</h2>
-                            <input type="text" placeholder="ชื่อ..." class="input-text">
+                <form id="editMemberForm" onsubmit="updateMember(event)">
+                    @csrf
+                    <input type="hidden" id="editMemberId" name="id">
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeEditPopup()">
+                            <   
                         </div>
-                        <div class="popup-input-wrapper">
-                            <h2>นามสกุล</h2>
-                            <input type="text" placeholder="นามสกุล..." class="input-text">
+                        <div class="popup-name">
+                            <h1 class="page-title sarabun-36">แก้ไขบุคลากร</h1>
+                        </div>
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">    
+                            <i class="fas fa-trash"></i>
                         </div>
                     </div>
-                    <div class="popup-input-wrapper">
-                        <h2>ตำแหน่ง</h2>
-                        <input type="text" placeholder="ตำแหน่ง..." class="input-text">
+                    <div class="popup-image">
+                        <img src="https://placehold.co/128" alt="" class="card-logo-img" id="previewImage">
+                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')">
                     </div>
-                    <div class="popup-input-wrapper">
-                        <h2>หน่วยงาน</h2>
-                        <div class="dropdown">
-                            <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
-                                <span class="selected-text">เลือกหน่วยงาน</span>
-                                <button>▼</button>
+                    <div class="popup-input-container">
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ชื่อ</h2>
+                                <input type="text" name="first_name" placeholder="ชื่อ..." class="input-text">
                             </div>
-                            <div class="dropdown-content" id="dropdownMenuDepartmentEdit">
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentEdit')">หน่วยงาน 1</a>
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentEdit')">หน่วยงาน 2</a>
-                                <a href="#" onclick="selectDepartment(this, 'dropdownMenuDepartmentEdit')">หน่วยงาน 3</a>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">นามสกุล</h2>
+                                <input type="text" name="last_name" placeholder="นามสกุล..." class="input-text">
                             </div>
                         </div>
-                    </div>
-                    <div class="popup-member-name">
                         <div class="popup-input-wrapper">
-                            <h2>หน่วยงานย่อย</h2>
-                            <input type="text" placeholder="หน่วยงาน..." class="input-text">
+                            <h2 class="sarabun-16">ตำแหน่ง</h2>
+                            <input type="text" name="position" placeholder="ตำแหน่ง..." class="input-text">
                         </div>
                         <div class="popup-input-wrapper">
-                            <h2>บทบาท</h2>
-                            <div class="dropdown">
-                                <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuRoleEdit')">
-                                    <span class="selected-text">เลือกบทบาท</span>
-                                    <button>▼</button>
-                                </div>
-                                <div class="dropdown-content" id="dropdownMenuRoleEdit">
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleEdit')">ผู้ดูแลระบบ</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleEdit')">ผู้บริหาร</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleEdit')">หัวหน้างาน</a>
-                                    <a href="#" onclick="selectRole(this, 'dropdownMenuRoleEdit')">บุคลากร</a>
-                                </div>
+                            <h2 class="sarabun-16">หน่วยงาน</h2>
+                            <select name="department_id" class="input-text">
+                                <option value="">เลือกหน่วยงาน</option>
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">หน่วยงานย่อย</h2>
+                                <input type="text" name="sub_department" placeholder="หน่วยงาน..." class="input-text">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">บทบาท</h2>
+                                <select name="role" class="input-text">
+                                    <option value="">เลือกบทบาท</option>
+                                    <option value="admin">ผู้ดูแลระบบ</option>
+                                    <option value="manager">ผู้บริหาร</option>
+                                    <option value="headstaff">หัวหน้างาน</option>
+                                    <option value="staff">บุคลากร</option>
+                                </select>
                             </div>
                         </div>
-                    </div>                    
-                    <div class="popup-member-name">
-                        <div class="popup-input-wrapper">
-                            <h2>อีเมล</h2>
-                            <input type="text" placeholder="อีเมล..." class="input-text">
+                        <div class="popup-member-name">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">อีเมล</h2>
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
+                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                            </div>
                         </div>
-                        <div class="popup-input-wrapper">
-                            <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                            <input type="text" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                        <div class="popup-btn-wrapper">
+                            <button type="button" class="btn btn-cancel sarabun-20" onclick="closeEditPopup()">
+                                ยกเลิก
+                            </button>
+                            <button type="submit" class="btn btn-confirm sarabun-20">
+                                ตกลง
+                            </button>
                         </div>
                     </div>
-                    <div class="popup-btn-wrapper">
-                        <div class="btn btn-cancel close-popup" onclick="closeEditPopup()">
-                            <p class="sarabun-20">ยกเลิก</p>
-                        </div>
-                        <div class="btn btn-confirm" id="confirmButton" onclick="closeEditPopup()">
-                            <p class="sarabun-20">ตกลง</p>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Delete Confirmation Popup -->
     <div id="deleteConfirmationPopup" class="popup-container">
-        <div class="confirmation-popup scale-in">
+        <div class="confirmation-popup">
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
@@ -312,8 +282,8 @@
                     <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
                 </div>  
                 <div class="divider"></div>
-                <div class = "card-name sarabun-36">
-                    <h2>ชื่อ - นามสกุล</h2>
+                <div class = "card-name">
+                    <h2 class="sarabun-36">ชื่อ - นามสกุล</h2>
                 </div>
                 <div class="popup-member-infoamation">
                     <div class="popup-member-infoamation-item">
@@ -362,5 +332,6 @@
 
     <!-- script -->
     @vite('resources/js/app.js')
+    @vite('resources/js/member.js')
 </body>
 </html> 

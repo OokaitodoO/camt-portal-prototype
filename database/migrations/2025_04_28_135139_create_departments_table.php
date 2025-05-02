@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
+            $table->string('description')->nullable();
             $table->string('icon_path')->nullable();
             $table->timestamps();
         });
@@ -20,4 +21,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('departments');
     }
-}; 
+};

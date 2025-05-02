@@ -14,13 +14,20 @@ class Member extends Model
         'last_name',
         'position',
         'department_id',
-        'profile_picture',
+        'sub_department',
+        'role',
+        'email',
         'phone',
-        'email'
+        'profile_picture'
     ];
 
     public function department()
     {
-        // return $this->belongsTo(Department::class);
+        return $this->belongsTo(Department::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
     }
 } 

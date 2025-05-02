@@ -18,13 +18,13 @@
                 <p>Please sign in to continue</p>
             </div>
             
-            <form method="GET" action="{{route('department')}}" class="login-form">
+            <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
                 <div class="form-group">
-                    <label for="username">
-                        <i class="fas fa-user"></i> Username
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email
                     </label>
-                    <input type="text" id="username" name="username" required autofocus>
+                    <input type="email" id="email" name="email" required autofocus>
                 </div>
                 
                 <div class="form-group">
@@ -47,6 +47,11 @@
             <div class="login-footer">
                 <a href="#" class="forgot-password">Forgot Password?</a>
                 <p>Don't have an account? <a href="#">Contact Administrator</a></p>
+                @if(session('error'))
+                    <div class="error-message" style="color: red; margin-top: 10px;">
+                        {{ session('error') }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
