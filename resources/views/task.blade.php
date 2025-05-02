@@ -22,7 +22,7 @@
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
-                <img src="https://placehold.co/200x50" alt="">
+                <img src="/Image/CamtLogo.png" alt="">
                 <ul class="nav-action">
                     <li><a href="{{ route('department') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
