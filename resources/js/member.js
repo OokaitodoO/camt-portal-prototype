@@ -33,9 +33,9 @@ async function openEditPopup(element) {
             throw new Error('Member ID not found');
         }
         
-        // Fetch member data from database
-        const response = await axios.get(`/members/${memberId}`);
-        if (!response.data || !response.data.member) {
+        // Fetch member data from database using the new endpoint
+        const response = await axios.get(`/members/${memberId}/data`);
+        if (!response.data || !response.data.success) {
             throw new Error('Failed to fetch member data');
         }
 
@@ -81,8 +81,10 @@ async function openEditPopup(element) {
         }
 
         // Show the popup
-        document.getElementById('popupEdit').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
+        const popup = document.getElementById('popupEdit');
+        if (popup) {
+            popup.classList.add('active');
+        }
 
     } catch (error) {
         console.error('Error in openEditPopup:', error);
@@ -140,12 +142,11 @@ async function createMember() {
         return;
     }
 
-    // Get buttons using the correct class names from your HTML
-    const submitBtn = document.querySelector('.popup-btn-wrapper .btn-confirm');
-    const cancelBtn = document.querySelector('.popup-btn-wrapper .btn-cancel');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const cancelBtn = form.querySelector('button[type="button"]');
     
     if (!submitBtn || !cancelBtn) {
-        console.error('Buttons not found', { submitBtn, cancelBtn });
+        console.error('Buttons not found');
         return;
     }
 
@@ -157,6 +158,12 @@ async function createMember() {
 
         const formData = new FormData(form);
 
+        // Log form data for debugging
+        console.log('Sending form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
         const response = await axios.post('/members', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -164,35 +171,52 @@ async function createMember() {
             }
         });
 
+        console.log('Server response:', response.data);
+
         if (response.data.success) {
             // Show success state
             submitBtn.innerHTML = '<i class="fas fa-check"></i> สำเร็จ';
             submitBtn.style.backgroundColor = '#28a745';
 
-            // Refresh the page after successful creation
-            window.location.reload();
+            // Close popup and reset form
+            setTimeout(() => {
+                closeCreatePopup();
+                form.reset();
+                // Refresh the page or update the UI
+                window.location.reload();
+            }, 1000);
         } else {
             throw new Error(response.data.message || 'Failed to create member');
         }
 
     } catch (error) {
         console.error('Error creating member:', error);
+        console.error('Error details:', error.response?.data);
         
-        if (submitBtn) {
-            // Show error state
-            submitBtn.innerHTML = '<i class="fas fa-times"></i> ผิดพลาด';
-            submitBtn.style.backgroundColor = '#dc3545';
-
-            // Reset button state after delay
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                if (cancelBtn) cancelBtn.disabled = false;
-                submitBtn.innerHTML = 'ตกลง';
-                submitBtn.style.backgroundColor = '#F48E2E';
-            }, 1500);
+        let errorMessage = 'เกิดข้อผิดพลาดในการสร้างบุคลากร';
+        
+        if (error.response?.data?.errors) {
+            // Handle validation errors
+            errorMessage = Object.values(error.response.data.errors)
+                .flat()
+                .join('\n');
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
         }
 
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างบุคลากร');
+        // Show error state
+        submitBtn.innerHTML = '<i class="fas fa-times"></i> ผิดพลาด';
+        submitBtn.style.backgroundColor = '#dc3545';
+
+        // Reset button state after delay
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            cancelBtn.disabled = false;
+            submitBtn.innerHTML = 'ตกลง';
+            submitBtn.style.backgroundColor = '#F48E2E';
+        }, 1500);
+
+        alert(errorMessage);
     }
 }
 
@@ -246,9 +270,14 @@ async function openDeleteConfirmationPopup() {
 
         const memberId = editForm.querySelector('input[name="id"]').value;
         
-        // Fetch member data from database
-        const response = await axios.get(`/members/${memberId}`);
-        const member = response.data.member; // Access the member data from the response
+        // Fetch member data using the new endpoint
+        const response = await axios.get(`/members/${memberId}/details`);
+        
+        if (!response.data.success) {
+            throw new Error('Failed to fetch member details');
+        }
+
+        const member = response.data.member;
 
         // Get delete confirmation popup
         const deletePopup = document.getElementById('deleteConfirmationPopup');
@@ -271,19 +300,21 @@ async function openDeleteConfirmationPopup() {
 
         // Update information fields
         const infoItems = deletePopup.querySelectorAll('.popup-member-infoamation-item p');
-        const values = [
-            member.position,
-            member.department.name,
-            member.sub_department || '-',
-            member.email || '-',
-            member.phone || '-'
-        ];
+        if (infoItems) {
+            const values = [
+                member.position,
+                member.department?.name || '-',
+                member.sub_department || '-',
+                member.email || '-',
+                member.phone || '-'
+            ];
 
-        infoItems.forEach((p, index) => {
-            if (values[index]) {
-                p.textContent = values[index];
-            }
-        });
+            infoItems.forEach((p, index) => {
+                if (values[index]) {
+                    p.textContent = values[index];
+                }
+            });
+        }
 
         // Store member ID for deletion
         deletePopup.setAttribute('data-member-id', memberId);

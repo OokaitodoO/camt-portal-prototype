@@ -84,7 +84,11 @@ function handleLogoUpload(event) {
 function addNewSubTask(mode = 'create') {
     const containerId = mode === 'edit' ? 'editSubTasksContainer' : 'createSubTasksContainer';
     const container = document.getElementById(containerId);
-    if (!container) return;
+    
+    if (!container) {
+        console.error(`Container ${containerId} not found`);
+        return;
+    }
 
     const subtaskCount = container.children.length + 1;
     const subtaskHtml = `
@@ -92,11 +96,11 @@ function addNewSubTask(mode = 'create') {
             <div class="popup-sub-task-detail">
                 <div class="popup-input-wrapper">
                     <h2 class="sarabun-16">ภาระงานย่อย ${subtaskCount}</h2>
-                    <input type="text" name="subtasks[]" class="input-text sarabun-16">
+                    <input type="text" name="sub_tasks[${subtaskCount-1}][title]" class="input-text sarabun-16" required>
                 </div>
                 <div class="popup-input-wrapper">
                     <h2 class="sarabun-16">ลิ้งก์</h2>
-                    <input type="text" name="subtask_links[]" class="input-text sarabun-16">
+                    <input type="text" name="sub_tasks[${subtaskCount-1}][link]" class="input-text sarabun-16">
                 </div>
             </div>
             <div class="popup-sub-task-delete btn-pointer" onclick="deleteSubTask(this)">
@@ -109,21 +113,14 @@ function addNewSubTask(mode = 'create') {
 
 // Function to delete subtask
 function deleteSubTask(element) {
-    const subtaskElement = element.closest('.popup-sub-task');
-    if (subtaskElement) {
-        subtaskElement.remove();
-        
+    const subtaskDiv = element.closest('.popup-sub-task');
+    if (subtaskDiv) {
+        subtaskDiv.remove();
         // Renumber remaining subtasks
-        const container = subtaskElement.closest('.popup-sub-task-wrapper');
-        if (container) {
-            const subtasks = container.querySelectorAll('.popup-sub-task');
-            subtasks.forEach((subtask, index) => {
-                const title = subtask.querySelector('h2');
-                if (title) {
-                    title.textContent = `ภาระงานย่อย ${index + 1}`;
-                }
-            });
-        }
+        const container = subtaskDiv.parentElement;
+        container.querySelectorAll('.popup-sub-task').forEach((subtask, index) => {
+            subtask.querySelector('h2').textContent = `ภาระงานย่อย ${index + 1}`;
+        });
     }
 }
 
@@ -159,15 +156,15 @@ function sortByDeadline(departmentId) {
 }
 
 // Function to load departments into dropdown
-async function loadDepartments() {
+async function loadDepartments(dropdownId) {
     try {
         const response = await axios.get('/departments');
         const departments = response.data;
-        const dropdownContent = document.getElementById('dropdownMenuDepartmentCreate');
+        const dropdownContent = document.getElementById(dropdownId);
         
         if (dropdownContent) {
             dropdownContent.innerHTML = departments.map(dept => `
-                <a href="#" onclick="selectDepartment(this, ${dept.id}, '${dept.name}')" 
+                <a href="#" onclick="selectDepartment(this, ${dept.id}, '${dept.name}', '${dropdownId}')" 
                    data-department-id="${dept.id}">${dept.name}</a>
             `).join('');
         }
@@ -176,46 +173,49 @@ async function loadDepartments() {
     }
 }
 
+// Function to toggle dropdown visibility
+function toggleDropdownDepartment(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (dropdown) {
+        // Load departments if not already loaded
+        if (!dropdown.children.length) {
+            loadDepartments(dropdownId);
+        }
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
 // Function to select department
-function selectDepartment(element, departmentId, departmentName) {
-    // Prevent default link behavior
+function selectDepartment(element, departmentId, departmentName, dropdownId) {
     event.preventDefault();
     
+    const isEdit = dropdownId.includes('Edit');
+    const spanId = isEdit ? 'editTaskDepartment' : 'createTaskDepartment';
+    
     // Update the dropdown button text
-    const dropdownBtn = element.closest('.dropdown').querySelector('.dropdown-btn .selected-text');
+    const dropdownBtn = document.getElementById(spanId);
     if (dropdownBtn) {
         dropdownBtn.textContent = departmentName;
         dropdownBtn.setAttribute('data-department-id', departmentId);
     }
     
     // Load members for selected department
-    loadDepartmentMembers(departmentId);
+    loadDepartmentMembers(departmentId, isEdit ? 'dropdownMenuMemberEdit' : 'dropdownMenuMemberCreate');
     
-    // Toggle dropdown visibility
-    const dropdownContent = element.closest('.dropdown-content');
-    if (dropdownContent) {
-        dropdownContent.style.display = 'none';
-    }
-}
-
-// Function to toggle dropdown visibility
-function toggleDropdownDepartment(dropdownId) {
-    const dropdown = document.getElementById(dropdownId);
-    if (dropdown) {
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    }
+    // Hide dropdown
+    document.getElementById(dropdownId).style.display = 'none';
 }
 
 // Function to load members for selected department
-async function loadDepartmentMembers(departmentId) {
+async function loadDepartmentMembers(departmentId, dropdownId) {
     try {
         const response = await axios.get(`/tasks/department/${departmentId}/members`);
         const members = response.data.members;
-        const dropdownContent = document.getElementById('dropdownMenuMemberCreate');
+        const dropdownContent = document.getElementById(dropdownId);
         
         if (dropdownContent) {
             dropdownContent.innerHTML = members.map(member => `
-                <a href="#" onclick="selectMember(this, ${member.id}, '${member.first_name} ${member.last_name}')" 
+                <a href="#" onclick="selectMember(this, ${member.id}, '${member.first_name} ${member.last_name}', '${dropdownId}')" 
                    data-member-id="${member.id}">${member.first_name} ${member.last_name}</a>
             `).join('');
             
@@ -231,25 +231,6 @@ async function loadDepartmentMembers(departmentId) {
     }
 }
 
-// Function to select member
-function selectMember(element, memberId, memberName) {
-    // Prevent default link behavior
-    event.preventDefault();
-    
-    // Update the dropdown button text
-    const dropdownBtn = element.closest('.dropdown').querySelector('.dropdown-btn .selected-text');
-    if (dropdownBtn) {
-        dropdownBtn.textContent = memberName;
-        dropdownBtn.setAttribute('data-member-id', memberId);
-    }
-    
-    // Toggle dropdown visibility
-    const dropdownContent = element.closest('.dropdown-content');
-    if (dropdownContent) {
-        dropdownContent.style.display = 'none';
-    }
-}
-
 // Function to toggle member dropdown
 function toggleDropdownMember(dropdownId) {
     const dropdown = document.getElementById(dropdownId);
@@ -258,10 +239,27 @@ function toggleDropdownMember(dropdownId) {
     }
 }
 
+// Function to select member
+function selectMember(element, memberId, memberName, dropdownId) {
+    event.preventDefault();
+    
+    const isEdit = dropdownId.includes('Edit');
+    const spanId = isEdit ? 'editTaskAssignedTo' : 'createTaskAssignedTo';
+    
+    // Update the dropdown button text
+    const dropdownBtn = document.getElementById(spanId);
+    if (dropdownBtn) {
+        dropdownBtn.textContent = memberName;
+        dropdownBtn.setAttribute('data-member-id', memberId);
+    }
+    
+    // Hide dropdown
+    document.getElementById(dropdownId).style.display = 'none';
+}
+
 // Function to create new task
 async function createNewTask() {
     try {
-        // Get form data
         const form = document.getElementById('createTaskForm');
         if (!form) {
             console.error('Create task form not found');
@@ -269,34 +267,51 @@ async function createNewTask() {
         }
 
         const formData = new FormData(form);
+        
+        // Get description
+        const description = document.querySelector('input[name="description"]')?.value || '';
+        formData.append('description', description);
 
-        // Get department and member IDs from spans
-        const departmentSpan = document.querySelector('#createTaskDepartment');
-        const memberSpan = document.querySelector('#createTaskAssignedTo');
+        // Get department and member IDs
+        const departmentId = document.querySelector('#createTaskDepartment')?.getAttribute('data-department-id');
+        const memberId = document.querySelector('#createTaskAssignedTo')?.getAttribute('data-member-id');
 
-        if (!departmentSpan || !memberSpan) {
-            console.error('Department or member span not found');
-            alert('เกิดข้อผิดพลาด: ไม่พบข้อมูลแผนกหรือบุคลากร');
+        if (!departmentId) {
+            alert('กรุณาเลือกหน่วยงาน');
             return;
         }
 
-        // Add department and member IDs to form data
-        formData.append('department_id', departmentSpan.getAttribute('data-department-id'));
-        formData.append('assigned_to', memberSpan.getAttribute('data-member-id'));
+        formData.append('department_id', departmentId);
+        formData.append('assigned_to', memberId || '');
+
+        // Get deadline if exists
+        const deadline = document.querySelector('input[name="deadline"]')?.value;
+        if (deadline) {
+            formData.append('deadline', deadline);
+        }
 
         // Get subtasks
         const subtasks = document.querySelectorAll('#createSubTasksContainer .popup-sub-task');
+        const subTasksData = [];
+        
         subtasks.forEach((subtask, index) => {
-            const titleInput = subtask.querySelector('input[name="subtasks[]"]');
-            const linkInput = subtask.querySelector('input[name="subtask_links[]"]');
+            const titleInput = subtask.querySelector('input[name*="[title]"]');
+            const linkInput = subtask.querySelector('input[name*="[link]"]');
             
             if (titleInput && titleInput.value.trim()) {
-                formData.append(`sub_tasks[${index}][title]`, titleInput.value.trim());
-                if (linkInput && linkInput.value.trim()) {
-                    formData.append(`sub_tasks[${index}][link]`, linkInput.value.trim());
-                }
+                subTasksData.push({
+                    title: titleInput.value.trim(),
+                    link: linkInput ? linkInput.value.trim() : ''
+                });
             }
         });
+
+        formData.append('sub_tasks', JSON.stringify(subTasksData));
+
+        // Log form data for debugging
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
 
         // Send request
         const response = await axios.post('/tasks', formData, {
@@ -307,19 +322,16 @@ async function createNewTask() {
         });
 
         if (response.data.success) {
-            // Close popup and refresh page
             closeCreatePopup();
             location.reload();
         } else {
-            alert('เกิดข้อผิดพลาดในการสร้างภาระงาน');
+            throw new Error(response.data.message || 'Failed to create task');
         }
 
     } catch (error) {
         console.error('Error creating task:', error);
-        if (error.response) {
-            console.error('Server error:', error.response.data);
-        }
-        alert('เกิดข้อผิดพลาดในการสร้างภาระงาน');
+        console.error('Error details:', error.response?.data);
+        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างภาระงาน');
     }
 }
 
@@ -449,7 +461,7 @@ async function openEditPopup(element) {
     try {
         const taskId = element.getAttribute('data-task-id');
         
-        // Show overlay and popup using active class
+        // Show loading state
         document.getElementById('overlay').classList.add('active');
         document.getElementById('popupEdit').classList.add('active');
         
@@ -457,22 +469,35 @@ async function openEditPopup(element) {
         const response = await axios.get(`/tasks/${taskId}/edit`);
         const task = response.data.task;
 
+        console.log('Fetched task data:', task); // Debug log
+
         // Populate form fields
         document.getElementById('editTaskId').value = task.id;
-        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskTitle').value = task.title || '';
         document.getElementById('editTaskDescription').value = task.description || '';
         document.getElementById('editTaskLink').value = task.link || '';
-        document.getElementById('editTaskDeadline').value = task.deadline;
+        
+        // Format and set deadline
+        if (task.deadline) {
+            const deadlineDate = new Date(task.deadline);
+            const formattedDate = deadlineDate.toISOString().split('T')[0];
+            document.getElementById('editTaskDeadline').value = formattedDate;
+        }
         
         // Set department
         const departmentSpan = document.querySelector('#editTaskDepartment');
-        departmentSpan.textContent = task.department.name;
-        departmentSpan.setAttribute('data-department-id', task.department_id);
+        if (task.department) {
+            departmentSpan.textContent = task.department.name;
+            departmentSpan.setAttribute('data-department-id', task.department.id);
+        } else {
+            departmentSpan.textContent = 'เลือกหน่วยงาน';
+            departmentSpan.setAttribute('data-department-id', '');
+        }
 
         // Set assigned member
         const memberSpan = document.querySelector('#editTaskAssignedTo');
-        if (task.assigned_to) {
-            memberSpan.textContent = `${task.assigned_to.first_name} ${task.assigned_to.last_name}`;
+        if (task.assigned_to && task.assigned_to.first_name) {
+            memberSpan.textContent = `${task.assigned_to.first_name} ${task.assigned_to.last_name || ''}`;
             memberSpan.setAttribute('data-member-id', task.assigned_to.id);
         } else {
             memberSpan.textContent = 'เลือกบุคลากร';
@@ -481,26 +506,45 @@ async function openEditPopup(element) {
 
         // Set logo
         const logoPreview = document.getElementById('editTaskLogoPreview');
-        logoPreview.src = task.logo_path || 'https://placehold.co/128';
+        if (task.logo_path) {
+            console.log('Setting logo path:', task.logo_path); // Debug log
+            logoPreview.src = task.logo_path;
+            
+            // Add error handling for image load
+            logoPreview.onerror = function() {
+                console.error('Failed to load image:', task.logo_path);
+                this.src = 'https://placehold.co/128';
+            };
+        } else {
+            console.log('No logo path, using placeholder'); // Debug log
+            logoPreview.src = 'https://placehold.co/128';
+        }
 
         // Handle subtasks
         const subTasksContainer = document.getElementById('editSubTasksContainer');
         subTasksContainer.innerHTML = ''; // Clear existing subtasks
 
         if (task.sub_tasks && task.sub_tasks.length > 0) {
+            console.log('Loading subtasks:', task.sub_tasks); // Debug log
             task.sub_tasks.forEach((subTask, index) => {
                 const subTaskHtml = `
                     <div class="popup-sub-task" data-subtask-id="${subTask.id}">
                         <div class="popup-sub-task-detail">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ภาระงานย่อย ${index + 1}</h2>
-                                <input type="text" name="sub_tasks[${index}][title]" 
-                                       value="${subTask.title}" 
-                                       class="input-text sarabun-16">
+                                <input type="text" 
+                                       name="sub_tasks[${index}][title]" 
+                                       value="${subTask.title || ''}" 
+                                       class="input-text sarabun-16" 
+                                       required>
+                                <input type="hidden" 
+                                       name="sub_tasks[${index}][id]" 
+                                       value="${subTask.id}">
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
-                                <input type="text" name="sub_tasks[${index}][link]" 
+                                <input type="text" 
+                                       name="sub_tasks[${index}][link]" 
                                        value="${subTask.link || ''}" 
                                        class="input-text sarabun-16">
                             </div>
@@ -512,6 +556,11 @@ async function openEditPopup(element) {
                 `;
                 subTasksContainer.insertAdjacentHTML('beforeend', subTaskHtml);
             });
+        }
+
+        // Load department members for dropdown
+        if (task.department && task.department.id) {
+            await loadDepartmentMembers(task.department.id, 'dropdownMenuMemberEdit');
         }
 
     } catch (error) {
@@ -537,102 +586,228 @@ function closeEditPopup() {
 window.openEditPopup = openEditPopup;
 window.closeEditPopup = closeEditPopup;
 
-function openDeleteConfirmationPopup() {
-    // Get task details from edit form
-    const taskId = document.getElementById('editTaskId').value;
-    const title = document.getElementById('editTaskTitle').value;
-    const description = document.getElementById('editTaskDescription').value;
-    const department = document.querySelector('#editTaskDepartment').textContent;
-    const assignedTo = document.querySelector('#editTaskAssignedTo').textContent;
-    const deadline = document.getElementById('editTaskDeadline').value;
-    const logo = document.getElementById('editTaskLogoPreview').src;
+async function openDeleteConfirmationPopup() {
+    try {
+        const taskId = document.getElementById('editTaskId').value;
+        const response = await axios.get(`/tasks/${taskId}/edit`);
+        const task = response.data.task;
 
-    // Populate delete confirmation popup
-    document.getElementById('deleteTaskLogo').src = logo;
-    document.getElementById('deleteTaskTitle').textContent = title;
-    document.getElementById('deleteTaskDescription').textContent = description || '-';
-    document.getElementById('deleteTaskDepartment').textContent = department;
-    document.getElementById('deleteTaskAssignedTo').textContent = assignedTo;
-    document.getElementById('deleteTaskDeadline').textContent = deadline;
+        // Set the task details in the delete confirmation popup
+        document.getElementById('deleteTaskLogo').src = task.logo_path || 'https://placehold.co/128';
+        document.getElementById('deleteTaskTitle').textContent = task.title;
+        document.getElementById('deleteTaskDescription').textContent = task.description || '-';
+        document.getElementById('deleteTaskDepartment').textContent = task.department?.name || '-';
+        document.getElementById('deleteTaskAssignedTo').textContent = 
+            task.assigned_to ? `${task.assigned_to.first_name} ${task.assigned_to.last_name}` : '-';
+        document.getElementById('deleteTaskDeadline').textContent = 
+            task.deadline ? new Date(task.deadline).toLocaleDateString('th-TH') : '-';
 
-    // Handle subtasks in delete confirmation
-    const subTasksContainer = document.getElementById('deleteSubTasksContainer');
-    subTasksContainer.innerHTML = '';
-    
-    const editSubTasks = document.querySelectorAll('#editSubTasksContainer .popup-sub-task');
-    if (editSubTasks.length > 0) {
-        const subTasksList = document.createElement('div');
-        subTasksList.innerHTML = '<h2 class="sarabun-16">ภาระงานย่อย:</h2>';
-        editSubTasks.forEach((subTask, index) => {
-            const title = subTask.querySelector('input[name*="[title]"]').value;
-            subTasksList.innerHTML += `<p class="sarabun-16">${index + 1}. ${title}</p>`;
-        });
-        subTasksContainer.appendChild(subTasksList);
+        // Show subtasks if any
+        const deleteSubTasksContainer = document.getElementById('deleteSubTasksContainer');
+        if (task.sub_tasks && task.sub_tasks.length > 0) {
+            let subtasksHtml = '<div class="card-info-item"><h2 class="sarabun-16">ภาระงานย่อย:</h2><ul>';
+            task.sub_tasks.forEach(subTask => {
+                subtasksHtml += `<li class="sarabun-16">${subTask.title}</li>`;
+            });
+            subtasksHtml += '</ul></div>';
+            deleteSubTasksContainer.innerHTML = subtasksHtml;
+        } else {
+            deleteSubTasksContainer.innerHTML = '';
+        }
+
+        // Show the delete confirmation popup
+        document.getElementById('deleteConfirmationPopup').classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+        
+        // Hide the edit popup
+        document.getElementById('popupEdit').classList.remove('active');
+    } catch (error) {
+        console.error('Error loading task details for deletion:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลภาระงาน');
     }
-
-    // Show delete confirmation popup using active class
-    closeEditPopup();
-    document.getElementById('deleteConfirmationPopup').classList.add('active');
-    document.getElementById('overlay').classList.add('active');
 }
 
-// Make functions globally available
-window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
+function closeDeleteConfirmation() {
+    document.getElementById('deleteConfirmationPopup').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('popupEdit').classList.add('active');
+}
 
-// Function to delete task
 async function deleteTask() {
     try {
         const taskId = document.getElementById('editTaskId').value;
+        await axios.delete(`/tasks/${taskId}`);
         
-        if (!taskId) {
-            console.error('No task ID found');
-            alert('เกิดข้อผิดพลาด: ไม่พบรหัสภาระงาน');
-            return;
-        }
-
-        // Get CSRF token
-        const token = document.querySelector('meta[name="csrf-token"]').content;
-        if (!token) {
-            console.error('CSRF token not found');
-            alert('เกิดข้อผิดพลาด: ไม่พบ CSRF token');
-            return;
-        }
-
-        // Send delete request
-        const response = await axios.delete(`/tasks/${taskId}`, {
-            headers: {
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.data.success) {
-            // Close the delete confirmation popup
-            closeDeleteConfirmation();
-            
-            // Refresh the page to show updated task list
-            location.reload();
-        } else {
-            console.error('Server returned success: false', response.data);
-            alert('เกิดข้อผิดพลาดในการลบภาระงาน');
-        }
+        // Close all popups and refresh the page
+        document.getElementById('deleteConfirmationPopup').classList.remove('active');
+        document.getElementById('overlay').classList.remove('active');
+        window.location.reload();
     } catch (error) {
         console.error('Error deleting task:', error);
-        if (error.response) {
-            console.error('Server error details:', error.response.data);
-        }
         alert('เกิดข้อผิดพลาดในการลบภาระงาน');
     }
 }
 
-// Function to close delete confirmation popup
-function closeDeleteConfirmation() {
-    document.getElementById('deleteConfirmationPopup').classList.remove('active');
-    document.getElementById('overlay').classList.remove('active');
+// Make functions globally available
+window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
+window.closeDeleteConfirmation = closeDeleteConfirmation;
+window.deleteTask = deleteTask;
+
+async function updateTask() {
+    try {
+        const form = document.getElementById('editTaskForm');
+        if (!form) {
+            console.error('Edit task form not found');
+            return;
+        }
+
+        const taskId = document.getElementById('editTaskId').value;
+        const formData = new FormData(form);
+        
+        // Get description
+        const description = document.querySelector('#editTaskDescription')?.value || '';
+        formData.append('description', description);
+
+        // Get department and member IDs
+        const departmentId = document.querySelector('#editTaskDepartment')?.getAttribute('data-department-id');
+        const memberId = document.querySelector('#editTaskAssignedTo')?.getAttribute('data-member-id');
+
+        if (!departmentId) {
+            alert('กรุณาเลือกหน่วยงาน');
+            return;
+        }
+
+        formData.append('department_id', departmentId);
+        formData.append('assigned_to', memberId || '');
+        formData.append('_method', 'PUT');
+
+        // Get deadline if exists
+        const deadline = document.querySelector('#editTaskDeadline')?.value;
+        if (deadline) {
+            formData.append('deadline', deadline);
+        }
+
+        // Get subtasks
+        const subtasks = document.querySelectorAll('#editSubTasksContainer .popup-sub-task');
+        const subTasksData = [];
+        
+        subtasks.forEach((subtask) => {
+            const titleInput = subtask.querySelector('input[name*="[title]"]');
+            const linkInput = subtask.querySelector('input[name*="[link]"]');
+            const idInput = subtask.querySelector('input[name*="[id]"]');
+            
+            if (titleInput && titleInput.value.trim()) {
+                subTasksData.push({
+                    id: idInput ? idInput.value : null,
+                    title: titleInput.value.trim(),
+                    link: linkInput ? linkInput.value.trim() : ''
+                });
+            }
+        });
+
+        formData.append('sub_tasks', JSON.stringify(subTasksData));
+
+        // Log form data for debugging
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        // Send request
+        const response = await axios.post(`/tasks/${taskId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+
+        if (response.data.success) {
+            closeEditPopup();
+            location.reload();
+        } else {
+            throw new Error(response.data.message || 'Failed to update task');
+        }
+
+    } catch (error) {
+        console.error('Error updating task:', error);
+        if (error.response?.data) {
+            console.error('Server error:', error.response.data);
+        }
+        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัพเดทภาระงาน');
+    }
 }
 
-// Make functions globally available
-window.deleteTask = deleteTask;
-window.closeDeleteConfirmation = closeDeleteConfirmation;
-window.openDeleteConfirmationPopup = openDeleteConfirmationPopup; 
+// Add to window object for global access
+window.updateTask = updateTask;
+
+function toggleSubtasks(event, taskId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const subtasksContent = document.getElementById(`subtasks-${taskId}`);
+    const button = event.currentTarget;
+    const arrow = button.querySelector('.dropdown-arrow');
+    
+    if (subtasksContent.style.display === 'none') {
+        subtasksContent.style.display = 'block';
+        arrow.classList.add('active');
+    } else {
+        subtasksContent.style.display = 'none';
+        arrow.classList.remove('active');
+    }
+}
+
+// Make the function globally available
+window.toggleSubtasks = toggleSubtasks;
+
+async function toggleFavorite(event, taskId, element) {
+    try {
+        event.stopPropagation();
+        const isFavorite = element.getAttribute('data-favorite') === 'true';
+        
+        // Update the favorite status
+        const response = await axios.post(`/tasks/${taskId}/toggle-favorite`, {
+            is_favorite: !isFavorite
+        });
+        
+        if (response.data.success) {
+            // Update the UI
+            const starIcon = element.querySelector('i');
+            element.setAttribute('data-favorite', (!isFavorite).toString());
+            
+            if (!isFavorite) {
+                starIcon.classList.add('favorite-active');
+            } else {
+                starIcon.classList.remove('favorite-active');
+            }
+            
+            // Refresh the page to update the favorites sidebar
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        alert('เกิดข้อผิดพลาดในการเพิ่ม/ลบรายการโปรด');
+    }
+}
+
+// Make the function globally available
+window.toggleFavorite = toggleFavorite;
+
+function openTaskLink(event, link) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (!link) {
+        console.log('No link provided');
+        return;
+    }
+    
+    // Check if the link starts with http:// or https://
+    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+        link = 'https://' + link;
+    }
+    
+    window.open(link, '_blank');
+}
+
+// Make the function globally available
+window.openTaskLink = openTaskLink; 

@@ -10,6 +10,7 @@ use App\Models\Member;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
@@ -51,37 +52,80 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required',
-            'department_id' => 'required|exists:departments,id',
-            'assigned_to' => 'required|exists:members,id',
-            'deadline' => 'required|date',
-            'logo' => 'nullable|image|max:2048'
-        ]);
+        try {
+            DB::beginTransaction();
+            
+            // Log incoming request data
+            Log::info('Creating new task with data:', $request->all());
 
-        $task = new Task($validated);
-        
-        if ($request->hasFile('logo')) {
-            $task->logo_path = $request->file('logo')->store('task-logos', 'public');
-        }
-        
-        $task->assigned_by = auth()->id();
-        $task->save();
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'department_id' => 'required|exists:departments,id',
+                'assigned_to' => 'required|exists:members,id',
+                'deadline' => 'nullable|date',
+                'logo' => 'nullable|image|max:2048',
+                'link' => 'nullable|string'
+            ]);
 
-        // Save subtasks
-        if ($request->has('subtasks')) {
-            foreach ($request->subtasks as $index => $subtaskTitle) {
-                $task->subtasks()->create([
-                    'title' => $subtaskTitle,
-                    'link' => $request->subtask_links[$index] ?? null
-                ]);
+            // Create task with default values
+            $task = new Task();
+            $task->title = $validated['title'];
+            $task->description = $validated['description'] ?? null;
+            $task->department_id = $validated['department_id'];
+            $task->assigned_to = $validated['assigned_to'];
+            $task->deadline = $validated['deadline'] ?? null;
+            $task->link = $validated['link'] ?? null;
+            $task->status = 'pending';
+            $task->is_favorite = false;
+            $task->assigned_by = auth()->id();
+            
+            // Handle logo upload
+            if ($request->hasFile('logo')) {
+                $file = $request->file('logo');
+                $path = $file->store('task-logos', 'public');
+                $task->logo_path = $path;
             }
-        }
+            
+            $task->save();
 
-        return response()->json([
-            'success' => true,
-            'task' => $task->load(['department', 'assignedTo', 'assignedBy'])
-        ]);
+            // Handle subtasks
+            if ($request->has('sub_tasks')) {
+                $subTasks = json_decode($request->sub_tasks, true);
+                if (is_array($subTasks)) {
+                    foreach ($subTasks as $subTaskData) {
+                        if (!empty($subTaskData['title'])) {
+                            $task->subTasks()->create([
+                                'title' => $subTaskData['title'],
+                                'link' => $subTaskData['link'] ?? null
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            // Load relationships for response
+            $task = $task->load(['department', 'assignedTo', 'assignedBy', 'subTasks']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'สร้างภาระงานสำเร็จ',
+                'task' => $task
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task creation error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Request data:', $request->all());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating task: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getDepartmentMembers($departmentId)
@@ -106,44 +150,23 @@ class TaskController extends Controller
     public function edit(Task $task)
     {
         try {
-            Log::info('Fetching task details for task ID: ' . $task->id);
-            
-            // First, verify the task exists
-            if (!$task) {
-                Log::error('Task not found');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Task not found'
-                ], 404);
-            }
+            // Load all relationships including subtasks
+            $task->load(['department', 'assignedTo', 'assignedBy', 'subTasks']);
 
-            // Load relationships one by one to identify any issues
-            try {
-                $task->load('department');
-            } catch (\Exception $e) {
-                Log::error('Error loading department: ' . $e->getMessage());
-            }
+            // Add debug logging
+            Log::info('Fetching task with subtasks:', [
+                'task_id' => $task->id,
+                'subtasks_count' => $task->subTasks->count(),
+                'subtasks' => $task->subTasks->toArray()
+            ]);
 
-            try {
-                $task->load('assignedTo');
-            } catch (\Exception $e) {
-                Log::error('Error loading assignedTo: ' . $e->getMessage());
-            }
-
-            try {
-                $task->load('subTasks');
-            } catch (\Exception $e) {
-                Log::error('Error loading subTasks: ' . $e->getMessage());
-            }
-
-            // Transform the data to ensure it matches the expected format
             $taskData = [
                 'id' => $task->id,
                 'title' => $task->title,
                 'description' => $task->description,
                 'link' => $task->link,
                 'deadline' => $task->deadline,
-                'logo_path' => $task->logo_path,
+                'logo_path' => $task->logo_path ? asset('storage/' . $task->logo_path) : null,
                 'department' => $task->department ? [
                     'id' => $task->department->id,
                     'name' => $task->department->name
@@ -153,16 +176,14 @@ class TaskController extends Controller
                     'first_name' => $task->assignedTo->first_name,
                     'last_name' => $task->assignedTo->last_name
                 ] : null,
-                'sub_tasks' => $task->subTasks ? $task->subTasks->map(function($subTask) {
+                'sub_tasks' => $task->subTasks->map(function($subTask) {
                     return [
                         'id' => $subTask->id,
                         'title' => $subTask->title,
-                        'link' => $subTask->link
+                        'link' => $subTask->link ?? ''
                     ];
-                }) : []
+                })->toArray()
             ];
-
-            Log::info('Successfully fetched task data', ['task' => $taskData]);
 
             return response()->json([
                 'success' => true,
@@ -176,8 +197,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading task details',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -219,6 +239,122 @@ class TaskController extends Controller
                 'message' => 'Error deleting task',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
+
+    public function update(Request $request, Task $task)
+    {
+        try {
+            DB::beginTransaction();
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'department_id' => 'required|exists:departments,id',
+                'assigned_to' => 'required|exists:members,id',
+                'deadline' => 'nullable|date',
+                'logo' => 'nullable|image|max:2048',
+                'link' => 'nullable|string'
+            ]);
+
+            // Update main task fields
+            $task->title = $validated['title'];
+            $task->description = $validated['description'] ?? null;
+            $task->department_id = $validated['department_id'];
+            $task->assigned_to = $validated['assigned_to'];
+            $task->deadline = $validated['deadline'] ?? null;
+            $task->link = $validated['link'] ?? null;
+
+            // Handle logo upload
+            if ($request->hasFile('logo')) {
+                // Delete old logo if exists
+                if ($task->logo_path) {
+                    Storage::disk('public')->delete($task->logo_path);
+                }
+                $task->logo_path = $request->file('logo')->store('task-logos', 'public');
+            }
+
+            $task->save();
+
+            // Handle subtasks
+            if ($request->has('sub_tasks')) {
+                $subTasks = json_decode($request->sub_tasks, true);
+                
+                if (is_array($subTasks)) {
+                    // Get existing subtask IDs
+                    $existingSubTaskIds = $task->subTasks->pluck('id')->toArray();
+                    $updatedSubTaskIds = [];
+
+                    foreach ($subTasks as $subTaskData) {
+                        if (!empty($subTaskData['title'])) {
+                            if (isset($subTaskData['id'])) {
+                                // Update existing subtask
+                                $subTask = $task->subTasks()->find($subTaskData['id']);
+                                if ($subTask) {
+                                    $subTask->update([
+                                        'title' => $subTaskData['title'],
+                                        'link' => $subTaskData['link'] ?? null
+                                    ]);
+                                    $updatedSubTaskIds[] = $subTask->id;
+                                }
+                            } else {
+                                // Create new subtask
+                                $newSubTask = $task->subTasks()->create([
+                                    'title' => $subTaskData['title'],
+                                    'link' => $subTaskData['link'] ?? null
+                                ]);
+                                $updatedSubTaskIds[] = $newSubTask->id;
+                            }
+                        }
+                    }
+
+                    // Delete removed subtasks
+                    $task->subTasks()
+                        ->whereNotIn('id', $updatedSubTaskIds)
+                        ->delete();
+                }
+            }
+
+            DB::commit();
+
+            // Load relationships for response
+            $task = $task->load(['department', 'assignedTo', 'assignedBy', 'subTasks']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'อัพเดทภาระงานสำเร็จ',
+                'task' => $task
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task update error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Request data:', $request->all());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัพเดทภาระงาน',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function toggleFavorite(Task $task)
+    {
+        try {
+            $task->is_favorite = !$task->is_favorite;
+            $task->save();
+            
+            return response()->json([
+                'success' => true,
+                'is_favorite' => $task->is_favorite
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error toggling favorite status'
             ], 500);
         }
     }

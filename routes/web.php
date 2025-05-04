@@ -26,12 +26,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('members.filter');
 
     Route::get('/members/create', [MemberController::class, 'create'])->name('members.create');
-    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
     Route::get('/members/{member}', [MemberController::class, 'show'])->name('members.show');
     Route::get('/members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
+    Route::get('/members/search', [MemberController::class, 'search'])->name('members.search');
+    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
     Route::put('/members/{member}', [MemberController::class, 'update'])->name('members.update');
     Route::delete('/members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
-    Route::get('/members/search', [MemberController::class, 'search'])->name('members.search');
 
     // // Add new route for individual member view
     // Route::get('/members/{id}/individual', [MemberController::class, 'individual'])->name('members.individual');
@@ -64,6 +64,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+    // Add this new route for fetching member details
+    Route::get('/members/{member}/details', [MemberController::class, 'getMemberDetails'])->name('members.details');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -78,4 +81,9 @@ Route::middleware(['auth', 'role:admin,manager'])->group(function () {
 Route::get('/departments', function() {
     return App\Models\Department::select('id', 'name')->get();
 });
+
+Route::post('/tasks/{task}/toggle-favorite', [TaskController::class, 'toggleFavorite'])->name('tasks.toggle-favorite');
+
+// Add this route for fetching member data
+Route::get('/members/{member}/data', [MemberController::class, 'getMemberData'])->name('members.getData');
 

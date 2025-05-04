@@ -168,7 +168,7 @@
     <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="createMemberForm" onsubmit="return createMember(event)">
+                <form id="createMemberForm" enctype="multipart/form-data">
                     @csrf
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeCreatePopup()">
@@ -180,7 +180,7 @@
                     </div>
                     <div class="popup-image">
                         <img src="https://placehold.co/128" alt="" class="card-logo-img" id="previewImage">
-                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')">
+                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')" accept="image/*">
                     </div>
                     <div class="popup-input-container">
                         <div class="popup-member-name">

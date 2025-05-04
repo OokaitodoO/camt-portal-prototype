@@ -13,6 +13,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+    align-items: start;
 }
 
 .side-nav-container{
@@ -57,6 +58,190 @@
     align-items: center;
     width: 100%;
     padding: 10px;
+}
+
+.card-wrapper {
+    height: fit-content;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.card-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-header, .card-container-info {
+    cursor: pointer;
+}
+
+.card-actions > div {
+    z-index: 2;
+}
+
+.subtasks-dropdown {
+    z-index: 3;
+}
+
+.subtask-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.subtask-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.subtask-item i {
+    color: #666;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.card-edit {
+    z-index: 2;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    z-index: 2;
+}
+
+.card-favorite {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.card-favorite:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.card-favorite i {
+    color: #ccc;
+    transition: all 0.3s ease;
+}
+
+.card-favorite i.favorite-active {
+    color: #ffd700;
+}
+
+.favorite-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.favorite-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.favorite-task-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.favorite-task-link {
+    color: inherit;
+    text-decoration: none;
+    flex: 1;
+}
+
+.favorite-task-link:hover {
+    color: #007bff;
+}
+
+.card-container-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.subtasks-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.subtasks-dropdown-btn:hover {
+    color: #333;
+}
+
+.subtask-count {
+    font-size: 14px;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 12px;
+}
+
+.dropdown-arrow {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.active {
+    transform: rotate(180deg);
+}
+
+.subtasks-content {
+    margin-top: 5px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background: white;
+}
+
+.subtask-item {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.subtask-item:hover {
+    background-color: #f5f5f5;
 }
 
 

@@ -17,6 +17,8 @@ class Member extends Authenticatable
         'last_name',
         'position',
         'department_id',
+        'sub_department',
+        'phone',
         'role',
         'profile_picture'
     ];
@@ -29,6 +31,11 @@ class Member extends Authenticatable
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
     }
 
     // Helper methods for role checking

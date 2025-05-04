@@ -114,7 +114,7 @@
                                             @if($task->deadline)
                                                 {{ \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') }}
                                             @else
-                                                -
+                                                ไม่มีวันครบกำหนด
                                             @endif
                                         </td>
                                         <td class="border-top" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
@@ -146,9 +146,14 @@
                             </div>
                         </div>
                         <div class="popup-image">
-                            <img src="https://placehold.co/128" alt="" class="card-logo-img" id="taskLogoPreview">
+                            <label for="taskLogo" class="logo-upload-label">
+                                <img src="https://placehold.co/128" alt="" class="card-logo-img" id="taskLogoPreview">
+                                <div class="upload-overlay">
+                                    <i class="fas fa-camera"></i>
+                                    <span>อัพโหลดรูปภาพ</span>
+                                </div>
+                            </label>
                             <input type="file" name="logo" id="taskLogo" accept="image/*" style="display: none;">
-                            <label for="taskLogo" class="btn-upload">อัพโหลดรูปภาพ</label>
                         </div>
                         <div class="popup-input-container">
                             <div class="popup-input-wrapper">
@@ -195,10 +200,10 @@
                             </div>
                         </div>
                         <hr class="divider">
-                        <div class="popup-sub-task-wrapper">
+                        <div class="popup-sub-task-wrapper" id="createSubTasksContainer">
                             <!-- Subtasks will be added here -->
                         </div>
-                        <div class="add-subtask-btn btn-pointer" onclick="addNewSubTask()">
+                        <div class="add-subtask-btn btn-pointer" onclick="addNewSubTask('create')">
                             <i class="fas fa-plus"></i>
                         </div>
                         <div class="popup-btn-wrapper">
@@ -233,9 +238,14 @@
                             </div>
                         </div>
                         <div class="popup-image">
-                            <img src="" alt="" class="card-logo-img" id="editTaskLogoPreview">
+                            <label for="editTaskLogo" class="logo-upload-label">
+                                <img src="" alt="" class="card-logo-img" id="editTaskLogoPreview">
+                                <div class="upload-overlay">
+                                    <i class="fas fa-camera"></i>
+                                    <span>อัพโหลดรูปภาพ</span>
+                                </div>
+                            </label>
                             <input type="file" name="logo" id="editTaskLogo" accept="image/*" style="display: none;">
-                            <label for="editTaskLogo" class="btn-upload">อัพโหลดรูปภาพ</label>
                         </div>
                         <div class="popup-input-container">
                             <div class="popup-input-wrapper">
@@ -249,11 +259,11 @@
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">หน่วยงาน</h2>
                                 <div class="dropdown">
-                                    <div class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
-                                        <span class="selected-text" id="editTaskDepartment" data-department-id="">เลือกหน่วยงาน</span>
-                                        <button type="button">▼</button>
-                                    </div>
-                                    <div class="dropdown-content sarabun-16" id="dropdownMenuDepartmentEdit">
+                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
+                                        <span id="editTaskDepartment" class="selected-text" data-department-id="">เลือกหน่วยงาน</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div id="dropdownMenuDepartmentEdit" class="dropdown-content">
                                         <!-- Departments will be loaded here -->
                                     </div>
                                 </div>
@@ -265,11 +275,11 @@
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
                                 <div class="dropdown">
-                                    <div class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberEdit')">
-                                        <span class="selected-text" id="editTaskAssignedTo" data-member-id="">เลือกบุคลากร</span>
-                                        <button type="button">▼</button>
-                                    </div>
-                                    <div class="dropdown-content sarabun-16" id="dropdownMenuMemberEdit">
+                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberEdit')">
+                                        <span id="editTaskAssignedTo" class="selected-text" data-member-id="">เลือกบุคลากร</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div id="dropdownMenuMemberEdit" class="dropdown-content">
                                         <!-- Members will be loaded here -->
                                     </div>
                                 </div>

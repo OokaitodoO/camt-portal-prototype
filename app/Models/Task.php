@@ -17,7 +17,19 @@ class Task extends Model
         'assigned_to',
         'assigned_by',
         'deadline',
-        'logo_path'
+        'logo_path',
+        'status',
+        'is_favorite'
+    ];
+
+    protected $attributes = [
+        'status' => 'pending',
+        'is_favorite' => false
+    ];
+
+    protected $casts = [
+        'is_favorite' => 'boolean',
+        'deadline' => 'datetime'
     ];
 
     protected $dates = [
