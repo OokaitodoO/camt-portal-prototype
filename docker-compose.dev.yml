@@ -81,6 +81,63 @@ services:
       - "traefik.http.routers.phpmyadmin.rule=Host(`pma.localhost`)"
       - "traefik.http.routers.phpmyadmin.entrypoints=web"
       - "traefik.http.services.phpmyadmin.loadbalancer.server.port=8080"
+
+  # set file ownership
+  zrok-init:
+    image: busybox
+    # matches uid:gid of "ziggy" in zrok container image
+    command: chown -Rc 2171:2171 /mnt/
+    user: root
+    volumes:
+      - zrok_env:/mnt
+    networks:
+      - development
+
+  # enable zrok environment
+  zrok-enable:
+    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+    depends_on:
+      zrok-init:
+        condition: service_completed_successfully
+    entrypoint: zrok-enable.bash
+    volumes:
+      - zrok_env:/mnt
+    networks:
+      - development
+    environment:
+      HOME: /mnt
+      ZROK_ENABLE_TOKEN:
+      ZROK_API_ENDPOINT:
+      ZROK_ENVIRONMENT_NAME:
+
+  # reserve zrok frontend subdomain and start sharing the target
+  zrok-share:
+    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+    restart: unless-stopped
+    entrypoint: zrok-share.bash
+    depends_on:
+      zrok-enable:
+        condition: service_completed_successfully
+    volumes:
+      - zrok_env:/mnt
+    networks:
+      - development
+    environment:
+      HOME: /mnt
+      ZROK_ENABLE_TOKEN: ${ZROK_ENABLE_TOKEN}
+      ZROK_UNIQUE_NAME: ${ZROK_UNIQUE_NAME}
+      ZROK_BACKEND_MODE: ${ZROK_BACKEND_MODE:-proxy}
+      ZROK_TARGET: ${ZROK_TARGET:-http://php:80}
+      ZROK_FRONTENDS: "public"
+      PFXLOG_NO_JSON: "true"
+
+  # demo server
+  zrok-test:
+    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+    command: test endpoint --address 0.0.0.0  # 9090
+    networks:
+      - development
+  
     
 networks:
   development:
@@ -89,3 +146,4 @@ networks:
 
 volumes:
   mysql_data:
+  zrok_env:

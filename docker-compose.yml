@@ -6,3 +6,4 @@ services:
   php:
     depends_on:
       - traefik
+  
