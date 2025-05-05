@@ -71,7 +71,7 @@ header {
 
 .title {
     display: flex;
-    width: 500px;
+    width: fit-content;
     padding-left: 10px;
 }
 
