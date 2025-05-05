@@ -12,5 +12,5 @@ export default defineConfig({
             refresh: true,
         }),
         tailwindcss(),
-    ],
+    ],    
 });
