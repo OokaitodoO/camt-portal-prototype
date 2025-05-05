@@ -6,8 +6,8 @@
     <title>หน่วยงาน</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/pages/department.css') }}">
+    <link rel="stylesheet" href="{{ secure_asset('css/main.css') }}">
+    <link rel="stylesheet" href="{{ secure_asset('css/pages/department.css') }}">    
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -32,7 +32,7 @@
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
-                <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x60'">
+                <img src="{{ secure_asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x60'">
                 <ul class="nav-action">
                     <li><a href="{{route('department')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
@@ -163,6 +163,8 @@
     <!-- script -->
     @vite('resources/js/app.js')
     @vite('resources/js/department.js')
+    <!-- <script type="module" src="{{ secure_asset('js/app.js') }}"></script>
+    <script type="module" src="{{ secure_asset('js/department.js') }}"></script> -->
 
 </body>
 

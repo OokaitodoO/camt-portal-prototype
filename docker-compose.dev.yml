@@ -30,6 +30,8 @@ services:
       - "traefik.http.routers.laravel.entrypoints=web"
       - "traefik.http.services.laravel.loadbalancer.server.port=8080"
       - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
+    ports:
+      - "8080:8080"
   
   node:
     image: node:20
@@ -74,7 +76,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - "8080:80"
+      - "8081:80"
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -82,61 +84,63 @@ services:
       - "traefik.http.routers.phpmyadmin.entrypoints=web"
       - "traefik.http.services.phpmyadmin.loadbalancer.server.port=8080"
 
-  # set file ownership
-  zrok-init:
-    image: busybox
-    # matches uid:gid of "ziggy" in zrok container image
-    command: chown -Rc 2171:2171 /mnt/
-    user: root
-    volumes:
-      - zrok_env:/mnt
-    networks:
-      - development
+  # # set file ownership
+  # zrok-init:
+  #   image: busybox
+  #   # matches uid:gid of "ziggy" in zrok container image
+  #   command: chown -Rc 2171:2171 /mnt/
+  #   user: root
+  #   volumes:
+  #     - zrok_env:/mnt
+  #   networks:
+  #     - development
 
-  # enable zrok environment
-  zrok-enable:
-    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
-    depends_on:
-      zrok-init:
-        condition: service_completed_successfully
-    entrypoint: zrok-enable.bash
-    volumes:
-      - zrok_env:/mnt
-    networks:
-      - development
-    environment:
-      HOME: /mnt
-      ZROK_ENABLE_TOKEN:
-      ZROK_API_ENDPOINT:
-      ZROK_ENVIRONMENT_NAME:
+  # # enable zrok environment
+  # zrok-enable:
+  #   image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+  #   depends_on:
+  #     zrok-init:
+  #       condition: service_completed_successfully
+  #   entrypoint: zrok-enable.bash
+  #   volumes:
+  #     - zrok_env:/mnt
+  #   environment:
+  #     HOME: /mnt
+  #     ZROK_ENABLE_TOKEN: ${ZROK_ENABLE_TOKEN}
+  #     ZROK_API_ENDPOINT:
+  #     ZROK_ENVIRONMENT_NAME: ${ZROK_ENVIRONMENT_NAME}
+  #   networks:
+  #     - development
 
-  # reserve zrok frontend subdomain and start sharing the target
-  zrok-share:
-    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
-    restart: unless-stopped
-    entrypoint: zrok-share.bash
-    depends_on:
-      zrok-enable:
-        condition: service_completed_successfully
-    volumes:
-      - zrok_env:/mnt
-    networks:
-      - development
-    environment:
-      HOME: /mnt
-      ZROK_ENABLE_TOKEN: ${ZROK_ENABLE_TOKEN}
-      ZROK_UNIQUE_NAME: ${ZROK_UNIQUE_NAME}
-      ZROK_BACKEND_MODE: ${ZROK_BACKEND_MODE:-proxy}
-      ZROK_TARGET: ${ZROK_TARGET:-http://php:80}
-      ZROK_FRONTENDS: "public"
-      PFXLOG_NO_JSON: "true"
+  # # reserve zrok frontend subdomain and start sharing the target
+  # zrok-share:
+  #   image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+  #   restart: unless-stopped
+  #   entrypoint: /bin/sh
+  #   command: -c "zrok share reserved ${ZROK_UNIQUE_NAME} --override-endpoint http://php:8080 --headless"
+  #   depends_on:
+  #     zrok-enable:
+  #       condition: service_completed_successfully
+  #   volumes:
+  #     - zrok_env:/mnt
+  #   environment:
+  #     HOME: /mnt
+  #     ZROK_UNIQUE_NAME: ${ZROK_UNIQUE_NAME}
+  #     ZROK_BACKEND_MODE: proxy
+  #     ZROK_TARGET: http://php:8080
+  #     ZROK_FRONTENDS: public
+  #     ZROK_INSECURE: "true"
+  #     ZROK_ALLOW_UNENCRYPTED: "true"
+  #     PFXLOG_NO_JSON: "true"
+  #   networks:
+  #     - development
 
-  # demo server
-  zrok-test:
-    image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
-    command: test endpoint --address 0.0.0.0  # 9090
-    networks:
-      - development
+  # # demo server
+  # zrok-test:
+  #   image: ${ZROK_CONTAINER_IMAGE:-docker.io/openziti/zrok}
+  #   command: test endpoint --address 0.0.0.0  # 9090
+  #   networks:
+  #     - development
   
     
 networks:
@@ -146,4 +150,4 @@ networks:
 
 volumes:
   mysql_data:
-  zrok_env:
+  # zrok_env:
