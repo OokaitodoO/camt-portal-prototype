@@ -80,54 +80,46 @@
         <div class="content">
             <div class="task-remain slide-in">
                 <h3 class="sarabun-20">จำนวนภาระงาน</h3>
-                <p class="sarabun-20">{{ $tasks->count() }}</p>
+                <p class="sarabun-20">{{ $totalTasks }}</p>
             </div>
 
-            @foreach($departments as $department)
-                @php
-                    $departmentTasks = $tasks->where('department_id', $department->id);
-                @endphp
-                
-                @if($departmentTasks->count() > 0)
-                    <div class="task-department">
-                        <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
-                        <table class="fade-in">
-                            <tr class="table-title sarabun-16">
-                                <th>ภาระงาน</th>
-                                <th>หน่วยงาน</th>
-                                <th>ผู้รับผิดชอบ</th>
-                                <th>มอบหมายโดย</th>
-                                <th onclick="sortByDeadline('{{ $department->id }}')" style="cursor: pointer">
-                                    วันครบกำหนด 
-                                    <i class="fas fa-sort"></i>
-                                </th>
-                                <th>แก้ไข</th>
-                            </tr>
-                            <tbody id="taskTableBody-{{ $department->id }}">
-                                @foreach($departmentTasks->sortBy('deadline') as $task)
-                                    <tr class="table-task">
-                                        <td class="border-top sarabun-16">{{ $task->title }}</td>
-                                        <td class="border-top sarabun-16">{{ $task->department->name }}</td>
-                                        <td class="border-top sarabun-16">{{ optional($task->assignedTo)->first_name ?? '-' }}</td>
-                                        <td class="border-top sarabun-16">{{ optional($task->assignedBy)->first_name ?? '-' }}</td>
-                                        <td class="border-top sarabun-16">
-                                            @if($task->deadline)
-                                                {{ \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') }}
-                                            @else
-                                                ไม่มีวันครบกำหนด
-                                            @endif
-                                        </td>
-                                        <td class="border-top" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
-                                            <div class="btn-edit">
-                                                <i class="fas fa-edit"></i>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+            @foreach($tasksByDepartment as $departmentName => $departmentTasks)
+                <div class="task-department" data-department-id="{{ optional($departmentTasks->first()->assignedTo->department)->id ?? 'none' }}">
+                    <h1 class="page-title slide-in sarabun-36">{{ $departmentName }}</h1>
+                    <table class="fade-in">
+                        <tr class="table-title sarabun-16">
+                            <th>ภาระงาน</th>
+                            <th>ผู้รับผิดชอบ</th>
+                            <th>มอบหมายโดย</th>
+                            <th onclick="sortByDeadline()" style="cursor: pointer">
+                                วันครบกำหนด 
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>แก้ไข</th>
+                        </tr>
+                        <tbody class="department-task-body" id="taskTableBody-{{ optional($departmentTasks->first()->assignedTo->department)->id ?? 'none' }}">
+                            @foreach($departmentTasks->sortBy('deadline') as $task)
+                                <tr class="table-task">
+                                    <td class="border-top sarabun-16">{{ $task->title }}</td>
+                                    <td class="border-top sarabun-16">{{ optional($task->assignedTo)->first_name ?? '-' }}</td>
+                                    <td class="border-top sarabun-16">{{ optional($task->assignedBy)->first_name ?? '-' }}</td>
+                                    <td class="border-top sarabun-16">
+                                        @if($task->deadline)
+                                            {{ \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') }}
+                                        @else
+                                            ไม่มีวันครบกำหนด
+                                        @endif
+                                    </td>
+                                    <td class="border-top" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
+                                        <div class="btn-edit">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endforeach
         </div>
 
@@ -164,7 +156,7 @@
                                 <h2 class="sarabun-16">รายละเอียด</h2>
                                 <input type="text" name="description" placeholder="รายละเอียด..." class="input-text sarabun-16">
                             </div>
-                            <div class="popup-input-wrapper">
+                            <!-- <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">หน่วยงาน</h2>
                                 <div class="dropdown">
                                     <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentCreate')">
@@ -172,24 +164,29 @@
                                         <i class="fas fa-chevron-down"></i>
                                     </button>
                                     <div id="dropdownMenuDepartmentCreate" class="dropdown-content">
-                                        <!-- Departments will be loaded here -->
+                                        
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
                                 <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberCreate')">
-                                        <span id="createTaskAssignedTo" class="selected-text" data-member-id="">เลือกบุคลากร</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuMemberCreate" class="dropdown-content">
-                                        <!-- Members will be loaded here -->
+                                <div class="member-search-container">
+                                    <div class="search-input-wrapper">
+                                        <input type="text" 
+                                            id="createTaskMemberSearch" 
+                                            class="input-text sarabun-16" 
+                                            placeholder="พิมพ์ชื่อบุคลากร...">
                                     </div>
+                                    <div class="member-search-dropdown dropdown-content">
+                                        <!-- Search results will appear here -->
+                                    </div>
+                                </div>
+                                <div id="createSelectedMembers" class="selected-members-wrapper">
+                                    <!-- Selected members will appear here as tags -->
                                 </div>
                             </div>
                             <div class="popup-input-wrapper">
@@ -257,32 +254,13 @@
                                 <input type="text" name="description" id="editTaskDescription" placeholder="รายละเอียด..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">หน่วยงาน</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
-                                        <span id="editTaskDepartment" class="selected-text" data-department-id="">เลือกหน่วยงาน</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuDepartmentEdit" class="dropdown-content">
-                                        <!-- Departments will be loaded here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
                                 <input type="text" name="link" id="editTaskLink" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberEdit')">
-                                        <span id="editTaskAssignedTo" class="selected-text" data-member-id="">เลือกบุคลากร</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuMemberEdit" class="dropdown-content">
-                                        <!-- Members will be loaded here -->
-                                    </div>
-                                </div>
+                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
+                                <input type="text" id="editTaskAssignedTo" class="input-text sarabun-16" readonly>
+                                <input type="hidden" name="assigned_to" id="editTaskAssignedToId">
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">

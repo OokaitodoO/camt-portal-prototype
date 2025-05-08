@@ -56,17 +56,29 @@ Route::middleware(['auth'])->group(function () {
         
         // Delete task
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+        // Add this new route inside your tasks prefix group
+        Route::get('/search-members', [TaskController::class, 'searchMembers'])->name('tasks.search-members');
     });
 
     // Add these new routes
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-    Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
     // Add this new route for fetching member details
     Route::get('/members/{member}/details', [MemberController::class, 'getMemberDetails'])->name('members.details');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Task routes
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {

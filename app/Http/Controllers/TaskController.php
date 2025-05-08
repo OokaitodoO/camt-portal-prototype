@@ -16,26 +16,17 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $user = auth()->user(); // This will now be a Member model
-        
-        // Filter tasks based on user role
-        if ($user->isAdmin()) {
-            // Show all tasks
-            $tasks = Task::with(['department', 'assignedTo', 'assignedBy'])->get();
-        } elseif ($user->isManager()) {
-            // Show only department tasks
-            $tasks = Task::where('department_id', $user->department_id)
-                        ->with(['department', 'assignedTo', 'assignedBy'])
-                        ->get();
-        } else {
-            // Show only assigned tasks
-            $tasks = Task::where('assigned_to', $user->id)
-                        ->with(['department', 'assignedTo', 'assignedBy'])
-                        ->get();
-        }
+        // Get tasks grouped by department through the assigned members
+        $tasksByDepartment = Task::with(['assignedTo.department', 'assignedBy', 'subTasks'])
+            ->get()
+            ->groupBy(function ($task) {
+                return $task->assignedTo->department->name ?? 'ไม่ระบุหน่วยงาน';
+            });
 
         $departments = Department::all();
-        return view('task', compact('tasks', 'departments'));
+        $totalTasks = Task::count();
+        
+        return view('task', compact('tasksByDepartment', 'departments', 'totalTasks'));
     }
 
     public function filterByDepartment($departmentId)
@@ -55,75 +46,85 @@ class TaskController extends Controller
         try {
             DB::beginTransaction();
             
-            // Log incoming request data
-            Log::info('Creating new task with data:', $request->all());
+            // Log the incoming request data
+            Log::info('Task creation request data:', $request->all());
 
+            // Validate the request
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'department_id' => 'required|exists:departments,id',
-                'assigned_to' => 'required|exists:members,id',
+                'link' => 'nullable|string|max:255',
                 'deadline' => 'nullable|date',
-                'logo' => 'nullable|image|max:2048',
-                'link' => 'nullable|string'
+                'assigned_to' => 'required|string', // Changed to handle comma-separated string
+                'logo' => 'nullable|image|max:2048'
             ]);
 
-            // Create task with default values
-            $task = new Task();
-            $task->title = $validated['title'];
-            $task->description = $validated['description'] ?? null;
-            $task->department_id = $validated['department_id'];
-            $task->assigned_to = $validated['assigned_to'];
-            $task->deadline = $validated['deadline'] ?? null;
-            $task->link = $validated['link'] ?? null;
-            $task->status = 'pending';
-            $task->is_favorite = false;
-            $task->assigned_by = auth()->id();
+            // Parse assigned_to into array
+            $assignedToIds = array_filter(explode(',', $validated['assigned_to']));
             
-            // Handle logo upload
-            if ($request->hasFile('logo')) {
-                $file = $request->file('logo');
-                $path = $file->store('task-logos', 'public');
-                $task->logo_path = $path;
+            if (empty($assignedToIds)) {
+                throw new \Exception('At least one member must be assigned to the task');
             }
-            
-            $task->save();
 
-            // Handle subtasks
-            if ($request->has('sub_tasks')) {
-                $subTasks = json_decode($request->sub_tasks, true);
-                if (is_array($subTasks)) {
-                    foreach ($subTasks as $subTaskData) {
-                        if (!empty($subTaskData['title'])) {
-                            $task->subTasks()->create([
-                                'title' => $subTaskData['title'],
-                                'link' => $subTaskData['link'] ?? null
-                            ]);
+            // Handle logo upload if present
+            $logoPath = null;
+            if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+                $logoPath = $request->file('logo')->store('task-logos', 'public');
+            }
+
+            // Create tasks for each assigned member
+            $createdTasks = [];
+            foreach ($assignedToIds as $memberId) {
+                $task = Task::create([
+                    'title' => $validated['title'],
+                    'description' => $validated['description'] ?? null,
+                    'link' => $validated['link'] ?? null,
+                    'deadline' => $validated['deadline'] ?? null,
+                    'assigned_to' => $memberId,
+                    'assigned_by' => auth()->id(),
+                    'logo_path' => $logoPath ? Storage::url($logoPath) : null,
+                    'status' => 'pending'
+                ]);
+
+                // Handle subtasks if present
+                if ($request->has('sub_tasks')) {
+                    $subTasks = json_decode($request->sub_tasks, true);
+                    if (is_array($subTasks)) {
+                        foreach ($subTasks as $subTask) {
+                            if (!empty($subTask['title'])) {
+                                $task->subTasks()->create([
+                                    'title' => $subTask['title'],
+                                    'link' => $subTask['link'] ?? null
+                                ]);
+                            }
                         }
                     }
                 }
+
+                $createdTasks[] = $task->load(['assignedTo', 'subTasks']);
             }
 
             DB::commit();
 
-            // Load relationships for response
-            $task = $task->load(['department', 'assignedTo', 'assignedBy', 'subTasks']);
-            
             return response()->json([
                 'success' => true,
-                'message' => 'สร้างภาระงานสำเร็จ',
-                'task' => $task
+                'message' => 'Tasks created successfully',
+                'tasks' => $createdTasks
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Task creation error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-            Log::error('Request data:', $request->all());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error creating task: ' . $e->getMessage(),
+                'debug_info' => [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
     }
@@ -248,95 +249,70 @@ class TaskController extends Controller
         try {
             DB::beginTransaction();
 
+            // Validate the request
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'department_id' => 'required|exists:departments,id',
-                'assigned_to' => 'required|exists:members,id',
+                'link' => 'nullable|string|max:255',
                 'deadline' => 'nullable|date',
-                'logo' => 'nullable|image|max:2048',
-                'link' => 'nullable|string'
+                'assigned_to' => 'required|exists:members,id', // Validate the member ID exists
+                'logo' => 'nullable|image|max:2048'
             ]);
 
-            // Update main task fields
-            $task->title = $validated['title'];
-            $task->description = $validated['description'] ?? null;
-            $task->department_id = $validated['department_id'];
-            $task->assigned_to = $validated['assigned_to'];
-            $task->deadline = $validated['deadline'] ?? null;
-            $task->link = $validated['link'] ?? null;
-
-            // Handle logo upload
-            if ($request->hasFile('logo')) {
+            // Handle logo upload if present
+            if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
                 // Delete old logo if exists
                 if ($task->logo_path) {
-                    Storage::disk('public')->delete($task->logo_path);
+                    Storage::disk('public')->delete(str_replace('/storage/', '', $task->logo_path));
                 }
-                $task->logo_path = $request->file('logo')->store('task-logos', 'public');
+                $logoPath = $request->file('logo')->store('task-logos', 'public');
+                $task->logo_path = Storage::url($logoPath);
             }
 
-            $task->save();
+            // Update task
+            $task->update([
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'link' => $validated['link'] ?? null,
+                'deadline' => $validated['deadline'] ?? null,
+                'assigned_to' => $validated['assigned_to']
+            ]);
 
             // Handle subtasks
             if ($request->has('sub_tasks')) {
                 $subTasks = json_decode($request->sub_tasks, true);
                 
+                // Delete existing subtasks not in the new list
+                $task->subTasks()->delete();
+                
+                // Create new subtasks
                 if (is_array($subTasks)) {
-                    // Get existing subtask IDs
-                    $existingSubTaskIds = $task->subTasks->pluck('id')->toArray();
-                    $updatedSubTaskIds = [];
-
-                    foreach ($subTasks as $subTaskData) {
-                        if (!empty($subTaskData['title'])) {
-                            if (isset($subTaskData['id'])) {
-                                // Update existing subtask
-                                $subTask = $task->subTasks()->find($subTaskData['id']);
-                                if ($subTask) {
-                                    $subTask->update([
-                                        'title' => $subTaskData['title'],
-                                        'link' => $subTaskData['link'] ?? null
-                                    ]);
-                                    $updatedSubTaskIds[] = $subTask->id;
-                                }
-                            } else {
-                                // Create new subtask
-                                $newSubTask = $task->subTasks()->create([
-                                    'title' => $subTaskData['title'],
-                                    'link' => $subTaskData['link'] ?? null
-                                ]);
-                                $updatedSubTaskIds[] = $newSubTask->id;
-                            }
+                    foreach ($subTasks as $subTask) {
+                        if (!empty($subTask['title'])) {
+                            $task->subTasks()->create([
+                                'title' => $subTask['title'],
+                                'link' => $subTask['link'] ?? null
+                            ]);
                         }
                     }
-
-                    // Delete removed subtasks
-                    $task->subTasks()
-                        ->whereNotIn('id', $updatedSubTaskIds)
-                        ->delete();
                 }
             }
 
             DB::commit();
 
-            // Load relationships for response
-            $task = $task->load(['department', 'assignedTo', 'assignedBy', 'subTasks']);
-
             return response()->json([
                 'success' => true,
-                'message' => 'อัพเดทภาระงานสำเร็จ',
-                'task' => $task
+                'message' => 'Task updated successfully',
+                'task' => $task->load(['assignedTo', 'subTasks'])
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Task update error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            Log::error('Request data:', $request->all());
             
             return response()->json([
                 'success' => false,
-                'message' => 'เกิดข้อผิดพลาดในการอัพเดทภาระงาน',
-                'error' => $e->getMessage()
+                'message' => 'Error updating task: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -355,6 +331,69 @@ class TaskController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error toggling favorite status'
+            ], 500);
+        }
+    }
+
+    // Add this new method to search members
+    public function searchMembers(Request $request)
+    {
+        try {
+            $query = $request->get('query');
+
+            $members = Member::where(function($q) use ($query) {
+                $q->where('first_name', 'LIKE', "%{$query}%")
+                  ->orWhere('last_name', 'LIKE', "%{$query}%");
+            })
+            ->with('department') // Eager load department
+            ->select('id', 'first_name', 'last_name', 'department_id')
+            ->limit(10)
+            ->get()
+            ->map(function($member) {
+                return [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'department_name' => $member->department ? $member->department->name : null
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'members' => $members
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to search members'
+            ], 500);
+        }
+    }
+
+    public function show(Task $task)
+    {
+        try {
+            // Check if user is authenticated
+            if (!auth()->check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            // Load the necessary relationships
+            $task->load(['assignedTo', 'assignedBy', 'subTasks']);
+            
+            return response()->json([
+                'success' => true,
+                'task' => $task
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error showing task: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading task details',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
