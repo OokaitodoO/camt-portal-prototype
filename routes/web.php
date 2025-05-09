@@ -37,28 +37,16 @@ Route::middleware(['auth'])->group(function () {
     // Route::get('/members/{id}/individual', [MemberController::class, 'individual'])->name('members.individual');
 
     Route::prefix('tasks')->group(function () {
-        // View all tasks
         Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
-        
-        // Create new task
         Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
-        
-        // Filter tasks by department
-        Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])
-            ->name('tasks.filter');
-        
-        // Get members by department (for dropdown)
-        Route::get('/department/{departmentId}/members', [TaskController::class, 'getDepartmentMembers'])
-            ->name('tasks.department.members');
-        
-        // Update task
+        Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])->name('tasks.filter');
+        Route::get('/department/{departmentId}/members', [TaskController::class, 'getDepartmentMembers'])->name('tasks.department.members');
         Route::put('/{task}', [TaskController::class, 'update'])->name('tasks.update');
-        
-        // Delete task
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-
-        // Add this new route inside your tasks prefix group
         Route::get('/search-members', [TaskController::class, 'searchMembers'])->name('tasks.search-members');
+        Route::get('/{task}/data', [TaskController::class, 'getData'])->name('tasks.getData');
+        Route::get('/{task}/subtasks', [TaskController::class, 'getSubtasks'])->name('tasks.subtasks');
+        Route::post('/{task}/toggle-favorite', [TaskController::class, 'toggleFavorite'])->name('tasks.toggle-favorite');
     });
 
     // Add these new routes
@@ -98,4 +86,8 @@ Route::post('/tasks/{task}/toggle-favorite', [TaskController::class, 'toggleFavo
 
 // Add this route for fetching member data
 Route::get('/members/{member}/data', [MemberController::class, 'getMemberData'])->name('members.getData');
+
+Route::get('/tasks/{task}/data', [TaskController::class, 'getData'])->name('tasks.getData');
+
+Route::get('/tasks/{task}/subtasks', [TaskController::class, 'getSubtasks'])->name('tasks.subtasks');
 

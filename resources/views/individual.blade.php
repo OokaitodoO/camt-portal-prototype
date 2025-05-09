@@ -100,7 +100,7 @@
                 <div class="favorite-tasks">
                     @foreach($assignedTasks->where('is_favorite', true) as $favTask)
                     <div class="favorite-task-item">
-                        <img src="{{ $favTask->logo_path ? asset('storage/' . $favTask->logo_path) : 'https://placehold.co/25' }}" 
+                        <img src="{{ $favTask->logo_path ? Storage::url($favTask->logo_path) : 'https://placehold.co/25' }}" 
                              class="nav-logo-img" alt="logo">
                         <a href="javascript:void(0)" 
                            onclick="openTaskLink(event, '{{ $favTask->link }}')" 
@@ -140,8 +140,14 @@
                                     </div>
                                 </div>
                                 <div class="card-logo">
-                                    <img src="{{ $task->logo_path ? asset('storage/' . $task->logo_path) : 'https://placehold.co/128' }}" 
-                                         class="card-logo-img" alt="logo">
+                                    @if($task->logo_path)
+                                        <img src="{{ asset('storage/' . $task->logo_path) }}" 
+                                             class="card-logo-img" 
+                                             alt="logo"
+                                             onerror="this.src='https://placehold.co/128'">
+                                    @else
+                                        <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                                    @endif
                                 </div>
                             </div>
                             <div class="divider"></div>

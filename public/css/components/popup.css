@@ -227,3 +227,29 @@
     }
 }
 
+/* Add these styles for the deadline input */
+.date-picker input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: right;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 16px;
+}
+
+.date-picker input[type="text"]:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+.date-picker input[type="text"]::placeholder {
+    text-align: right;
+    color: #999;
+}
+
+/* Style for the Flatpickr calendar to match your theme */
+.flatpickr-calendar {
+    font-family: 'Sarabun', sans-serif;
+}
+

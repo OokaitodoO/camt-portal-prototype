@@ -100,7 +100,7 @@
                         <tbody class="department-task-body" id="taskTableBody-{{ optional($departmentTasks->first()->assignedTo->department)->id ?? 'none' }}">
                             @foreach($departmentTasks->sortBy('deadline') as $task)
                                 <tr class="table-task">
-                                    <td class="border-top sarabun-16">{{ $task->title }}</td>
+                                    <td class="border-top sarabun-16" onclick="openTaskLink(event, '{{ $task->link }}')">{{ $task->title }}</td>
                                     <td class="border-top sarabun-16">{{ optional($task->assignedTo)->first_name ?? '-' }}</td>
                                     <td class="border-top sarabun-16">{{ optional($task->assignedBy)->first_name ?? '-' }}</td>
                                     <td class="border-top sarabun-16">

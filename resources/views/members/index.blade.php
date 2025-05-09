@@ -179,8 +179,16 @@
                         </div>
                     </div>
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img" id="previewImage">
-                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')" accept="image/*">
+                        <div class="card-logo-container">
+                            <div class="card-logo" onclick="document.getElementById('memberProfilePicture').click()">
+                                <img src="https://placehold.co/128" class="card-logo-img" id="previewImage" alt="logo">
+                                <input type="file" name="profile_picture" id="memberProfilePicture" style="display: none;" accept="image/*">                                                    
+                            </div>   
+                            <div>
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div> 
+                        </div>                                                                
                     </div>
                     <div class="popup-input-container">
                         <div class="popup-member-name">
@@ -265,8 +273,17 @@
                         </div>
                     </div>
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img" id="previewImage">
-                        <input type="file" name="profile_picture" onchange="previewImage(this, 'previewImage')">
+                        <div class="card-logo-container">
+                            <div class="card-logo" onclick="document.getElementById('editMemberProfilePicture').click()">
+                                <img src="https://placehold.co/128" class="card-logo-img" id="editPreviewImage" alt="logo">
+                                <input type="file" name="profile_picture" id="editMemberProfilePicture" style="display: none;" accept="image/*">
+                            </div>
+                            <div>
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div> 
+                        </div>
+                        
                     </div>
                     <div class="popup-input-container">
                         <div class="popup-member-name">

@@ -6,6 +6,7 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DepartmentController extends Controller
 {
@@ -39,7 +40,8 @@ class DepartmentController extends Controller
 
             // Validate request
             $validated = $request->validate([
-                'name' => 'required|unique:departments,name,' . $department->id
+                'name' => 'required|unique:departments,name,' . $department->id,
+                'icon' => 'nullable|image|max:2048'
             ]);
 
             Log::info('Updating department:', [
@@ -47,6 +49,15 @@ class DepartmentController extends Controller
                 'old_name' => $name,
                 'new_name' => $validated['name']
             ]);
+
+            if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
+                // Delete old icon if exists
+                if ($department->icon_path) {
+                    Storage::disk('public')->delete(str_replace('/storage/', '', $department->icon_path));
+                }
+                $iconPath = $request->file('icon')->store('department-icons', 'public');
+                $department->icon_path = Storage::url($iconPath);
+            }
 
             // Update department first
             $department->name = $validated['name'];
@@ -81,10 +92,19 @@ class DepartmentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|unique:departments,name'
+                'name' => 'required|unique:departments,name',
+                'icon' => 'nullable|image|max:2048'
             ]);
 
-            $department = Department::create($validated);
+            $department = new Department();
+            $department->name = $validated['name'];
+
+            if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
+                $iconPath = $request->file('icon')->store('department-icons', 'public');
+                $department->icon_path = Storage::url($iconPath);
+            }
+
+            $department->save();
 
             if ($request->ajax()) {
                 return response()->json([

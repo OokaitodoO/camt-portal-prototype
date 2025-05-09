@@ -33,7 +33,7 @@ async function openEditPopup(element) {
             throw new Error('Member ID not found');
         }
         
-        // Fetch member data from database using the new endpoint
+        // Fetch member data from database
         const response = await axios.get(`/members/${memberId}/data`);
         if (!response.data || !response.data.success) {
             throw new Error('Failed to fetch member data');
@@ -74,8 +74,8 @@ async function openEditPopup(element) {
             roleSelect.value = member.role;
         }
 
-        // Show profile picture if exists
-        const previewImage = document.getElementById('previewImage');
+        // Show profile picture if exists, otherwise show placeholder
+        const previewImage = document.getElementById('editPreviewImage');
         if (previewImage) {
             previewImage.src = member.profile_picture || 'https://placehold.co/128';
         }
@@ -669,7 +669,39 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(memberCard);
         });
     }
-}); 
+
+    // Create member image preview
+    const createInput = document.getElementById('memberProfilePicture');
+    const createPreview = document.getElementById('previewImage');
+    
+    if (createInput && createPreview) {
+        createInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    createPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    // Edit member image preview
+    const editInput = document.getElementById('editMemberProfilePicture');
+    const editPreview = document.getElementById('editPreviewImage');
+    
+    if (editInput && editPreview) {
+        editInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    editPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+});
 
 // Make functions available globally
 window.createMember = createMember;

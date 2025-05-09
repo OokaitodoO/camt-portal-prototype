@@ -82,7 +82,7 @@ class TaskController extends Controller
                     'deadline' => $validated['deadline'] ?? null,
                     'assigned_to' => $memberId,
                     'assigned_by' => auth()->id(),
-                    'logo_path' => $logoPath ? Storage::url($logoPath) : null,
+                    'logo_path' => $logoPath,
                     'status' => 'pending'
                 ]);
 
@@ -247,45 +247,43 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         try {
-            DB::beginTransaction();
-
-            // Validate the request
-            $validated = $request->validate([
+            $validatedData = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'link' => 'nullable|string|max:255',
+                'link' => 'nullable|string',
                 'deadline' => 'nullable|date',
-                'assigned_to' => 'required|exists:members,id', // Validate the member ID exists
-                'logo' => 'nullable|image|max:2048'
+                'assigned_to' => 'required|exists:members,id',
+                'sub_tasks' => 'nullable|json',
+                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
-            // Handle logo upload if present
+            // Start transaction
+            DB::beginTransaction();
+
+            // Handle file upload if present
             if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
-                // Delete old logo if exists
                 if ($task->logo_path) {
-                    Storage::disk('public')->delete(str_replace('/storage/', '', $task->logo_path));
+                    Storage::disk('public')->delete($task->logo_path);
                 }
                 $logoPath = $request->file('logo')->store('task-logos', 'public');
-                $task->logo_path = Storage::url($logoPath);
+                $task->logo_path = $logoPath;
             }
 
-            // Update task
-            $task->update([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'link' => $validated['link'] ?? null,
-                'deadline' => $validated['deadline'] ?? null,
-                'assigned_to' => $validated['assigned_to']
-            ]);
+            // Update basic task information
+            $task->title = $validatedData['title'];
+            $task->description = $validatedData['description'] ?? null;
+            $task->link = $validatedData['link'] ?? null;
+            $task->deadline = $request->has('deadline') ? $validatedData['deadline'] : null;
+            $task->assigned_to = $validatedData['assigned_to'];
+            
+            // Save the task
+            $task->save();
 
-            // Handle subtasks
+            // Handle subtasks if present
             if ($request->has('sub_tasks')) {
-                $subTasks = json_decode($request->sub_tasks, true);
-                
-                // Delete existing subtasks not in the new list
                 $task->subTasks()->delete();
                 
-                // Create new subtasks
+                $subTasks = json_decode($request->sub_tasks, true);
                 if (is_array($subTasks)) {
                     foreach ($subTasks as $subTask) {
                         if (!empty($subTask['title'])) {
@@ -302,14 +300,14 @@ class TaskController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Task updated successfully',
-                'task' => $task->load(['assignedTo', 'subTasks'])
+                'message' => 'Task updated successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Task update error: ' . $e->getMessage());
             
+            Log::error('Task update error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating task: ' . $e->getMessage()
@@ -394,6 +392,43 @@ class TaskController extends Controller
                 'success' => false,
                 'message' => 'Error loading task details',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getData(Task $task)
+    {
+        try {
+            $task = $task->load(['department', 'subTasks', 'assignedTo']);
+            
+            // Format the task data
+            $taskData = $task->toArray();
+            $taskData['assigned_to_name'] = $task->assignedTo ? 
+                $task->assignedTo->first_name . ' ' . $task->assignedTo->last_name : null;
+            
+            return response()->json([
+                'success' => true,
+                'task' => $taskData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch task data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getSubtasks(Task $task)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'subtasks' => $task->subTasks
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch subtasks: ' . $e->getMessage()
             ], 500);
         }
     }

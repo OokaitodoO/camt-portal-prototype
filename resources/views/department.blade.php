@@ -74,7 +74,14 @@
                         </div>
                     </div>
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                        <label for="departmentLogo" class="logo-upload-label">
+                            <img src="https://placehold.co/128" alt="" class="card-logo-img" id="createLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="departmentLogo" accept="image/*" style="display: none;">
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
@@ -111,7 +118,14 @@
                     </div>
                     <input type="hidden" name="id" id="editDepartmentId">
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                        <label for="editDepartmentLogo" class="logo-upload-label">
+                            <img src="" alt="" class="card-logo-img" id="editLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="editDepartmentLogo" accept="image/*" style="display: none;">
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>

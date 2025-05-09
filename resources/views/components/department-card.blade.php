@@ -8,7 +8,7 @@
         
         <div class="card-content" onclick="window.location.href='{{ route('members.filter', $department->id) }}'">
             <div class="card-logo">
-                <img src="{{ $department->icon_path ?? 'https://placehold.co/128' }}" class="card-logo-img" alt="logo">
+                <img src="{{ $department->icon_path ?? 'https://placehold.co/128' }}" class="card-logo-img" alt="logo" id="department-logo-{{ $department->id }}">
             </div>
             <hr class="divider">
             <div class="card-container-info">
