@@ -263,7 +263,7 @@ class TaskController extends Controller
             // Handle file upload if present
             if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
                 if ($task->logo_path) {
-                    Storage::disk('public')->delete($task->logo_path);
+                    Storage::disk('public')->delete(str_replace('storage/', '', $task->logo_path));
                 }
                 $logoPath = $request->file('logo')->store('task-logos', 'public');
                 $task->logo_path = $logoPath;

@@ -54,7 +54,7 @@
         <!-- side nav -->
         <div class="side-nav-container slide-right">
             <div class="side-nav-logo">
-                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                <img src="{{ $member->profile_picture ? asset('storage/' . str_replace('storage/', '', $member->profile_picture)) : 'https://placehold.co/128' }}" 
                      class="card-logo-img" alt="logo">
             </div>
             <div class="side-nav-info-item">
@@ -100,7 +100,7 @@
                 <div class="favorite-tasks">
                     @foreach($assignedTasks->where('is_favorite', true) as $favTask)
                     <div class="favorite-task-item">
-                        <img src="{{ $favTask->logo_path ? Storage::url($favTask->logo_path) : 'https://placehold.co/25' }}" 
+                        <img src="{{ $favTask->logo_path ? asset('storage/' . str_replace('storage/', '', $favTask->logo_path)) : 'https://placehold.co/25' }}" 
                              class="nav-logo-img" alt="logo">
                         <a href="javascript:void(0)" 
                            onclick="openTaskLink(event, '{{ $favTask->link }}')" 
@@ -141,7 +141,7 @@
                                 </div>
                                 <div class="card-logo">
                                     @if($task->logo_path)
-                                        <img src="{{ asset('storage/' . $task->logo_path) }}" 
+                                        <img src="{{ asset('storage/' . str_replace('storage/', '', $task->logo_path)) }}" 
                                              class="card-logo-img" 
                                              alt="logo"
                                              onerror="this.src='https://placehold.co/128'">
@@ -236,37 +236,21 @@
                                 <input type="text" name="description" placeholder="รายละเอียด..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">หน่วยงาน</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartment')">
-                                        <span class="selected-text sarabun-16" data-department-id="">เลือกหน่วยงาน</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuDepartment" class="dropdown-content">
-                                        <!-- Departments will be loaded here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
                                 <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMember')">
-                                        <span class="selected-text sarabun-16" data-member-id="">เลือกบุคลากร</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuMember" class="dropdown-content">
-                                        <!-- Members will be loaded here -->
-                                    </div>
-                                </div>
+                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
+                                <input type="text" 
+                                       value="{{ $member->first_name }} {{ $member->last_name }}" 
+                                       class="input-text sarabun-16" 
+                                       readonly>
+                                <input type="hidden" name="assigned_to" value="{{ $member->id }}">
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" id="deadline" name="deadline" required>
+                                    <input type="text" name="deadline" class="sarabun-16" placeholder="dd/mm/yyyy" required>
                                 </div>
                             </div>
                         </div>
@@ -439,6 +423,7 @@
     <!-- script -->
     @vite('resources/js/app.js')
     @vite('resources/js/task.js')
+    @vite('resources/js/individual.js')
     
 </body>
 </html>
