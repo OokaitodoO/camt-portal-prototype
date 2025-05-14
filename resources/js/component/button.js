@@ -9,6 +9,7 @@ function openCreatePopup() {
         toggleScrollbar(popup);
         popup.classList.add('active');
         overlay.classList.add('active');
+        document.body.classList.add('lock-scroll');
     } else {
         console.error('Create popup not found');
     }
@@ -22,6 +23,7 @@ function closeCreatePopup() {
         toggleScrollbar(popup);
         popup.classList.remove('active');
         overlay.classList.remove('active');
+        document.body.classList.remove('lock-scroll');
     }
 }
 
@@ -61,6 +63,7 @@ function openEditPopup() {
         toggleScrollbar(popup);
         popup.classList.add('active');
         overlay.classList.add('active');
+        document.body.classList.add('lock-scroll');
     }
 }
 
@@ -71,6 +74,7 @@ function closeEditPopup() {
     if (popup) {
         popup.classList.remove('active');
         overlay.classList.remove('active');
+        document.body.classList.remove('lock-scroll');
     }
 }
 
@@ -81,6 +85,7 @@ function openDeleteConfirmationPopup() {
         closeEditPopup();
         deletePopup.classList.add('active');
         overlay.classList.add('active');
+        document.body.classList.add('lock-scroll');
     }
 }
 
@@ -90,6 +95,7 @@ function closeDeleteConfirmation() {
     if (deletePopup) {
         deletePopup.classList.remove('active');
         overlay.classList.remove('active');
+        document.body.classList.remove('lock-scroll');
     }
 }
 

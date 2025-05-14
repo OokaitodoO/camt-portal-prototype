@@ -73,6 +73,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+    position: relative;
 }
 
 .card-container:hover {
@@ -80,8 +81,38 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.card-header, .card-container-info {
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px;
+}
+
+.card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+.card-favorite {
     cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+
+.card-edit {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: absolute;
+    right: 10px;
+    top: 10px;
 }
 
 .card-actions > div {
@@ -105,33 +136,15 @@
     color: #666;
 }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-}
-
-.card-edit {
-    z-index: 2;
-}
-
 .card-actions {
     display: flex;
     gap: 10px;
     z-index: 2;
 }
 
-.card-favorite {
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-.card-favorite:hover {
+/* .card-favorite:hover {
     background-color: rgba(0, 0, 0, 0.1);
-}
+} */
 
 .card-favorite i {
     color: #ccc;
@@ -156,11 +169,13 @@
     padding: 8px;
     border-radius: 4px;
     transition: background-color 0.2s ease;
+    background-color: white;
+    color: black;
 }
 
-.favorite-task-item:hover {
+/* .favorite-task-item:hover {
     background-color: rgba(0, 0, 0, 0.05);
-}
+} */
 
 .favorite-task-link {
     color: inherit;
@@ -169,7 +184,7 @@
 }
 
 .favorite-task-link:hover {
-    color: #007bff;
+    color: #F48E2E;
 }
 
 .card-container-info {

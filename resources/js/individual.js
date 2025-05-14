@@ -77,12 +77,14 @@ async function createNewTask() {
 function openCreatePopup() {
     document.getElementById('popupCreate').classList.add('active');
     document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
 }
 
 // Function to close create popup
 function closeCreatePopup() {
     document.getElementById('popupCreate').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Initialize event listeners
@@ -101,4 +103,29 @@ window.openCreatePopup = openCreatePopup;
 window.closeCreatePopup = closeCreatePopup;
 window.createNewTask = createNewTask;
 window.addNewSubTask = addNewSubTask;
-window.removeSubTask = removeSubTask; 
+window.removeSubTask = removeSubTask;
+
+function toggleFavorite(event, taskId, element) {
+    event.stopPropagation();
+    
+    const isFavorite = element.getAttribute('data-favorite') === '1';
+    
+    axios.post(`/tasks/${taskId}/toggle-favorite`, {
+        _token: document.querySelector('meta[name="csrf-token"]').content
+    })
+    .then(response => {
+        if (response.data.success) {
+            // Toggle the favorite status
+            element.setAttribute('data-favorite', isFavorite ? '0' : '1');
+            element.querySelector('i').classList.toggle('favorite-active');
+            
+            // Refresh the page to show the updated order
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling favorite:', error);
+    });
+}
+
+window.toggleFavorite = toggleFavorite; 

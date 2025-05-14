@@ -15,19 +15,32 @@
     <!-- Header -->
     <header>
         <div class="role-container">
-            <ul>
-                <li class="btn-status btn-text sarabun-20">
-                    @php
-                        $roleLabels = [
-                            'admin' => 'ผู้ดูแลระบบ',
-                            'manager' => 'ผู้บริหาร',
-                            'headstaff' => 'หัวหน้างาน',
-                            'staff' => 'บุคลากร'
-                        ];
-                    @endphp
-                    {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
-                </li>
-            </ul>
+            <div class="user-dropdown">
+                <div class="btn-status btn-text sarabun-20" onclick="toggleUserDropdown()">
+                    {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="userDropdown">
+                    <div class="dropdown-item sarabun-16">
+                        @php
+                            $roleLabels = [
+                                'admin' => 'ผู้ดูแลระบบ',
+                                'manager' => 'ผู้บริหาร',
+                                'headstaff' => 'หัวหน้างาน',
+                                'staff' => 'บุคลากร'
+                            ];
+                        @endphp
+                        {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item sarabun-16">
+                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
@@ -118,10 +131,11 @@
         <div class="content">
             <div class="content-task">
                 @php
-                    // Get tasks assigned to this member
+                    // Get tasks assigned to this member and sort by favorite status
                     $assignedTasks = \App\Models\Task::with(['department', 'assignedBy', 'subTasks'])
                         ->where('assigned_to', $member->id)
-                        ->get();
+                        ->get()
+                        ->sortByDesc('is_favorite');
                 @endphp
 
                 @if($assignedTasks && $assignedTasks->count() > 0)

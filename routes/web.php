@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{task}/data', [TaskController::class, 'getData'])->name('tasks.getData');
         Route::get('/{task}/subtasks', [TaskController::class, 'getSubtasks'])->name('tasks.subtasks');
         Route::post('/{task}/toggle-favorite', [TaskController::class, 'toggleFavorite'])->name('tasks.toggle-favorite');
+        Route::get('/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     });
 
     // Add these new routes

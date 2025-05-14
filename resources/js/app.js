@@ -2,6 +2,8 @@ import './component/button.js';
 import './component/popup.js';
 import './component/card.js';
 import './component/dropdown.js';
+import './layouts/header.js';
+import './layouts/body.js';
 import axios from 'axios';
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
