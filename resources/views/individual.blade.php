@@ -177,7 +177,7 @@
                                     </div>
                                     <div class="card-details">
                                         <p class="card-date-title sarabun-16">วันครบกำหนด</p>
-                                        <p class="sarabun-16">{{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : 'ไม่มีกำหนด' }}</p>
+                                        <p class="sarabun-16">{{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : 'ไม่มีวันครบกำหนด' }}</p>
                                     </div>
                                     <div class="card-details">
                                         <p class="card-date-title sarabun-16">มอบหมายโดย</p>
@@ -288,7 +288,7 @@
             </div>
         </div>
 
-        <!-- Add the edit popup HTML -->
+        <!-- Edit Task Popup -->
         <div id="popupEdit" class="popup-container">
             <div class="create-popup-department">
                 <div class="popup-content">
@@ -326,32 +326,13 @@
                                 <input type="text" name="description" id="editTaskDescription" placeholder="รายละเอียด..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">หน่วยงาน</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
-                                        <span id="editTaskDepartment" class="selected-text" data-department-id="">เลือกหน่วยงาน</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuDepartmentEdit" class="dropdown-content">
-                                        <!-- Departments will be loaded here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
                                 <input type="text" name="link" id="editTaskLink" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberEdit')">
-                                        <span id="editTaskAssignedTo" class="selected-text" data-member-id="">เลือกบุคลากร</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuMemberEdit" class="dropdown-content">
-                                        <!-- Members will be loaded here -->
-                                    </div>
-                                </div>
+                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
+                                <input type="text" id="editTaskAssignedTo" class="input-text sarabun-16" readonly>
+                                <input type="hidden" name="assigned_to" id="editTaskAssignedToId">
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
@@ -380,7 +361,7 @@
             </div>
         </div>
 
-        <!-- Add the delete confirmation popup -->
+        <!-- Delete Confirmation Popup -->
         <div id="deleteConfirmationPopup" class="popup-container">
             <div class="confirmation-popup">
                 <div class="popup-content">

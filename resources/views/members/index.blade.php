@@ -420,6 +420,41 @@
         </div>
     </div>
 
+    <!-- Task Confirmation Popup -->
+    <div id="taskConfirmationPopup" class="popup-container">
+        <div class="confirmation-popup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="popup-name">
+                        <h1 class="page-title sarabun-36">ยืนยันการลบบุคลากรและภาระงาน</h1>
+                    </div>
+                </div>
+                <div class="member-info">
+                    <div class="card-logo">
+                        <img id="memberImage" src="https://placehold.co/128" class="card-logo-img" alt="Member">
+                    </div>
+                    <h2 id="memberName" class="sarabun-24"></h2>
+                </div>
+                <div class="divider"></div>
+                <div class="warning-message sarabun-20">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    บุคลากรนี้มีภาระงานที่ต้องรับผิดชอบ การลบจะเป็นการลบภาระงานทั้งหมดด้วย
+                </div>
+                <div class="tasks-list" id="tasksList">
+                    <!-- Tasks will be populated here -->
+                </div>
+                <div class="popup-btn-wrapper">
+                    <button type="button" class="btn btn-cancel sarabun-20" onclick="closeTaskConfirmationPopup()">
+                        ยกเลิก
+                    </button>
+                    <button type="button" class="btn btn-confirm sarabun-20" onclick="deleteMemberWithTasks()">
+                        ยืนยันการลบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- overlay -->
     <div id="overlay"></div>
 

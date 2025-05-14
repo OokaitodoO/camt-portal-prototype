@@ -160,4 +160,37 @@ class DepartmentController extends Controller
             ], 500);
         }
     }
+
+    public function getDepartmentData($id)
+    {
+        try {
+            $department = Department::findOrFail($id);
+            
+            // Format the icon path correctly
+            $iconPath = $department->icon_path;
+            if ($iconPath) {
+                // Remove '/storage/' prefix if it exists
+                $iconPath = str_replace('/storage/', '', $iconPath);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'department' => [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'icon_path' => $iconPath
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching department data:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching department data'
+            ], 500);
+        }
+    }
 }

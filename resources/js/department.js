@@ -359,6 +359,67 @@ window.deleteDepartment = deleteDepartment;
 window.openEditPopup = handleEditPopup; // Export handleEditPopup as openEditPopup
 window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 
+async function openEditPopup(element) {
+    try {
+        const departmentId = element.getAttribute('data-department-id');
+        if (!departmentId) {
+            throw new Error('Department ID not found');
+        }
+
+        // Fetch department data
+        const response = await axios.get(`/departments/${departmentId}/data`);
+        if (!response.data.success) {
+            throw new Error('Failed to fetch department data');
+        }
+
+        const department = response.data.department;
+        
+        // Store current card for deletion reference
+        currentCard = element.closest('.card-container');
+
+        // Get the edit form
+        const form = document.getElementById('editDepartmentForm');
+        
+        // Set form values
+        form.querySelector('input[name="id"]').value = departmentId;
+        form.querySelector('input[name="name"]').value = department.name;
+
+        // Set logo preview
+        const logoPreview = document.getElementById('editLogoPreview');
+        if (department.icon_path) {
+            // Check if the path already includes storage/
+            const iconPath = department.icon_path.startsWith('storage/') 
+                ? department.icon_path 
+                : `storage/${department.icon_path}`;
+            logoPreview.src = `/${iconPath}`;
+        } else {
+            logoPreview.src = 'https://placehold.co/128';
+        }
+
+        // Show popup
+        document.getElementById('popupEdit').classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+
+    } catch (error) {
+        console.error('Error opening edit popup:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');
+    }
+}
+
+// Add this function to handle logo preview for edit form
+document.getElementById('editDepartmentLogo').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editLogoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+window.openEditPopup = openEditPopup;
+
 
 
 

@@ -261,7 +261,6 @@ async function updateMember(event) {
 
 async function openDeleteConfirmationPopup() {
     try {
-        // Get the current member data from the edit popup
         const editForm = document.getElementById('editMemberForm');
         if (!editForm) {
             console.error('Edit form not found');
@@ -270,96 +269,151 @@ async function openDeleteConfirmationPopup() {
 
         const memberId = editForm.querySelector('input[name="id"]').value;
         
-        // Fetch member data using the new endpoint
-        const response = await axios.get(`/members/${memberId}/details`);
+        // Fetch member data and their tasks
+        const response = await axios.get(`/members/${memberId}/details-with-tasks`);
         
         if (!response.data.success) {
             throw new Error('Failed to fetch member details');
         }
 
         const member = response.data.member;
+        const tasks = response.data.tasks;
 
-        // Get delete confirmation popup
-        const deletePopup = document.getElementById('deleteConfirmationPopup');
-        if (!deletePopup) {
-            console.error('Delete confirmation popup not found');
-            return;
+        // If member has tasks, show task confirmation popup
+        if (tasks && tasks.length > 0) {
+            showTaskConfirmationPopup(member, tasks);
+        } else {
+            // If no tasks, show regular delete confirmation
+            showDeleteConfirmationPopup(member);
         }
 
-        // Update profile image
-        const profileImage = deletePopup.querySelector('.card-logo-img');
-        if (profileImage) {
-            profileImage.src = member.profile_picture || 'https://placehold.co/128';
-        }
-
-        // Update name
-        const nameElement = deletePopup.querySelector('.card-name h2');
-        if (nameElement) {
-            nameElement.textContent = `${member.first_name} ${member.last_name}`;
-        }
-
-        // Update information fields
-        const infoItems = deletePopup.querySelectorAll('.popup-member-infoamation-item p');
-        if (infoItems) {
-            const values = [
-                member.position,
-                member.department?.name || '-',
-                member.sub_department || '-',
-                member.email || '-',
-                member.phone || '-'
-            ];
-
-            infoItems.forEach((p, index) => {
-                if (values[index]) {
-                    p.textContent = values[index];
-                }
-            });
-        }
-
-        // Store member ID for deletion
-        deletePopup.setAttribute('data-member-id', memberId);
-
-        // Close edit popup and show delete confirmation
-        closeEditPopup();
-        deletePopup.classList.add('active');
-        document.getElementById('overlay').classList.add('active');
-        document.body.classList.add('lock-scroll');
     } catch (error) {
         console.error('Error opening delete confirmation:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลบุคลากร');
     }
 }
 
-async function deleteMember() {
+function showTaskConfirmationPopup(member, tasks) {
+    const popup = document.getElementById('taskConfirmationPopup');
+    
+    // Update member info
+    popup.querySelector('#memberName').textContent = `${member.first_name} ${member.last_name}`;
+    popup.querySelector('#memberImage').src = member.profile_picture || 'https://placehold.co/128';
+
+    // Update tasks list
+    const tasksList = popup.querySelector('#tasksList');
+    tasksList.innerHTML = tasks.map(task => `
+        <div class="task-item">
+            <div class="task-info">
+                <h3 class="sarabun-20">${task.title}</h3>
+                <p class="sarabun-16">${task.description || 'ไม่มีคำอธิบาย'}</p>
+                <p class="sarabun-16">วันครบกำหนด: ${task.deadline || 'ไม่ระบุ'}</p>
+            </div>
+        </div>
+    `).join('');
+
+    // Store member ID for deletion
+    popup.setAttribute('data-member-id', member.id);
+
+    // Show popup
+    closeEditPopup();
+    popup.classList.add('active');
+    document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
+
+}
+
+function showDeleteConfirmationPopup(member) {
+    const deletePopup = document.getElementById('deleteConfirmationPopup');
+    
+    // Update member info
+    const profileImage = deletePopup.querySelector('.card-logo-img');
+    if (profileImage) {
+        profileImage.src = member.profile_picture || 'https://placehold.co/128';
+    }
+
+    const nameElement = deletePopup.querySelector('.card-name h2');
+    if (nameElement) {
+        nameElement.textContent = `${member.first_name} ${member.last_name}`;
+    }
+
+    // Store member ID for deletion
+    deletePopup.setAttribute('data-member-id', member.id);
+
+    // Show popup
+    closeEditPopup();
+    deletePopup.style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+}
+
+// Function to delete member and their tasks
+async function deleteMemberWithTasks() {
     try {
-        const deletePopup = document.getElementById('deleteConfirmationPopup');
-        const memberId = deletePopup.getAttribute('data-member-id');
+        const popup = document.getElementById('taskConfirmationPopup');
+        const memberId = popup.getAttribute('data-member-id');
 
         if (!memberId) {
             console.error('Member ID not found');
             return;
         }
 
-        const response = await axios.delete(`/members/${memberId}`, {
+        // Show loading state
+        const confirmButton = popup.querySelector('.btn-confirm');
+        const originalText = confirmButton.textContent;
+        confirmButton.textContent = 'กำลังลบ...';
+        confirmButton.disabled = true;
+
+        const response = await axios.delete(`/members/${memberId}/with-tasks`, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
         });
 
         if (response.data.success) {
-            // Close both popups
-            closeEditPopup();
-            closeDeleteConfirmation();
-            
-            // Refresh the page after successful deletion
-            window.location.reload();
+            // Show success state
+            confirmButton.textContent = 'ลบสำเร็จ';
+            confirmButton.style.backgroundColor = '#28a745';
+
+            // Close popup and refresh page after delay
+            setTimeout(() => {
+                closeTaskConfirmationPopup();
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(response.data.message || 'Failed to delete member');
         }
 
     } catch (error) {
-        console.error('Error deleting member:', error);
-        alert('เกิดข้อผิดพลาดในการลบบุคลากร');
+        console.error('Error deleting member and tasks:', error);
+        
+        // Show error state on button
+        const confirmButton = popup.querySelector('.btn-confirm');
+        confirmButton.textContent = 'เกิดข้อผิดพลาด';
+        confirmButton.style.backgroundColor = '#dc3545';
+        
+        // Reset button state after delay
+        setTimeout(() => {
+            confirmButton.textContent = 'ยืนยันการลบ';
+            confirmButton.style.backgroundColor = '#F48E2E';
+            confirmButton.disabled = false;
+        }, 1500);
+
+        alert('เกิดข้อผิดพลาดในการลบบุคลากรและภาระงาน');
     }
 }
+
+function closeTaskConfirmationPopup() {
+    const popup = document.getElementById('taskConfirmationPopup');
+    if (popup) {
+        popup.classList.remove('active');
+        document.getElementById('overlay').classList.remove('active');
+        document.body.classList.remove('lock-scroll');
+    }
+}
+
+window.closeTaskConfirmationPopup = closeTaskConfirmationPopup;
+// Add to window object to make it globally available
+window.deleteMemberWithTasks = deleteMemberWithTasks;
 
 
 // Helper functions
@@ -707,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.createMember = createMember;
 window.filterByDepartment = filterByDepartment;
 window.openEditPopup = openEditPopup;
-window.deleteMember = deleteMember;
+window.deleteMember = deleteMemberWithTasks;
 window.updateMember = updateMember;
 window.previewImage = previewImage;
 window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;

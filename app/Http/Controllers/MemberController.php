@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class MemberController extends Controller
 {
@@ -248,6 +249,63 @@ class MemberController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch member details'
+            ], 500);
+        }
+    }
+
+    public function destroyWithTasks(Member $member)
+    {
+        try {
+            DB::transaction(function () use ($member) {
+                // Delete all tasks
+                $member->tasks()->delete();
+                // Delete the member
+                $member->delete();
+            });
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error deleting member and tasks']);
+        }
+    }
+
+    public function getDetailsWithTasks(Member $member)
+    {
+        try {
+            // Load the member's tasks and department with error logging
+            \Log::info('Fetching member details with tasks', ['member_id' => $member->id]);
+            
+            $member->load(['assignedTasks', 'department']);
+            
+            return response()->json([
+                'success' => true,
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department' => $member->department,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
+                ],
+                'tasks' => $member->assignedTasks->map(function($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title,
+                        'description' => $task->description,
+                        'deadline' => $task->deadline,
+                        'status' => $task->status
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching member details', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching member details: ' . $e->getMessage()
             ], 500);
         }
     }

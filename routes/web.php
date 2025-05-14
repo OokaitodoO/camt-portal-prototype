@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Add this new route for fetching member details
     Route::get('/members/{member}/details', [MemberController::class, 'getMemberDetails'])->name('members.details');
+    Route::get('/members/{member}/details-with-tasks', [MemberController::class, 'getDetailsWithTasks'])->name('members.getDetailsWithTasks');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -91,4 +92,9 @@ Route::get('/members/{member}/data', [MemberController::class, 'getMemberData'])
 Route::get('/tasks/{task}/data', [TaskController::class, 'getData'])->name('tasks.getData');
 
 Route::get('/tasks/{task}/subtasks', [TaskController::class, 'getSubtasks'])->name('tasks.subtasks');
+
+Route::delete('/members/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])->name('members.destroyWithTasks');
+
+// Add this route with your other department routes
+Route::get('/departments/{id}/data', [DepartmentController::class, 'getDepartmentData'])->name('departments.getData');
 

@@ -250,3 +250,44 @@
     width: 300px;
 }
 
+.warning-message {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tasks-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.task-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.task-info h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.task-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.member-info {
+    text-align: center;
+    margin: 20px 0;
+}
+
