@@ -3,23 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class DepartmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $departments = Department::all();
         return view('department', compact('departments'));
     }
 
-    public function update(Request $request, $name)
+    public function update(Request $request, $id)
     {
         Log::info('Update department request:', [
-            'old_name' => $name,
+            'department_id' => $id,
             'new_name' => $request->input('name'),
             'request_data' => $request->all()
         ]);
@@ -27,47 +35,28 @@ class DepartmentController extends Controller
         try {
             DB::beginTransaction();
             
-            // Find the department
-            $department = Department::where('name', $name)->first();
+            // Find the department by ID instead of name
+            $department = Department::findOrFail($id);
             
-            if (!$department) {
-                Log::error('Department not found:', ['name' => $name]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Department not found'
-                ], 404);
-            }
-
             // Validate request
             $validated = $request->validate([
                 'name' => 'required|unique:departments,name,' . $department->id,
                 'icon' => 'nullable|image|max:2048'
             ]);
 
-            Log::info('Updating department:', [
-                'department_id' => $department->id,
-                'old_name' => $name,
-                'new_name' => $validated['name']
-            ]);
-
             if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
                 // Delete old icon if exists
                 if ($department->icon_path) {
-                    Storage::disk('public')->delete(str_replace('/storage/', '', $department->icon_path));
+                    Storage::disk('public')->delete($department->icon_path);
                 }
                 $iconPath = $request->file('icon')->store('department-icons', 'public');
-                $department->icon_path = Storage::url($iconPath);
+                $department->icon_path = $iconPath;
             }
 
-            // Update department first
             $department->name = $validated['name'];
             $department->save();
 
-            // The foreign key constraint with CASCADE will automatically update the users table
-
             DB::commit();
-
-            Log::info('Department updated successfully');
 
             return response()->json([
                 'success' => true,
@@ -90,40 +79,43 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
+        // Check if user is admin
+        if (!auth()->user() || !auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
+        }
+
         try {
-            $validated = $request->validate([
-                'name' => 'required|unique:departments,name',
-                'icon' => 'nullable|image|max:2048'
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'departmentLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
             $department = new Department();
-            $department->name = $validated['name'];
+            $department->name = $validatedData['name'];
 
-            if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
-                $iconPath = $request->file('icon')->store('department-icons', 'public');
-                $department->icon_path = Storage::url($iconPath);
+            if ($request->hasFile('departmentLogo')) {
+                $file = $request->file('departmentLogo');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('public/department_icons', $filename);
+                $department->icon_path = str_replace('public/', '', $path);
             }
 
             $department->save();
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'department' => $department,
-                    'html' => view('components.department-card', compact('department'))->render()
-                ]);
-            }
-
-            return redirect()->route('departments.index')
-                ->with('success', 'Department created successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Department created successfully',
+                'department' => $department
+            ]);
 
         } catch (\Exception $e) {
-            Log::error('Department creation error: ' . $e->getMessage());
-            
+            \Log::error('Department creation error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create department',
-                'error' => $e->getMessage()
+                'message' => 'Failed to create department: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -131,18 +123,32 @@ class DepartmentController extends Controller
     public function destroy($id)
     {
         try {
-            Log::info('Attempting to delete department with ID: ' . $id);
-            
-            $department = Department::findOrFail($id);
-            
-            // Check if department has any members
-            if ($department->members()->count() > 0) {
+            // Check if user is admin
+            if (!auth()->user()->isAdmin()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'ไม่สามารถลบหน่วยงานได้ เนื่องจากมีบุคลากรในหน่วยงานนี้'
-                ], 422);
+                    'message' => 'Unauthorized access'
+                ], 403);
             }
 
+            // Find the department
+            $department = Department::findOrFail($id);
+
+            // Check if department has any members
+            $hasMember = \App\Models\Member::where('department_id', $id)->exists();
+            if ($hasMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่สามารถลบหน่วยงานได้ เนื่องจากมีสมาชิกอยู่ในหน่วยงานนี้'
+                ], 400);
+            }
+
+            // Delete the department's icon if it exists
+            if ($department->icon_path) {
+                Storage::delete('public/' . $department->icon_path);
+            }
+
+            // Delete the department
             $department->delete();
 
             return response()->json([
@@ -151,8 +157,7 @@ class DepartmentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error deleting department: ' . $e->getMessage());
-            
+            \Log::error('Error deleting department: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'เกิดข้อผิดพลาดในการลบหน่วยงาน',

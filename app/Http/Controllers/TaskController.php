@@ -16,16 +16,34 @@ class TaskController extends Controller
 {
     public function index()
     {
-        // Get tasks grouped by department through the assigned members
-        $tasksByDepartment = Task::with(['assignedTo.department', 'assignedBy', 'subTasks'])
-            ->get()
-            ->groupBy(function ($task) {
-                return $task->assignedTo->department->name ?? 'ไม่ระบุหน่วยงาน';
-            });
-
+        $user = auth()->user();
         $departments = Department::all();
-        $totalTasks = Task::count();
         
+        // Get tasks based on user role
+        switch($user->role) {
+            case 'admin':
+            case 'manager':
+                $tasks = Task::with(['assignedTo', 'assignedBy'])->get();
+                break;
+            case 'headstaff':
+                $tasks = Task::where('department_id', $user->department_id)
+                            ->with(['assignedTo', 'assignedBy'])
+                            ->get();
+                break;
+            case 'staff':
+                $tasks = Task::where('assigned_to', $user->id)
+                            ->with(['assignedTo', 'assignedBy'])
+                            ->get();
+                break;
+        }
+
+        // Group tasks by department
+        $tasksByDepartment = $tasks->groupBy(function($task) {
+            return $task->assignedTo->department->name ?? 'Unassigned';
+        });
+
+        $totalTasks = $tasks->count();
+
         return view('task', compact('tasksByDepartment', 'departments', 'totalTasks'));
     }
 

@@ -309,4 +309,16 @@ class MemberController extends Controller
             ], 500);
         }
     }
+
+    public function filter($departmentId)
+    {
+        $members = Member::where('department_id', $departmentId)
+                       ->orderBy('created_at', 'desc')
+                       ->get();
+
+        return view('members.index', [
+            'members' => $members,
+            'filtered_department_id' => $departmentId
+        ]);
+    }
 } 

@@ -52,9 +52,11 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
+            @if(auth()->user()->isAdmin())
+                <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มหน่วยงาน
-            </div>
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in sarabun-36">
@@ -77,7 +79,8 @@
     <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="createDepartmentForm">
+                <form id="createDepartmentForm" enctype="multipart/form-data">
+                    @csrf
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeCreatePopup()">
                             <   
@@ -98,7 +101,7 @@
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
-                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
@@ -117,7 +120,8 @@
     <div id="popupEdit" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="editDepartmentForm">
+                <form id="editDepartmentForm" enctype="multipart/form-data">
+                    @csrf
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeEditPopup()">
                             <
@@ -142,7 +146,7 @@
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
-                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup sarabun-20" onclick="closeEditPopup()">

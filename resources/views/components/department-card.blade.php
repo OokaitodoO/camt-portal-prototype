@@ -1,7 +1,6 @@
 <div class="card-wrapper">
     <div class="card-container">
         <div class="card-edit" onclick="openEditPopup(this)" 
-            data-department="{{ $department->name }}"
             data-department-id="{{ $department->id }}">
             <i class="fas fa-edit"></i>
         </div>
