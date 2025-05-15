@@ -82,10 +82,10 @@ async function openEditPopup(element) {
 
         // Show the popup
         const popup = document.getElementById('popupEdit');
+        document.body.classList.add('lock-scroll');
         if (popup) {
             popup.classList.add('active');
         }
-
     } catch (error) {
         console.error('Error in openEditPopup:', error);
         alert('เกิดข้อผิดพลาดในการเปิดหน้าต่างแก้ไข: ' + error.message);
@@ -323,7 +323,7 @@ async function openDeleteConfirmationPopup() {
         closeEditPopup();
         deletePopup.classList.add('active');
         document.getElementById('overlay').classList.add('active');
-
+        document.body.classList.add('lock-scroll');
     } catch (error) {
         console.error('Error opening delete confirmation:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลบุคลากร');

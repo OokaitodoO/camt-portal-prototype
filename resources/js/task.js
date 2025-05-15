@@ -355,12 +355,14 @@ function openCreatePopup() {
     // Show popup using active class
     document.getElementById('popupCreate').classList.add('active');
     document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
 }
 
 // Function to close create popup
 function closeCreatePopup() {
     document.getElementById('popupCreate').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Function to reset create form
@@ -506,6 +508,7 @@ async function openEditPopup(element) {
         // Show popup
         const popup = document.getElementById('popupEdit');
         const overlay = document.getElementById('overlay');
+        document.body.classList.add('lock-scroll');
         if (popup && overlay) {
             popup.classList.add('active');
             overlay.classList.add('active');
@@ -521,6 +524,7 @@ async function openEditPopup(element) {
 function closeEditPopup() {
     document.getElementById('popupEdit').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Make only the necessary functions globally available
@@ -558,7 +562,7 @@ async function openDeleteConfirmationPopup() {
         // Show the delete confirmation popup
         document.getElementById('deleteConfirmationPopup').classList.add('active');
         document.getElementById('overlay').classList.add('active');
-        
+        document.body.classList.add('lock-scroll');
         // Hide the edit popup
         document.getElementById('popupEdit').classList.remove('active');
     } catch (error) {
@@ -570,6 +574,7 @@ async function openDeleteConfirmationPopup() {
 function closeDeleteConfirmation() {
     document.getElementById('deleteConfirmationPopup').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
     document.getElementById('popupEdit').classList.add('active');
 }
 
@@ -1025,5 +1030,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    dropdown.classList.toggle('show');
+}
+
+// Close the dropdown if clicked outside
+window.onclick = function(event) {
+    if (!event.target.matches('.btn-status') && !event.target.matches('.btn-status *')) {
+        const dropdowns = document.getElementsByClassName('dropdown-menu');
+        for (let dropdown of dropdowns) {
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+window.toggleUserDropdown = toggleUserDropdown;
 // Make function globally available
 window.initializeDatePicker = initializeDatePicker; 

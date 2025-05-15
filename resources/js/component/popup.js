@@ -9,5 +9,11 @@ function toggleScrollbar(popup) {
     }
 }
 
+// Function to toggle body scroll
+function toggleBodyScroll(disable) {
+    document.body.classList.toggle('popup-open', disable);
+}
+
+
 
 export default toggleScrollbar;
