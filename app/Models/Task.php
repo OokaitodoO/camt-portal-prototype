@@ -69,4 +69,18 @@ class Task extends Model
     {
         return $this->hasMany(SubTask::class);
     }
+
+    public static function getVisibleTasks($user)
+    {
+        if ($user->isAdmin() || $user->isManager()) {
+            return self::with(['assignedTo', 'assignedBy', 'department'])->get();
+        }
+        
+        // For headstaff and staff, only show tasks from their department
+        return self::with(['assignedTo', 'assignedBy', 'department'])
+            ->whereHas('assignedTo', function($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })
+            ->get();
+    }
 }

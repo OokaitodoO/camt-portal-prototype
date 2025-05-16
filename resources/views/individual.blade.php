@@ -46,14 +46,22 @@
             <div class="nav-bar-action-container">
                 <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
-                    <li><a href="{{route('department')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    @if(!Auth::user()->isStaff())
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>                
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>                
+                    <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
+                    @endif
                 </ul>
             </div>
-            <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
-                    <i class="fas fa-plus"></i> เพิ่มภาระงาน
-            </div>
+            @if(Auth::user()->isNotManager())
+                <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
+                        <i class="fas fa-plus"></i> เพิ่มภาระงาน
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in">
@@ -91,7 +99,17 @@
                 </div>
                 <div class="side-nav-info-item">
                     <h2 class="sarabun-18">บทบาท: </h2>
-                    <p class="sarabun-18">{{ $member->role }}</p>
+                    <p class="sarabun-18">
+                        @php
+                            $roleLabels = [
+                                'admin' => 'ผู้ดูแลระบบ',
+                                'manager' => 'ผู้บริหาร',
+                                'headstaff' => 'หัวหน้างาน',
+                                'staff' => 'บุคลากร'
+                            ];
+                        @endphp
+                        {{ $roleLabels[$member->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                    </p>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
@@ -102,7 +120,20 @@
                 </div>
                 <div class="side-nav-info-item">
                     <h2 class="sarabun-18">เบอร์โทร: </h2>
-                    <p class="sarabun-18">{{ $member->phone ?? '-' }}</p>
+                    <p class="sarabun-18">
+                        @php
+                            $phone = $member->phone;
+                            if ($phone) {
+                                // Remove any non-digit characters
+                                $phone = preg_replace('/[^0-9]/', '', $phone);
+                                // Format as xxx-xxx-xxxx
+                                $phone = substr($phone, 0, 3) . '-' . 
+                                        substr($phone, 3, 3) . '-' . 
+                                        substr($phone, 6);
+                            }
+                        @endphp
+                        {{ $phone ?? '-' }}
+                    </p>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
@@ -144,14 +175,18 @@
                         <div class="card-container"  onclick="openTaskLink(event, '{{ $task->link }}')">
                             <div class="card-header">
                                 <div class="card-top">
+                                    @if($task->assigned_to == Auth::user()->id)
                                     <div class="card-favorite" onclick="toggleFavorite(event, {{ $task->id }}, this)" 
                                          data-favorite="{{ $task->is_favorite }}">
                                         <i class="fas fa-star {{ $task->is_favorite ? 'favorite-active' : '' }}"></i>
                                     </div>
+                                    @endif
+                                    @if(Auth::user()->isNotManager())
                                     <div class="card-edit" onclick="openEditPopup(this); event.stopPropagation();" 
                                          data-task-id="{{ $task->id }}">
                                         <i class="fas fa-edit"></i>
                                     </div>
+                                    @endif
                                 </div>
                                 <div class="card-logo">
                                     @if($task->logo_path)
@@ -216,7 +251,7 @@
             </div>
         </div>
 
-        <!-- popup -->
+        <!-- popup create task -->
         <div id="popupCreate" class="popup-container">
             <div class="create-popup-department">
                 <div class="popup-content">
@@ -254,12 +289,26 @@
                                 <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
-                                <input type="text" 
-                                       value="{{ $member->first_name }} {{ $member->last_name }}" 
-                                       class="input-text sarabun-16" 
-                                       readonly>
-                                <input type="hidden" name="assigned_to" value="{{ $member->id }}">
+                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
+                                <div class="member-search-container">
+                                    <div class="search-input-wrapper">
+                                        <input type="text" 
+                                            id="createTaskMemberSearch" 
+                                            class="input-text sarabun-16" 
+                                            placeholder="พิมพ์ชื่อบุคลากร...">
+                                    </div>
+                                    <div class="member-search-dropdown dropdown-content">
+                                        <!-- Search results will appear here -->
+                                    </div>
+                                </div>
+                                <div id="createSelectedMembers" class="selected-members-wrapper">
+                                    <!-- Default selected member (current user) -->
+                                    <div class="selected-member-tag" data-member-id="{{ $member->id }}">
+                                        <span>{{ $member->first_name }} {{ $member->last_name }}</span>
+                                        <i class="fas fa-times" onclick="removeMemberTag(this)"></i>
+                                        <input type="hidden" name="assigned_to[]" value="{{ $member->id }}">
+                                    </div>
+                                </div>
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">

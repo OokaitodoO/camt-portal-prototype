@@ -17,24 +17,32 @@ class TaskController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $departments = Department::all();
-        
-        // Get tasks based on user role
-        switch($user->role) {
+        $departments = $user->getVisibleDepartments();
+
+        switch ($user->role) {
             case 'admin':
             case 'manager':
                 $tasks = Task::with(['assignedTo', 'assignedBy'])->get();
                 break;
+
             case 'headstaff':
-                $tasks = Task::where('department_id', $user->department_id)
-                            ->with(['assignedTo', 'assignedBy'])
-                            ->get();
+                $tasks = Task::where(function($query) use ($user) {
+                    $query->whereHas('assignedTo', function($q) use ($user) {
+                        $q->where('department_id', $user->department_id);
+                    });
+                })
+                ->with(['assignedTo', 'assignedBy'])
+                ->get();
                 break;
+
             case 'staff':
                 $tasks = Task::where('assigned_to', $user->id)
                             ->with(['assignedTo', 'assignedBy'])
                             ->get();
                 break;
+
+            default:
+                $tasks = collect();
         }
 
         // Group tasks by department
@@ -44,15 +52,27 @@ class TaskController extends Controller
 
         $totalTasks = $tasks->count();
 
-        return view('task', compact('tasksByDepartment', 'departments', 'totalTasks'));
+        return view('task', compact('departments', 'tasksByDepartment', 'tasks', 'totalTasks'));
     }
 
     public function filterByDepartment($departmentId)
     {
-        $tasks = Task::where('department_id', $departmentId)
-                     ->with(['department', 'assignedTo', 'assignedBy'])
-                     ->get();
-                     
+        $user = auth()->user();
+
+        // For headstaff, only allow accessing their own department
+        if ($user->isHeadstaff() && $departmentId != $user->department_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        $tasks = Task::whereHas('assignedTo', function($query) use ($departmentId) {
+            $query->where('department_id', $departmentId);
+        })
+        ->with(['assignedTo', 'assignedBy'])
+        ->get();
+
         return response()->json([
             'success' => true,
             'tasks' => $tasks

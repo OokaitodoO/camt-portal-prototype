@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
     <title>ภาระงาน</title>
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
@@ -47,14 +49,16 @@
             <div class="nav-bar-action-container">
                 <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
-                    <li><a href="{{ route('department') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{ route('departments.index') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div id="popupButton" class="btn-create btn-text sarabun-20" onclick="openCreatePopup()">
-                    <i class="fas fa-plus"></i> เพิ่มภาระงาน
-            </div>
+            @if(auth()->user()->isNotManager())
+                <div id="popupButton" class="btn-create btn-text sarabun-20" onclick="openCreatePopup()">
+                        <i class="fas fa-plus"></i> เพิ่มภาระงาน
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in sarabun-36">
@@ -141,10 +145,12 @@
                                             ไม่มีวันครบกำหนด
                                         @endif
                                     </td>
-                                    <td class="border-top" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
-                                        <div class="btn-edit">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
+                                    <td class="border-top">
+                                        @if(auth()->user()->isNotManager())
+                                            <div class="btn-edit" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

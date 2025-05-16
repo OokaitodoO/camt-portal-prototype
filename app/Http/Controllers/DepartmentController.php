@@ -20,56 +20,56 @@ class DepartmentController extends Controller
 
     public function index()
     {
-        $departments = Department::all();
+        $user = Auth::user();
+        $departments = $user->getVisibleDepartments();
+        
         return view('department', compact('departments'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Department $department)
     {
-        Log::info('Update department request:', [
-            'department_id' => $id,
-            'new_name' => $request->input('name'),
-            'request_data' => $request->all()
-        ]);
-
         try {
-            DB::beginTransaction();
-            
-            // Find the department by ID instead of name
-            $department = Department::findOrFail($id);
-            
-            // Validate request
-            $validated = $request->validate([
-                'name' => 'required|unique:departments,name,' . $department->id,
-                'icon' => 'nullable|image|max:2048'
+            Log::info('Update request received', [
+                'department_id' => $department->id,
+                'request_data' => $request->all()
             ]);
 
-            if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
+            // Validate the request
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            // Update department name
+            $department->name = $validated['name'];
+
+            // Handle file upload if present
+            if ($request->hasFile('icon')) {
                 // Delete old icon if exists
                 if ($department->icon_path) {
                     Storage::disk('public')->delete($department->icon_path);
                 }
-                $iconPath = $request->file('icon')->store('department-icons', 'public');
-                $department->icon_path = $iconPath;
+
+                // Store new icon
+                $path = $request->file('icon')->store('departments', 'public');
+                $department->icon_path = $path;
             }
 
-            $department->name = $validated['name'];
+            // Save changes
             $department->save();
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
+                'message' => 'Department updated successfully',
                 'department' => $department
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Department update error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::error('Department update failed', [
+                'error' => $e->getMessage(),
+                'stack_trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update department: ' . $e->getMessage()
@@ -79,28 +79,18 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        // Check if user is admin
-        if (!auth()->user() || !auth()->user()->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
-
         try {
-            $validatedData = $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'departmentLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
             $department = new Department();
-            $department->name = $validatedData['name'];
+            $department->name = $validated['name'];
 
-            if ($request->hasFile('departmentLogo')) {
-                $file = $request->file('departmentLogo');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('public/department_icons', $filename);
-                $department->icon_path = str_replace('public/', '', $path);
+            if ($request->hasFile('icon')) {
+                $path = $request->file('icon')->store('departments', 'public');
+                $department->icon_path = $path;
             }
 
             $department->save();
@@ -115,7 +105,7 @@ class DepartmentController extends Controller
             \Log::error('Department creation error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create department: ' . $e->getMessage()
+                'message' => 'Failed to create department'
             ], 500);
         }
     }
@@ -192,6 +182,22 @@ class DepartmentController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching department data'
+            ], 500);
+        }
+    }
+
+    public function getData(Department $department)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'department' => $department
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching department data: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching department data'

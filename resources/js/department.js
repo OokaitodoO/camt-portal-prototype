@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
         newCreateForm.addEventListener('submit', function(e) {
             e.preventDefault();
             if (!isSubmitting) {
-                createNewDepartment(e);
+                createDepartment(e);
             } else {
                 console.log('Form submission already in progress');
             }
@@ -113,77 +113,28 @@ document.getElementById('departmentLogo').addEventListener('change', function(e)
     }
 });
 
-// Create department function
-async function createNewDepartment(event) {
+// Create department
+async function createDepartment(event) {
     event.preventDefault();
     
-    // Prevent double submission
-    if (isSubmitting) {
-        console.log('Submission already in progress');
-        return;
-    }
-    
-    const form = document.getElementById('createDepartmentForm');
-    const submitButton = form.querySelector('button[type="submit"]');
-    const originalButtonText = submitButton.innerHTML;
-
     try {
-        // Set submission flag
-        isSubmitting = true;
-        
-        // Disable the submit button
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<p>กำลังสร้าง...</p>';
-
+        const form = document.getElementById('createDepartmentForm');
         const formData = new FormData(form);
-        
-        // Debug logging
-        console.log('Form data being sent:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value instanceof File ? `File: ${value.name}` : value);
-        }
 
-        const response = await axios.post('/departments', formData, {
+        const response = await axios.post('/departments/create', formData, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
+                'Content-Type': 'multipart/form-data'
             }
         });
 
-        console.log('Server response:', response.data);
-
         if (response.data.success) {
-            // Close popup and reset form
-            closeCreatePopup();
-            form.reset();
-            document.getElementById('createLogoPreview').src = 'https://placehold.co/128';
-            
-            // Redirect to refresh the page
-            window.location.href = '/department';
-            return; // Exit the function after redirecting
-        } else {
-            throw new Error(response.data.message || 'Failed to create department');
+            window.location.reload();
         }
 
     } catch (error) {
         console.error('Create error:', error);
-        
-        let errorMessage = 'เกิดข้อผิดพลาดในการสร้างหน่วยงาน';
-        
-        if (error.response) {
-            if (error.response.status === 403) {
-                errorMessage = 'คุณไม่มีสิทธิ์ในการสร้างหน่วยงาน';
-            } else if (error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message;
-            }
-        }
-        
-        alert(errorMessage);
-    } finally {
-        // Reset submission flag and button state
-        isSubmitting = false;
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalButtonText;
+        alert('เกิดข้อผิดพลาดในการสร้างหน่วยงาน');
     }
 }
 
@@ -229,117 +180,61 @@ function createDepartmentCard(department) {
     `;
 }
 
-// Update confirmEditDepartment function
-async function confirmEditDepartment() {
-    if (isEditing) {
-        console.log('Edit already in progress');
-        return;
-    }
-
-    const form = document.getElementById('editDepartmentForm');
-    const submitButton = form?.querySelector('button[type="submit"]');
-    const originalButtonText = submitButton?.innerHTML || '<p>ตกลง</p>';
-
+// Edit department
+async function confirmEditDepartment(event) {
+    event.preventDefault();
+    
     try {
-        if (!form) {
-            throw new Error('Edit form not found');
-        }
-
-        const departmentId = document.getElementById('editDepartmentId').value;
-        console.log('Updating department ID:', departmentId);
-
-        if (!departmentId) {
-            throw new Error('Department ID not found');
-        }
-
-        if (!submitButton) {
-            throw new Error('Submit button not found');
-        }
-
-        // Set editing flag and disable submit button
-        isEditing = true;
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<p>กำลังแก้ไข...</p>';
-
+        const form = document.getElementById('editDepartmentForm');
         const formData = new FormData(form);
-        
-        // Debug logging
-        console.log('Form data being sent:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value instanceof File ? `File: ${value.name}` : value);
-        }
+        const departmentId = document.getElementById('editDepartmentId').value;
+
+        console.log('Submitting update:', {
+            departmentId,
+            name: formData.get('name'),
+            hasFile: formData.get('icon') !== null
+        });
 
         const response = await axios.post(`/departments/${departmentId}/update`, formData, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
             }
         });
 
-        console.log('Server response:', response.data);
-
         if (response.data.success) {
-            closeEditPopup();
-            window.location.href = '/department';
-            return;
-        } else {
-            throw new Error(response.data.message || 'Failed to update department');
+            // Close popup
+            const popup = document.getElementById('popupEdit');
+            const overlay = document.getElementById('overlay');
+            popup.classList.remove('active');
+            overlay.classList.remove('active');
+            
+            // Refresh page
+            window.location.reload();
         }
 
     } catch (error) {
         console.error('Edit error:', error);
         console.error('Error details:', {
             message: error.message,
-            response: error.response,
-            request: error.request
+            response: error.response?.data,
+            status: error.response?.status
         });
-        
-        let errorMessage = 'เกิดข้อผิดพลาดในการแก้ไขหน่วยงาน';
-        
-        if (error.response) {
-            if (error.response.status === 403) {
-                errorMessage = 'คุณไม่มีสิทธิ์ในการแก้ไขหน่วยงาน';
-            } else if (error.response.status === 404) {
-                errorMessage = 'ไม่พบหน่วยงานที่ต้องการแก้ไข';
-            } else if (error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message;
-            }
-        }
-        
-        alert(errorMessage);
-    } finally {
-        // Reset editing flag
-        isEditing = false;
-        
-        // Reset button state
-        if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalButtonText;
-        }
+        alert('เกิดข้อผิดพลาดในการอัพเดตหน่วยงาน');
     }
 }
 
-// Event listener setup
+// Make sure it's globally available
+window.confirmEditDepartment = confirmEditDepartment;
+
+// Add form submit listener
 document.addEventListener('DOMContentLoaded', function() {
     const editForm = document.getElementById('editDepartmentForm');
     if (editForm) {
-        const newEditForm = editForm.cloneNode(true);
-        editForm.parentNode.replaceChild(newEditForm, editForm);
-        
-        newEditForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (!isEditing) {
-                confirmEditDepartment();
-            } else {
-                console.log('Edit already in progress');
-            }
-        });
+        editForm.addEventListener('submit', confirmEditDepartment);
     }
 });
-
-// Make function available globally
-window.confirmEditDepartment = confirmEditDepartment;
 
 // Update closeEditPopup function if needed
 function closeEditPopup() {
@@ -418,118 +313,6 @@ async function deleteDepartment() {
     }
 }
 
-function handleEditPopup(element) {
-    currentDepartment = element;
-    const departmentName = element.getAttribute('data-department');
-    const departmentId = element.getAttribute('data-department-id');
-    
-    console.log('Opening edit popup for department:', { 
-        departmentId, 
-        departmentName,
-        element: element.outerHTML // Debug: show the full element
-    });
-
-    if (!departmentId) {
-        console.error('Department ID not found. Element attributes:', {
-            'data-department': element.getAttribute('data-department'),
-            'data-department-id': element.getAttribute('data-department-id'),
-            element: element.outerHTML
-        });
-        return;
-    }
-
-    const popup = document.getElementById('popupEdit');
-    const nameInput = popup.querySelector('input[name="name"]');
-    const idInput = document.getElementById('editDepartmentId');
-    
-    if (!nameInput || !idInput) {
-        console.error('Form inputs not found:', {
-            nameInput: !!nameInput,
-            idInput: !!idInput
-        });
-        return;
-    }
-
-    nameInput.value = departmentName;
-    idInput.value = departmentId;
-    
-    popup.classList.add('active');
-    document.getElementById('overlay').classList.add('active');
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    // Create Department Form
-    const createForm = document.querySelector('#popupCreate form');
-    if (createForm) {
-        createForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            createNewDepartment(e);
-        });
-    }
-
-    // Edit Department Form
-    const editForm = document.querySelector('#popupEdit form');
-    if (editForm) {
-        editForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            confirmEditDepartment();
-        });
-    }
-});
-
-async function openDeleteConfirmationPopup() {
-    try {
-        // Get the current department data from the edit form
-        const editForm = document.getElementById('editDepartmentForm');
-        if (!editForm) {
-            throw new Error('Edit form not found');
-        }
-
-        // Get department ID and name
-        const departmentId = document.getElementById('editDepartmentId').value;
-        const departmentName = editForm.querySelector('input[name="name"]').value;
-
-        console.log('Department ID:', departmentId); // Debug log
-        console.log('Department Name:', departmentName); // Debug log
-
-        if (!departmentId) {
-            throw new Error('Department ID not found in edit form');
-        }
-
-        // Get delete confirmation popup
-        const deletePopup = document.getElementById('deleteConfirmationPopup');
-        if (!deletePopup) {
-            throw new Error('Delete confirmation popup not found');
-        }
-
-        // Set the department ID as a data attribute on the delete popup
-        deletePopup.setAttribute('data-department-id', departmentId);
-
-        // Update the department name in the delete confirmation popup
-        const nameElement = deletePopup.querySelector('.card-name h3');
-        if (nameElement) {
-            nameElement.textContent = departmentName;
-        } else {
-            console.warn('Name element not found in delete popup');
-        }
-
-        // Close edit popup and show delete confirmation
-        closeEditPopup();
-        deletePopup.classList.add('active');
-        document.getElementById('overlay').classList.add('active');
-
-    } catch (error) {
-        console.error('Error opening delete confirmation:', error);
-        console.error('Error details:', {
-            editForm: document.getElementById('editDepartmentForm'),
-            departmentId: document.getElementById('editDepartmentId')?.value,
-            deletePopup: document.getElementById('deleteConfirmationPopup')
-        });
-        alert('เกิดข้อผิดพลาดในการเปิดหน้าต่างยืนยันการลบ: ' + error.message);
-    }
-}
-
 // Add this function to handle department filtering
 async function filterByDepartment(departmentId) {
     try {
@@ -548,65 +331,97 @@ async function filterByDepartment(departmentId) {
 window.filterByDepartment = filterByDepartment;
 
 // Export functions for global use
-window.createNewDepartment = createNewDepartment;
+window.createDepartment = createDepartment;
 window.deleteDepartment = deleteDepartment;
-window.openEditPopup = handleEditPopup; // Export handleEditPopup as openEditPopup
-window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 
 async function openEditPopup(element) {
     try {
+        // Get department ID directly from the clicked element
         const departmentId = element.getAttribute('data-department-id');
+        console.log('Opening edit popup for department ID:', departmentId);
+
         if (!departmentId) {
             throw new Error('Department ID not found');
         }
 
-        console.log('Opening edit for department:', departmentId); // Debug log
-
         // Fetch department data
         const response = await axios.get(`/departments/${departmentId}/data`);
+        console.log('Department data received:', response.data);
+
         if (!response.data.success) {
-            throw new Error('Failed to fetch department data');
+            throw new Error(response.data.message || 'Failed to fetch department data');
         }
 
         const department = response.data.department;
-        
-        // Get the edit form
-        const form = document.getElementById('editDepartmentForm');
-        
-        // Set form values
-        document.getElementById('editDepartmentId').value = departmentId;
-        form.querySelector('input[name="name"]').value = department.name;
 
-        // Set logo preview
+        // Get form elements using your exact class names from blade template
+        const form = document.getElementById('editDepartmentForm');
+        const idInput = document.getElementById('editDepartmentId');
+        const nameInput = form.querySelector('.input-text-name');  // Your class from blade
         const logoPreview = document.getElementById('editLogoPreview');
+
+        console.log('Found elements:', {
+            form: !!form,
+            idInput: !!idInput,
+            nameInput: !!nameInput,
+            logoPreview: !!logoPreview
+        });
+
+        // Set values
+        idInput.value = departmentId;
+        nameInput.value = department.name;
+
+        // Set logo preview with proper URL construction
         if (department.icon_path) {
-            // Check if the path already includes storage/
-            const iconPath = department.icon_path.startsWith('storage/') 
-                ? department.icon_path 
-                : `storage/${department.icon_path}`;
-            logoPreview.src = `/${iconPath}`;
+            logoPreview.src = `/storage/${department.icon_path}`;
+            console.log('Setting logo URL:', `/storage/${department.icon_path}`);
         } else {
             logoPreview.src = 'https://placehold.co/128';
         }
 
-        // Show popup
-        document.getElementById('popupEdit').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
+        // Show popup using your classes
+        const popup = document.getElementById('popupEdit');
+        const overlay = document.getElementById('overlay');
+        popup.classList.add('active');  // or popup.classList.add('active') depending on your CSS
+        overlay.classList.add('active');  // or overlay.classList.add('active')
 
     } catch (error) {
-        console.error('Error opening edit popup:', error);
+        console.error('Error in openEditPopup:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');
     }
 }
 
-// Make sure the function is available globally
+// Make sure it's available globally
 window.openEditPopup = openEditPopup;
+
+// Remove any duplicate event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Remove old listeners from edit buttons
+    const editButtons = document.querySelectorAll('.btn-edit');
+    editButtons.forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+});
 
 // Add notification function if not already present
 function showNotification(type, message) {
     // You can implement this based on your UI needs
     alert(message); // Basic implementation, replace with your notification system
 }
+
+// Add this to help debug the click event
+document.addEventListener('DOMContentLoaded', () => {
+    const editButtons = document.querySelectorAll('.btn-edit');
+    editButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            console.log('Edit button clicked', {
+                button: e.target,
+                departmentId: e.target.closest('.card-container')?.getAttribute('data-department-id')
+            });
+        });
+    });
+});
 
 
 

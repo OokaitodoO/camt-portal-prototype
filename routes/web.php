@@ -5,6 +5,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TaskController;
+use App\Models\Member;
 
 // Public routes
 Route::get('/', [LoginController::class, 'index'])->name('home');
@@ -13,35 +14,72 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
+    // Dashboard redirect
+    Route::get('/dashboard', function() {
+        $user = auth()->user();
+        if ($user->isStaff()) {
+            return redirect()->route('members.show', $user->id);
+        }
+        return redirect()->route('departments.index');
+    })->name('dashboard');
+
     // Department routes
-    Route::get('/department', [DepartmentController::class, 'index'])->name('department');
-    Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
-    Route::post('/departments/{id}/update', [DepartmentController::class, 'update'])->name('departments.update');
-    Route::get('/departments/{id}/data', [DepartmentController::class, 'getDepartmentData'])->name('departments.getData');
-    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+    Route::prefix('departments')->group(function () {
+        Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
+        Route::post('/create', [DepartmentController::class, 'store'])->name('departments.store');
+        Route::get('/{department}/data', [DepartmentController::class, 'getData'])->name('departments.getData');
+        Route::post('/{department}/update', [DepartmentController::class, 'update'])->name('departments.update');
+        Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+        
+        // Add this for serving department images directly
+        Route::get('/storage/{filename}', function ($filename) {
+            $path = storage_path('app/public/departments/' . $filename);
+            if (!file_exists($path)) {
+                return response()->json(['message' => 'Image not found'], 404);
+            }
+            return response()->file($path);
+        });
+    });
 
     // Member routes
-    Route::get('/member', [MemberController::class, 'index'])->name('member');
-    Route::get('/members', [MemberController::class, 'index'])->name('members.index');
-    Route::get('/members/filter/{department}', [MemberController::class, 'filterByDepartment'])->name('members.filter');
-    Route::get('/members/create', [MemberController::class, 'create'])->name('members.create');
-    Route::get('/members/{member}', [MemberController::class, 'show'])->name('members.show');
-    Route::get('/members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
-    Route::get('/members/search', [MemberController::class, 'search'])->name('members.search');
-    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
-    Route::put('/members/{member}', [MemberController::class, 'update'])->name('members.update');
-    Route::delete('/members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
-    Route::get('/members/{member}/details', [MemberController::class, 'getMemberDetails'])->name('members.details');
-    Route::get('/members/{member}/details-with-tasks', [MemberController::class, 'getDetailsWithTasks'])->name('members.getDetailsWithTasks');
-    Route::get('/members/{member}/data', [MemberController::class, 'getMemberData'])->name('members.getData');
-    Route::delete('/members/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])->name('members.destroyWithTasks');
+    Route::prefix('members')->group(function () {
+        Route::get('/', [MemberController::class, 'index'])->name('members.index');
+        Route::post('/create', [MemberController::class, 'store'])->name('members.store');
+        Route::get('/{member}', [MemberController::class, 'show'])->name('members.show');
+        Route::get('/{member}/data', [MemberController::class, 'getMemberData'])->name('members.data');
+        Route::post('/{member}/update', [MemberController::class, 'update'])->name('members.update');
+        Route::delete('/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
+        Route::get('/filter/{departmentId}', [MemberController::class, 'filter'])->name('members.filter');
+        
+        // Add this for serving member images directly
+        Route::get('/storage/{filename}', function ($filename) {
+            $path = storage_path('app/public/members/' . $filename);
+            if (!file_exists($path)) {
+                return response()->json(['message' => 'Image not found'], 404);
+            }
+            return response()->file($path);
+        });
+    });
 
     // Task routes
     Route::prefix('tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
         Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
         Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])->name('tasks.filter');
-        Route::get('/department/{departmentId}/members', [TaskController::class, 'getDepartmentMembers'])->name('tasks.department.members');
+        Route::get('/department/{departmentId}/members', function($departmentId) {
+            $user = auth()->user();
+            if ($user->isHeadstaff() && $departmentId != $user->department_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 403);
+            }
+            $members = Member::where('department_id', $departmentId)->get();
+            return response()->json([
+                'success' => true,
+                'members' => $members
+            ]);
+        })->name('tasks.department.members');
         Route::put('/{task}', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::get('/search-members', [TaskController::class, 'searchMembers'])->name('tasks.search-members');
@@ -53,10 +91,7 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-// Remove these duplicate or unnecessary routes as they're already defined above
-// Route::middleware(['auth', 'verified'])->group(function () { ... });
-// Route::middleware(['auth', 'role:admin'])->group(function () { ... });
-// Route::middleware(['auth', 'role:admin,manager'])->group(function () { ... });
-// Route::get('/departments', function() { ... });
-// Other duplicate routes...
+// Remove these duplicate routes if they exist
+// Route::get('/departments', function () { ... })->middleware('auth');
+// Route::get('storage/departments/{filename}', function ($filename) { ... });
 

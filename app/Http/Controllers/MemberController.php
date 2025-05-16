@@ -154,8 +154,10 @@ class MemberController extends Controller
 
     public function index()
     {
-        $members = Member::with('department')->get();
-        $departments = Department::all();
+        $user = auth()->user();
+        $members = $user->getVisibleMembers();
+        $departments = $user->getVisibleDepartments();
+
         return view('members.index', compact('members', 'departments'));
     }
 
@@ -180,14 +182,18 @@ class MemberController extends Controller
 
     public function show(Member $member)
     {
+        // Check if the current user can view this member
+        if (!auth()->user()->canView($member)) {
+            return redirect()->route('members.index')
+                ->with('error', 'คุณไม่มีสิทธิ์ในการดูข้อมูลบุคลากรนี้');
+        }
+
         // Load the member with their department and assigned tasks
         $member->load(['department', 'assignedTasks' => function($query) {
             $query->with(['department', 'assignedBy', 'subTasks']);
         }]);
 
-        // Get assigned tasks for the member
         $assignedTasks = $member->assignedTasks;
-
         return view('individual', compact('member', 'assignedTasks'));
     }
 
@@ -200,8 +206,16 @@ class MemberController extends Controller
 
     public function getMemberData(Member $member)
     {
+        // Check if the current user can view this member
+        if (!auth()->user()->canView($member)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'คุณไม่มีสิทธิ์ในการดูข้อมูลบุคลากรนี้'
+            ], 403);
+        }
+
         try {
-            $member->load('department'); // Load the department relationship
+            $member->load('department');
             
             return response()->json([
                 'success' => true,
@@ -312,13 +326,17 @@ class MemberController extends Controller
 
     public function filter($departmentId)
     {
-        $members = Member::where('department_id', $departmentId)
-                       ->orderBy('created_at', 'desc')
-                       ->get();
+        $user = auth()->user();
+        $departments = $user->getVisibleDepartments();
+        
+        if ($departmentId === 'all') {
+            $members = $user->getVisibleMembers();
+        } else {
+            $members = Member::with('department')
+                ->where('department_id', $departmentId)
+                ->get();
+        }
 
-        return view('members.index', [
-            'members' => $members,
-            'filtered_department_id' => $departmentId
-        ]);
+        return view('members.index', compact('members', 'departments', 'departmentId'));
     }
 } 

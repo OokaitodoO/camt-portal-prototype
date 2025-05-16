@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน่วยงาน</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/department.css') }}">
@@ -47,7 +49,7 @@
             <div class="nav-bar-action-container">
                 <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x60'">
                 <ul class="nav-action">
-                    <li><a href="{{route('department')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{route('departments.index')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
@@ -70,7 +72,11 @@
 
     <!-- department card -->
     <section class="content-container">        
-        @foreach($departments as $department)
+        @php
+            $visibleDepartments = Auth::user()->getVisibleDepartments();
+        @endphp
+        
+        @foreach($visibleDepartments as $department)
             @include('components.department-card', ['department' => $department])
         @endforeach
     </section>
@@ -122,6 +128,7 @@
             <div class="popup-content">
                 <form id="editDepartmentForm" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" id="editDepartmentId" name="id">
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeEditPopup()">
                             <
@@ -133,7 +140,6 @@
                             <i class="fas fa-trash"></i>
                         </div>
                     </div>
-                    <input type="hidden" name="id" id="editDepartmentId">
                     <div class="popup-image">
                         <label for="editDepartmentLogo" class="logo-upload-label">
                             <img src="" alt="" class="card-logo-img" id="editLogoPreview">

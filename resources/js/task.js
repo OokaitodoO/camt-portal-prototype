@@ -6,13 +6,30 @@ let subtaskCount = 1;
 // Function to handle department filtering
 async function filterTasksByDepartment(departmentId) {
     try {
+        const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
         const allDepartmentTables = document.querySelectorAll('.task-department');
         
+        // For headstaff, only allow viewing their own department
+        if (userRole === 'headstaff' && departmentId !== 'all' && departmentId != userDepartmentId) {
+            console.warn('Access restricted: Can only view own department');
+            return;
+        }
+
         // Show all tables if 'all' is selected
         if (departmentId === 'all') {
-            allDepartmentTables.forEach(table => {
-                table.style.display = 'block';
-            });
+            if (userRole === 'headstaff') {
+                // For headstaff, "all" means their department only
+                allDepartmentTables.forEach(table => {
+                    const tableDeptId = table.getAttribute('data-department-id');
+                    table.style.display = (tableDeptId == userDepartmentId) ? 'block' : 'none';
+                });
+            } else {
+                // For admin/manager, show all departments
+                allDepartmentTables.forEach(table => {
+                    table.style.display = 'grid';
+                });
+            }
         } else {
             // Hide all tables first
             allDepartmentTables.forEach(table => {
@@ -22,7 +39,7 @@ async function filterTasksByDepartment(departmentId) {
             // Show only the selected department's table
             const selectedTable = document.querySelector(`.task-department[data-department-id="${departmentId}"]`);
             if (selectedTable) {
-                selectedTable.style.display = 'block';
+                selectedTable.style.display = 'grid';
             }
         }
 
@@ -39,15 +56,20 @@ async function filterTasksByDepartment(departmentId) {
         }
 
         // Update task count
-        const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
-        const taskCountElement = document.querySelector('.task-remain p');
-        if (taskCountElement) {
-            taskCountElement.textContent = visibleTasks;
-        }
+        updateTaskCount();
 
     } catch (error) {
         console.error('Error filtering tasks:', error);
         alert('เกิดข้อผิดพลาดในการกรองข้อมูล');
+    }
+}
+
+// Add this helper function to update task count
+function updateTaskCount() {
+    const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
+    const taskCountElement = document.querySelector('.task-remain p');
+    if (taskCountElement) {
+        taskCountElement.textContent = visibleTasks;
     }
 }
 
@@ -148,20 +170,18 @@ function addNewSubTask(mode = 'create') {
 }
 
 // Function to load departments into dropdown
-async function loadDepartments(dropdownId) {
+async function loadDepartments() {
     try {
         const response = await axios.get('/departments');
-        const departments = response.data;
-        const dropdownContent = document.getElementById(dropdownId);
-        
-        if (dropdownContent) {
-            dropdownContent.innerHTML = departments.map(dept => `
-                <a href="#" onclick="selectDepartment(this, ${dept.id}, '${dept.name}', '${dropdownId}')" 
-                   data-department-id="${dept.id}">${dept.name}</a>
-            `).join('');
+        if (response.data.success) {
+            return response.data.departments;
+        } else {
+            console.error('Failed to load departments:', response.data);
+            return [];
         }
     } catch (error) {
         console.error('Error loading departments:', error);
+        return []; // Return empty array on error
     }
 }
 
@@ -171,7 +191,7 @@ function toggleDropdownDepartment(dropdownId) {
     if (dropdown) {
         // Load departments if not already loaded
         if (!dropdown.children.length) {
-            loadDepartments(dropdownId);
+            loadDepartments();
         }
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
@@ -428,6 +448,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     initializeMemberSearch();
     initializeDatePicker();
+
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+
+    if (userRole === 'headstaff') {
+        // Hide departments in side nav that aren't the user's department
+        document.querySelectorAll('.btn-side-nav').forEach(btn => {
+            const onclick = btn.getAttribute('onclick');
+            if (onclick && onclick.includes('filterTasksByDepartment')) {
+                const deptId = onclick.match(/filterTasksByDepartment\((\d+)\)/)?.[1];
+                if (deptId && deptId != userDepartmentId && deptId !== 'all') {
+                    btn.style.display = 'none';
+                }
+            }
+        });
+
+        // Initially filter to show only user's department
+        filterTasksByDepartment(userDepartmentId);
+    }
 });
 
 // Make functions available globally

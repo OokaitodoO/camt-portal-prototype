@@ -584,8 +584,20 @@ function updateURL(url) {
     window.history.pushState({}, '', url);
 }
 
-function filterByDepartment(departmentId) {
+// Update the filterByDepartment function
+async function filterByDepartment(departmentId) {
     try {
+        const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+
+        // If staff or headstaff, only allow viewing their own department
+        if ((userRole === 'staff' || userRole === 'headstaff') && 
+            departmentId !== 'all' && 
+            departmentId != userDepartmentId) {
+            console.warn('Access restricted: Can only view own department');
+            return;
+        }
+
         // Reset display for all sections
         document.querySelectorAll('.department-section').forEach(section => {
             section.style.display = 'none';
@@ -593,35 +605,27 @@ function filterByDepartment(departmentId) {
 
         // Show appropriate section
         if (departmentId === 'all') {
-            // Show the "all" section that contains all departments
-            const allSection = document.querySelector('.department-section[data-department="all"]');
-            if (allSection) {
-                allSection.style.display = 'block';
-            }
-        } else {
-            // For specific department, show either the filtered section or the "all" section's relevant part
-            const departmentSection = document.querySelector(`.department-section[data-department="${departmentId}"]`);
-            if (departmentSection) {
-                departmentSection.style.display = 'block';
+            if (userRole === 'staff' || userRole === 'headstaff') {
+                // For staff/headstaff, "all" means their department only
+                const departmentSection = document.querySelector(
+                    `.department-section[data-department="${userDepartmentId}"]`
+                );
+                if (departmentSection) {
+                    departmentSection.style.display = 'block';
+                }
             } else {
-                // If specific section not found, show relevant part from "all" section
+                // For admin/manager, show all departments
                 const allSection = document.querySelector('.department-section[data-department="all"]');
                 if (allSection) {
                     allSection.style.display = 'block';
-                    // Hide irrelevant department sections within "all"
-                    allSection.querySelectorAll('.cards-member').forEach(cardSection => {
-                        const cards = cardSection.querySelectorAll('.card-wrapper');
-                        let hasMatchingCards = false;
-                        cards.forEach(card => {
-                            if (card.getAttribute('data-department-id') == departmentId) {
-                                hasMatchingCards = true;
-                            }
-                        });
-                        if (!hasMatchingCards) {
-                            cardSection.closest('div').style.display = 'none';
-                        }
-                    });
                 }
+            }
+        } else {
+            const departmentSection = document.querySelector(
+                `.department-section[data-department="${departmentId}"]`
+            );
+            if (departmentSection) {
+                departmentSection.style.display = 'block';
             }
         }
 
@@ -630,40 +634,83 @@ function filterByDepartment(departmentId) {
             btn.classList.remove('active', 'btn-side-nav-active');
         });
 
-        const activeBtn = document.querySelector(`.btn-side-nav[onclick*="filterByDepartment(${departmentId === 'all' ? "'all'" : departmentId})"]`);
+        const activeBtn = document.querySelector(
+            `.btn-side-nav[onclick*="filterByDepartment(${
+                departmentId === 'all' ? "'all'" : departmentId
+            })"]`
+        );
         if (activeBtn) {
             activeBtn.classList.add('active', 'btn-side-nav-active');
         }
 
         // Update member count
-        const visibleMembers = document.querySelectorAll('.department-section:not([style*="display: none"]) .card-wrapper:not([style*="display: none"])').length;
-        const memberCount = document.querySelector('.member-count p');
-        if (memberCount) {
-            memberCount.textContent = visibleMembers;
-        }
+        updateMemberCount();
 
     } catch (error) {
         console.error('Error filtering members:', error);
     }
 }
 
-// Function to initialize filtering if URL contains department ID
-function initializeFiltering() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const departmentId = window.location.pathname.split('/').pop();
-    
-    if (departmentId && !isNaN(departmentId)) {
-        filterByDepartment(parseInt(departmentId));
+// Add this helper function to update member count
+function updateMemberCount() {
+    const visibleMembers = document.querySelectorAll(
+        '.department-section:not([style*="display: none"]) .card-wrapper:not([style*="display: none"])'
+    ).length;
+    const memberCount = document.querySelector('.member-count p');
+    if (memberCount) {
+        memberCount.textContent = visibleMembers;
     }
 }
 
-// Run initialization on page load
-document.addEventListener('DOMContentLoaded', initializeFiltering);
+// Initialize the page with proper filtering
+document.addEventListener('DOMContentLoaded', () => {
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
 
-// Helper function to create member card HTML
+    if (userRole === 'staff' || userRole === 'headstaff') {
+        // Hide departments in side nav that aren't the user's department
+        document.querySelectorAll('.btn-side-nav').forEach(btn => {
+            const departmentId = btn.getAttribute('onclick')?.match(/filterByDepartment\((\d+)\)/)?.[1];
+            if (departmentId && departmentId != userDepartmentId) {
+                btn.style.display = 'none';
+            }
+        });
+
+        // Initially filter to show only user's department
+        filterByDepartment(userDepartmentId);
+    }
+});
+
+// Add this function to check if user can view member
+function canViewMember(memberId, memberDepartmentId) {
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+    const userId = document.querySelector('meta[name="user-id"]')?.content;
+
+    if (userRole === 'admin' || userRole === 'manager') {
+        return true;
+    }
+
+    if (userRole === 'headstaff') {
+        return memberDepartmentId === userDepartmentId;
+    }
+
+    if (userRole === 'staff') {
+        return memberId === userId;
+    }
+
+    return false;
+}
+
+// Update the createMemberCard function
 function createMemberCard(member) {
     const card = document.createElement('div');
     card.className = 'card-wrapper fade-in';
+    
+    const canView = canViewMember(member.id, member.department_id);
+    const cardContent = canView 
+        ? `onclick="window.location.href='/members/${member.id}'" style="cursor: pointer;"`
+        : `style="cursor: not-allowed; opacity: 0.7;"`;
     
     const profilePicture = member.profile_picture 
         ? `/storage/${member.profile_picture}`
@@ -671,43 +718,39 @@ function createMemberCard(member) {
         
     card.innerHTML = `
         <div class="card-container">
-            <div class="card-edit" onclick="openEditPopup(this)" 
-                data-member-id="${member.id}"
-                data-first-name="${member.first_name}"
-                data-last-name="${member.last_name}"
-                data-position="${member.position}"
-                data-department-id="${member.department_id}">
-                <i class="fas fa-edit"></i>
-            </div>
-            <div class="card-content" onclick="window.location.href='/members/${member.id}'" style="cursor: pointer;">
-                <div class="card-logo">
-                    <img src="${profilePicture}" class="card-logo-img" alt="profile picture">
-                </div>
-                <div class="divider"></div>
-                <div class="card-container-info">
-                    <div class="card-name">
-                        <h3 class="sarabun-24">${member.first_name} ${member.last_name}</h3>
+            ${canView ? `
+                <div class="card-content" ${cardContent}>
+                    <div class="card-logo">
+                        <img src="${profilePicture}" class="card-logo-img" alt="profile picture">
                     </div>
-                    <div class="card-details">
-                        <h2 class="sarabun-16">ตำแหน่ง</h2>
-                        <p class="sarabun-16">${member.position}</p>
-                    </div>
-                    <div class="card-details">
-                        <h2 class="sarabun-16">หน่วยงาน</h2>
-                        <p class="sarabun-16">${member.department.name}</p>
-                    </div>
-                    ${member.sub_department ? `
-                        <div class="card-details">
-                            <h2 class="sarabun-16">หน่วยงานย่อย</h2>
-                            <p class="sarabun-16">${member.sub_department}</p>
+                    <div class="divider"></div>
+                    <div class="card-container-info">
+                        <div class="card-name">
+                            <h3 class="sarabun-24">${member.first_name} ${member.last_name}</h3>
                         </div>
-                    ` : ''}
-                    <div class="card-details">
-                        <h2 class="sarabun-16">บทบาท</h2>
-                        <p class="sarabun-16">${member.role}</p>
+                        <div class="card-details">
+                            <h2 class="sarabun-16">ตำแหน่ง</h2>
+                            <p class="sarabun-16">${member.position}</p>
+                        </div>
+                        <div class="card-details">
+                            <h2 class="sarabun-16">หน่วยงาน</h2>
+                            <p class="sarabun-16">${member.department.name}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            ` : `
+                <div class="card-content" ${cardContent}>
+                    <div class="card-logo">
+                        <img src="${profilePicture}" class="card-logo-img" alt="profile picture">
+                    </div>
+                    <div class="divider"></div>
+                    <div class="card-container-info">
+                        <div class="card-name">
+                            <h3 class="sarabun-24">ไม่มีสิทธิ์เข้าถึง</h3>
+                        </div>
+                    </div>
+                </div>
+            `}
         </div>
     `;
     
