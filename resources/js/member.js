@@ -1,126 +1,223 @@
-import {
-    openCreatePopup,
-    closeCreatePopup,
-    // openEditPopup,
-    closeEditPopup,
-    // openDeleteConfirmationPopup,
-    closeDeleteConfirmation
-} from './component/button.js';
-import axios from 'axios';
-
-// Popup management
-// function openCreatePopup() {
-//     document.getElementById('createPopup').style.display = 'flex';
-// }
-
-// function closeCreatePopup() {
-//     document.getElementById('createPopup').style.display = 'none';
-//     document.querySelector('#createPopup form').reset();
-//     document.getElementById('createPreviewImage').src = '/images/default-avatar.png';
-// }
-
-// Add this at the top of your file
+// Global variables and functions
 let currentCard = null;
 
-// Update the openEditPopup function
+// Edit popup functionality
 async function openEditPopup(element) {
-    console.log('Opening edit popup for member');
-    
     try {
-        // Get member ID from data attribute
         const memberId = element.getAttribute('data-member-id');
         if (!memberId) {
-            throw new Error('Member ID not found');
+            console.error('No member ID found');
+            return;
         }
-        
-        // Fetch member data from database
+
+        // Fetch member data
         const response = await axios.get(`/members/${memberId}/data`);
-        if (!response.data || !response.data.success) {
-            throw new Error('Failed to fetch member data');
+        const data = response.data;
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to fetch member details');
         }
 
-        const member = response.data.member;
-        console.log('Member data:', member);
+        const member = data.member;
 
-        // Store current card for deletion reference
-        currentCard = element.closest('.card-container');
-
-        // Get the edit form
+        // Populate the edit form
+        document.getElementById('editMemberId').value = member.id;
+        document.getElementById('editPreviewImage').src = member.profile_picture 
+            ? member.profile_picture  // Already contains Storage::url path
+            : 'https://placehold.co/128';
+        
         const form = document.getElementById('editMemberForm');
-        if (!form) {
-            throw new Error('Edit form not found');
-        }
-
-        // Set hidden member ID
-        form.querySelector('input[name="id"]').value = memberId;
-
-        // Set form values
         form.querySelector('input[name="first_name"]').value = member.first_name || '';
         form.querySelector('input[name="last_name"]').value = member.last_name || '';
         form.querySelector('input[name="position"]').value = member.position || '';
+        form.querySelector('select[name="department_id"]').value = member.department_id || '';
+        form.querySelector('input[name="sub_department"]').value = member.sub_department || '';
+        form.querySelector('select[name="role"]').value = member.role || '';
         form.querySelector('input[name="email"]').value = member.email || '';
         form.querySelector('input[name="phone"]').value = member.phone || '';
-        form.querySelector('input[name="sub_department"]').value = member.sub_department || '';
-        
-        // Set department dropdown
-        const departmentSelect = form.querySelector('select[name="department_id"]');
-        if (departmentSelect) {
-            departmentSelect.value = member.department_id;
-        }
-
-        // Set role dropdown
-        const roleSelect = form.querySelector('select[name="role"]');
-        if (roleSelect) {
-            roleSelect.value = member.role;
-        }
-
-        // Show profile picture if exists, otherwise show placeholder
-        const previewImage = document.getElementById('editPreviewImage');
-        if (previewImage) {
-            previewImage.src = member.profile_picture || 'https://placehold.co/128';
-        }
 
         // Show the popup
-        const popup = document.getElementById('popupEdit');
-        document.body.classList.add('lock-scroll');
-        if (popup) {
-            popup.classList.add('active');
-        }
+        document.getElementById('popupEdit').classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+
     } catch (error) {
-        console.error('Error in openEditPopup:', error);
-        alert('เกิดข้อผิดพลาดในการเปิดหน้าต่างแก้ไข: ' + error.message);
+        console.error('Error opening edit popup:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
     }
 }
 
-// function closeEditPopup() {
-//     const popup = document.getElementById('editPopup');
-//     if (popup) {
-//         popup.style.display = 'none';
-//         // Reset form
-//         document.getElementById('editForm').reset();
-//     }
-// }
+// Popup functions
+function openCreatePopup() {
+    document.getElementById('createPopup').classList.add('active');
+    document.getElementById('overlay').classList.add('active');
+}
 
-// function openDeleteConfirmation() {
-//     console.log('Opening delete confirmation...');
-//     if (!currentCard) {
-//         console.error('No member selected for deletion');
-//         return;
+function closeCreatePopup() {
+    document.getElementById('createPopup').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+    document.querySelector('#createPopup form').reset();
+    document.getElementById('createPreviewImage').src = 'https://placehold.co/128';
+}
+
+function closeEditPopup() {
+    document.getElementById('popupEdit').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+}
+
+function closeDeleteConfirmation() {
+    document.getElementById('deleteConfirmationPopup').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+}
+
+// Delete confirmation functionality
+async function openDeleteConfirmationPopup(memberId) {
+    try {
+        if (!memberId) {
+            console.error('No member ID provided');
+            return;
+        }
+
+        // Fetch member data
+        const response = await axios.get(`/members/${memberId}/data`);
+        const data = response.data;
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to fetch member details');
+        }
+
+        const member = data.member;
+        const tasks = data.tasks;
+
+        // Store member ID in both popups
+        document.getElementById('deleteConfirmationPopup').setAttribute('data-member-id', memberId);
+        document.getElementById('taskConfirmationPopup').setAttribute('data-member-id', memberId);
+
+        // Update the confirmation popup with member details
+        const popup = document.getElementById('deleteConfirmationPopup');
+        popup.querySelector('.card-logo-img').src = member.profile_picture || 'https://placehold.co/128';
+        popup.querySelector('.card-name h2').textContent = `${member.first_name} ${member.last_name}`;
+        
+        // Update all information fields
+        const infoItems = popup.querySelectorAll('.popup-member-infoamation-item');
+        infoItems.forEach(item => {
+            const title = item.querySelector('h2').textContent.toLowerCase();
+            if (title.includes('ตำแหน่ง')) {
+                item.querySelector('p').textContent = member.position || '-';
+            } else if (title.includes('หน่วยงาน')) {
+                item.querySelector('p').textContent = member.department.name || '-';
+            } else if (title.includes('หน่วยงานย่อย')) {
+                item.querySelector('p').textContent = member.sub_department || '-';
+            } else if (title.includes('อีเมล')) {
+                item.querySelector('p').textContent = member.email || '-';
+            } else if (title.includes('เบอร์โทรศัพท์')) {
+                item.querySelector('p').textContent = member.phone || '-';
+            }
+        });
+
+        // Show appropriate popup based on tasks
+        if (tasks && tasks.length > 0) {
+            // Update task confirmation popup
+            const taskPopup = document.getElementById('taskConfirmationPopup');
+            taskPopup.querySelector('#memberImage').src = member.profile_picture || 'https://placehold.co/128';
+            taskPopup.querySelector('#memberName').textContent = `${member.first_name} ${member.last_name}`;
+            
+            // Show task confirmation popup
+            taskPopup.classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        } else {
+            // Show regular delete confirmation popup
+            popup.classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+    } catch (error) {
+        console.error('Error opening delete confirmation:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    }
+}
+
+// URL update function
+function updateURL(url) {
+    window.history.pushState({}, '', url);
+}
+
+// Department filter function
+async function filterByDepartment(departmentId) {
+    try {
+        const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+
+        // If staff or headstaff, only allow viewing their own department
+        if ((userRole === 'staff' || userRole === 'headstaff') && 
+            departmentId !== 'all' && 
+            departmentId != userDepartmentId) {
+            console.warn('Access restricted: Can only view own department');
+            return;
+        }
+
+        // Navigate to the members page with the filter
+        if (departmentId === 'all') {
+            window.location.href = '/members';
+        } else {
+            window.location.href = `/members/filter/${departmentId}`;
+        }
+    } catch (error) {
+        console.error('Error filtering by department:', error);
+        alert('เกิดข้อผิดพลาดในการกรองข้อมูล');
+    }
+}
+
+// Make functions available globally
+window.openEditPopup = openEditPopup;
+window.openCreatePopup = openCreatePopup;
+window.closeCreatePopup = closeCreatePopup;
+window.closeEditPopup = closeEditPopup;
+window.closeDeleteConfirmation = closeDeleteConfirmation;
+window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
+window.updateURL = updateURL;
+window.filterByDepartment = filterByDepartment;
+
+// // Add animations
+// const style = document.createElement('style');
+// style.textContent = `
+//     .deleting {
+//         animation: fadeOut 0.3s ease-out forwards;
 //     }
 
-//     const memberName = currentCard.querySelector('h3').textContent;
-//     const popup = document.getElementById('deletePopup');
-//     const nameSpan = document.getElementById('deleteMemberName');
-    
-//     if (popup && nameSpan) {
-//         nameSpan.textContent = memberName;
-//         popup.style.display = 'flex';
+//     @keyframes fadeOut {
+//         from { 
+//             opacity: 1;
+//             transform: scale(1);
+//         }
+//         to { 
+//             opacity: 0;
+//             transform: scale(0.8);
+//         }
 //     }
-// }
 
-// function closeDeletePopup() {
-//     document.getElementById('deletePopup').style.display = 'none';
-// }
+//     .member-card {
+//         animation: fadeInUp 0.5s ease-out forwards;
+//         opacity: 0;
+//     }
+
+//     @keyframes fadeInUp {
+//         from {
+//             opacity: 0;
+//             transform: translateY(20px);
+//         }
+//         to {
+//             opacity: 1;
+//             transform: translateY(0);
+//         }
+//     }
+// `;
+// document.head.appendChild(style);
+
+// Add event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize your event listeners here
+    // ... rest of your initialization code ...
+});
 
 // Image preview
 function previewImage(input, previewId) {
@@ -132,7 +229,6 @@ function previewImage(input, previewId) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-
 
 // Member management functions
 async function createMember() {
@@ -164,7 +260,7 @@ async function createMember() {
             console.log(`${key}: ${value}`);
         }
 
-        const response = await axios.post('/members', formData, {
+        const response = await axios.post('/members/create', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -222,105 +318,88 @@ async function createMember() {
 
 async function updateMember(event) {
     event.preventDefault();
-    const form = event.target;
+    
+    const form = document.getElementById('editMemberForm');
+    if (!form) return;
+
     const memberId = document.getElementById('editMemberId').value;
-    const formData = new FormData(form);
-    formData.append('_method', 'PUT');
+    if (!memberId) {
+        console.error('No member ID found');
+        return;
+    }
 
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const cancelBtn = form.querySelector('button[type="button"]');
+    
     try {
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.textContent = 'กำลังบันทึก...';
-        submitButton.disabled = true;
+        // Disable buttons and show loading state
+        submitBtn.disabled = true;
+        cancelBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
 
-        const response = await axios.post(`/members/${memberId}`, formData, {
+        const formData = new FormData(form);
+        
+        // Log form data for debugging (optional)
+        console.log('Sending form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        const response = await axios.post(`/members/${memberId}/update`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
         });
 
         if (response.data.success) {
-            submitButton.textContent = 'บันทึกสำเร็จ!';
-            submitButton.style.backgroundColor = '#28a745';
-            
-            // Refresh the page after successful update
-            window.location.reload();
+            // Show success state
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> สำเร็จ';
+            submitBtn.style.backgroundColor = '#28a745';
+
+            // Close popup and refresh page
+            setTimeout(() => {
+                closeEditPopup();
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(response.data.message || 'Failed to update member');
         }
+
     } catch (error) {
         console.error('Error updating member:', error);
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.textContent = 'เกิดข้อผิดพลาด';
-        submitButton.style.backgroundColor = '#dc3545';
-        
-        setTimeout(() => {
-            submitButton.textContent = 'บันทึก';
-            submitButton.style.backgroundColor = '#F48E2E';
-            submitButton.disabled = false;
-        }, 1500);
+        submitBtn.disabled = false;
+        cancelBtn.disabled = false;
+        submitBtn.innerHTML = 'ตกลง';
+        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
     }
 }
 
-async function openDeleteConfirmationPopup() {
-    try {
-        const editForm = document.getElementById('editMemberForm');
-        if (!editForm) {
-            console.error('Edit form not found');
-            return;
-        }
-
-        const memberId = editForm.querySelector('input[name="id"]').value;
-        
-        // Fetch member data and their tasks
-        const response = await axios.get(`/members/${memberId}/details-with-tasks`);
-        
-        if (!response.data.success) {
-            throw new Error('Failed to fetch member details');
-        }
-
-        const member = response.data.member;
-        const tasks = response.data.tasks;
-
-        // If member has tasks, show task confirmation popup
-        if (tasks && tasks.length > 0) {
-            showTaskConfirmationPopup(member, tasks);
-        } else {
-            // If no tasks, show regular delete confirmation
-            showDeleteConfirmationPopup(member);
-        }
-
-    } catch (error) {
-        console.error('Error opening delete confirmation:', error);
-        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลบุคลากร');
-    }
-}
-
-function showTaskConfirmationPopup(member, tasks) {
+function showTaskConfirmationPopup(data) {
     const popup = document.getElementById('taskConfirmationPopup');
-    
+    const member = data.member;
+    const tasks = data.tasks;
+
     // Update member info
-    popup.querySelector('#memberName').textContent = `${member.first_name} ${member.last_name}`;
-    popup.querySelector('#memberImage').src = member.profile_picture || 'https://placehold.co/128';
+    document.getElementById('memberImage').src = member.profile_picture || 'https://placehold.co/128';
+    document.getElementById('memberName').textContent = `${member.first_name} ${member.last_name}`;
 
     // Update tasks list
-    const tasksList = popup.querySelector('#tasksList');
+    const tasksList = document.getElementById('tasksList');
     tasksList.innerHTML = tasks.map(task => `
         <div class="task-item">
-            <div class="task-info">
-                <h3 class="sarabun-20">${task.title}</h3>
-                <p class="sarabun-16">${task.description || 'ไม่มีคำอธิบาย'}</p>
-                <p class="sarabun-16">วันครบกำหนด: ${task.deadline || 'ไม่ระบุ'}</p>
-            </div>
+            <h3 class="sarabun-20">${task.title}</h3>
+            <p class="sarabun-16">${task.description || ''}</p>
+            <p class="sarabun-16">สถานะ: ${task.status}</p>
         </div>
     `).join('');
 
     // Store member ID for deletion
     popup.setAttribute('data-member-id', member.id);
 
-    // Show popup
-    closeEditPopup();
+    // Show the popup
     popup.classList.add('active');
     document.getElementById('overlay').classList.add('active');
-    document.body.classList.add('lock-scroll');
-
 }
 
 function showDeleteConfirmationPopup(member) {
@@ -342,26 +421,45 @@ function showDeleteConfirmationPopup(member) {
 
     // Show popup
     closeEditPopup();
-    deletePopup.style.display = 'block';
-    document.getElementById('overlay').style.display = 'block';
+    deletePopup.classList.add('active');
+    document.getElementById('overlay').classList.add('active');
 }
 
 // Function to delete member and their tasks
+async function deleteMember() {
+    try {
+        const popup = document.getElementById('deleteConfirmationPopup');
+        const memberId = popup.getAttribute('data-member-id');
+        
+        if (!memberId) {
+            throw new Error('No member ID found');
+        }
+
+        const response = await axios.delete(`/members/${memberId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+
+        if (response.data.success) {
+            window.location.reload();
+        } else {
+            throw new Error(response.data.message || 'Failed to delete member');
+        }
+    } catch (error) {
+        console.error('Error deleting member:', error);
+        alert('เกิดข้อผิดพลาดในการลบบุคลากร: ' + (error.response?.data?.message || error.message));
+    }
+}
+
 async function deleteMemberWithTasks() {
     try {
         const popup = document.getElementById('taskConfirmationPopup');
         const memberId = popup.getAttribute('data-member-id');
 
         if (!memberId) {
-            console.error('Member ID not found');
-            return;
+            throw new Error('No member ID found');
         }
-
-        // Show loading state
-        const confirmButton = popup.querySelector('.btn-confirm');
-        const originalText = confirmButton.textContent;
-        confirmButton.textContent = 'กำลังลบ...';
-        confirmButton.disabled = true;
 
         const response = await axios.delete(`/members/${memberId}/with-tasks`, {
             headers: {
@@ -370,35 +468,13 @@ async function deleteMemberWithTasks() {
         });
 
         if (response.data.success) {
-            // Show success state
-            confirmButton.textContent = 'ลบสำเร็จ';
-            confirmButton.style.backgroundColor = '#28a745';
-
-            // Close popup and refresh page after delay
-            setTimeout(() => {
-                closeTaskConfirmationPopup();
-                window.location.reload();
-            }, 1000);
+            window.location.reload();
         } else {
-            throw new Error(response.data.message || 'Failed to delete member');
+            throw new Error(response.data.message || 'Failed to delete member and tasks');
         }
-
     } catch (error) {
-        console.error('Error deleting member and tasks:', error);
-        
-        // Show error state on button
-        const confirmButton = popup.querySelector('.btn-confirm');
-        confirmButton.textContent = 'เกิดข้อผิดพลาด';
-        confirmButton.style.backgroundColor = '#dc3545';
-        
-        // Reset button state after delay
-        setTimeout(() => {
-            confirmButton.textContent = 'ยืนยันการลบ';
-            confirmButton.style.backgroundColor = '#F48E2E';
-            confirmButton.disabled = false;
-        }, 1500);
-
-        alert('เกิดข้อผิดพลาดในการลบบุคลากรและภาระงาน');
+        console.error('Error deleting member:', error);
+        alert('เกิดข้อผิดพลาดในการลบบุคลากร: ' + (error.response?.data?.message || error.message));
     }
 }
 
@@ -407,14 +483,13 @@ function closeTaskConfirmationPopup() {
     if (popup) {
         popup.classList.remove('active');
         document.getElementById('overlay').classList.remove('active');
-        document.body.classList.remove('lock-scroll');
     }
 }
 
 window.closeTaskConfirmationPopup = closeTaskConfirmationPopup;
 // Add to window object to make it globally available
+window.deleteMember = deleteMember;
 window.deleteMemberWithTasks = deleteMemberWithTasks;
-
 
 // Helper functions
 function addMemberCard(memberData) {
@@ -506,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (this.id === 'editPopup') {
                     closeEditPopup();
                 } else if (this.id === 'deletePopup') {
-                    closeDeletePopup();
+                    closeDeleteConfirmation();
                 } else if (this.id === 'createPopup') {
                     closeCreatePopup();
                 }
@@ -521,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (popup.id === 'editPopup') {
                 closeEditPopup();
             } else if (popup.id === 'deletePopup') {
-                closeDeletePopup();
+                closeDeleteConfirmation();
             } else if (popup.id === 'createPopup') {
                 closeCreatePopup();
             }
@@ -542,271 +617,3 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debug: Log if script is properly loaded
     console.log('Member.js initialized');
 });
-
-// Add these CSS animations
-const style = document.createElement('style');
-style.textContent = `
-    .deleting {
-        animation: fadeOut 0.3s ease-out forwards;
-    }
-
-    @keyframes fadeOut {
-        from { 
-            opacity: 1;
-            transform: scale(1);
-        }
-        to { 
-            opacity: 0;
-            transform: scale(0.8);
-        }
-    }
-
-    .member-card {
-        animation: fadeInUp 0.5s ease-out forwards;
-        opacity: 0;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// Add this new function to handle URL updates
-function updateURL(url) {
-    window.history.pushState({}, '', url);
-}
-
-// Update the filterByDepartment function
-async function filterByDepartment(departmentId) {
-    try {
-        const userRole = document.querySelector('meta[name="user-role"]')?.content;
-        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
-
-        // If staff or headstaff, only allow viewing their own department
-        if ((userRole === 'staff' || userRole === 'headstaff') && 
-            departmentId !== 'all' && 
-            departmentId != userDepartmentId) {
-            console.warn('Access restricted: Can only view own department');
-            return;
-        }
-
-        // Reset display for all sections
-        document.querySelectorAll('.department-section').forEach(section => {
-            section.style.display = 'none';
-        });
-
-        // Show appropriate section
-        if (departmentId === 'all') {
-            if (userRole === 'staff' || userRole === 'headstaff') {
-                // For staff/headstaff, "all" means their department only
-                const departmentSection = document.querySelector(
-                    `.department-section[data-department="${userDepartmentId}"]`
-                );
-                if (departmentSection) {
-                    departmentSection.style.display = 'block';
-                }
-            } else {
-                // For admin/manager, show all departments
-                const allSection = document.querySelector('.department-section[data-department="all"]');
-                if (allSection) {
-                    allSection.style.display = 'block';
-                }
-            }
-        } else {
-            const departmentSection = document.querySelector(
-                `.department-section[data-department="${departmentId}"]`
-            );
-            if (departmentSection) {
-                departmentSection.style.display = 'block';
-            }
-        }
-
-        // Update active state of side navigation buttons
-        document.querySelectorAll('.btn-side-nav').forEach(btn => {
-            btn.classList.remove('active', 'btn-side-nav-active');
-        });
-
-        const activeBtn = document.querySelector(
-            `.btn-side-nav[onclick*="filterByDepartment(${
-                departmentId === 'all' ? "'all'" : departmentId
-            })"]`
-        );
-        if (activeBtn) {
-            activeBtn.classList.add('active', 'btn-side-nav-active');
-        }
-
-        // Update member count
-        updateMemberCount();
-
-    } catch (error) {
-        console.error('Error filtering members:', error);
-    }
-}
-
-// Add this helper function to update member count
-function updateMemberCount() {
-    const visibleMembers = document.querySelectorAll(
-        '.department-section:not([style*="display: none"]) .card-wrapper:not([style*="display: none"])'
-    ).length;
-    const memberCount = document.querySelector('.member-count p');
-    if (memberCount) {
-        memberCount.textContent = visibleMembers;
-    }
-}
-
-// Initialize the page with proper filtering
-document.addEventListener('DOMContentLoaded', () => {
-    const userRole = document.querySelector('meta[name="user-role"]')?.content;
-    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
-
-    if (userRole === 'staff' || userRole === 'headstaff') {
-        // Hide departments in side nav that aren't the user's department
-        document.querySelectorAll('.btn-side-nav').forEach(btn => {
-            const departmentId = btn.getAttribute('onclick')?.match(/filterByDepartment\((\d+)\)/)?.[1];
-            if (departmentId && departmentId != userDepartmentId) {
-                btn.style.display = 'none';
-            }
-        });
-
-        // Initially filter to show only user's department
-        filterByDepartment(userDepartmentId);
-    }
-});
-
-// Add this function to check if user can view member
-function canViewMember(memberId, memberDepartmentId) {
-    const userRole = document.querySelector('meta[name="user-role"]')?.content;
-    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
-    const userId = document.querySelector('meta[name="user-id"]')?.content;
-
-    if (userRole === 'admin' || userRole === 'manager') {
-        return true;
-    }
-
-    if (userRole === 'headstaff') {
-        return memberDepartmentId === userDepartmentId;
-    }
-
-    if (userRole === 'staff') {
-        return memberId === userId;
-    }
-
-    return false;
-}
-
-// Update the createMemberCard function
-function createMemberCard(member) {
-    const card = document.createElement('div');
-    card.className = 'card-wrapper fade-in';
-    
-    const canView = canViewMember(member.id, member.department_id);
-    const cardContent = canView 
-        ? `onclick="window.location.href='/members/${member.id}'" style="cursor: pointer;"`
-        : `style="cursor: not-allowed; opacity: 0.7;"`;
-    
-    const profilePicture = member.profile_picture 
-        ? `/storage/${member.profile_picture}`
-        : 'https://placehold.co/128';
-        
-    card.innerHTML = `
-        <div class="card-container">
-            ${canView ? `
-                <div class="card-content" ${cardContent}>
-                    <div class="card-logo">
-                        <img src="${profilePicture}" class="card-logo-img" alt="profile picture">
-                    </div>
-                    <div class="divider"></div>
-                    <div class="card-container-info">
-                        <div class="card-name">
-                            <h3 class="sarabun-24">${member.first_name} ${member.last_name}</h3>
-                        </div>
-                        <div class="card-details">
-                            <h2 class="sarabun-16">ตำแหน่ง</h2>
-                            <p class="sarabun-16">${member.position}</p>
-                        </div>
-                        <div class="card-details">
-                            <h2 class="sarabun-16">หน่วยงาน</h2>
-                            <p class="sarabun-16">${member.department.name}</p>
-                        </div>
-                    </div>
-                </div>
-            ` : `
-                <div class="card-content" ${cardContent}>
-                    <div class="card-logo">
-                        <img src="${profilePicture}" class="card-logo-img" alt="profile picture">
-                    </div>
-                    <div class="divider"></div>
-                    <div class="card-container-info">
-                        <div class="card-name">
-                            <h3 class="sarabun-24">ไม่มีสิทธิ์เข้าถึง</h3>
-                        </div>
-                    </div>
-                </div>
-            `}
-        </div>
-    `;
-    
-    return card;
-}
-
-// Initialize page with all members
-document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('memberCardsContainer');
-    if (container && window.initialMembers) {
-        window.initialMembers.forEach(member => {
-            const memberCard = createMemberCard(member);
-            container.appendChild(memberCard);
-        });
-    }
-
-    // Create member image preview
-    const createInput = document.getElementById('memberProfilePicture');
-    const createPreview = document.getElementById('previewImage');
-    
-    if (createInput && createPreview) {
-        createInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    createPreview.src = e.target.result;
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-    }
-
-    // Edit member image preview
-    const editInput = document.getElementById('editMemberProfilePicture');
-    const editPreview = document.getElementById('editPreviewImage');
-    
-    if (editInput && editPreview) {
-        editInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    editPreview.src = e.target.result;
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-    }
-});
-
-// Make functions available globally
-window.createMember = createMember;
-window.filterByDepartment = filterByDepartment;
-window.openEditPopup = openEditPopup;
-window.deleteMember = deleteMemberWithTasks;
-window.updateMember = updateMember;
-window.previewImage = previewImage;
-window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
-window.updateURL = updateURL;
-

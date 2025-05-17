@@ -54,7 +54,7 @@
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            @if(auth()->user()->isNotManager())
+            @if(!auth()->user()->isManager())
                 <div id="popupButton" class="btn-create btn-text sarabun-20" onclick="openCreatePopup()">
                         <i class="fas fa-plus"></i> เพิ่มภาระงาน
                 </div>

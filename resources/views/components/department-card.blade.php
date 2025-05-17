@@ -1,4 +1,4 @@
-<div class="card-wrapper">
+<div class="card-wrapper fade-in">
     <div class="card-container">
         @if(auth()->user()->isAdmin())
         <div class="card-edit" onclick="openEditPopup(this)" 

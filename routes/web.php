@@ -6,6 +6,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TaskController;
 use App\Models\Member;
+use Illuminate\Support\Facades\Storage;
 
 // Public routes
 Route::get('/', [LoginController::class, 'index'])->name('home');
@@ -31,25 +32,35 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{department}/update', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
         
-        // Add this for serving department images directly
-        Route::get('/storage/{filename}', function ($filename) {
-            $path = storage_path('app/public/departments/' . $filename);
-            if (!file_exists($path)) {
+        // Update the storage route to use Storage::url
+        Route::get('/storage/{path}', function ($path) {
+            $fullPath = storage_path('app/public/departments/' . $path);
+            if (!file_exists($fullPath)) {
                 return response()->json(['message' => 'Image not found'], 404);
             }
-            return response()->file($path);
-        });
+            return response()->file($fullPath);
+        })->where('path', '.*');  // Allow any path format
     });
 
     // Member routes
     Route::prefix('members')->group(function () {
         Route::get('/', [MemberController::class, 'index'])->name('members.index');
         Route::post('/create', [MemberController::class, 'store'])->name('members.store');
-        Route::get('/{member}', [MemberController::class, 'show'])->name('members.show');
-        Route::get('/{member}/data', [MemberController::class, 'getMemberData'])->name('members.data');
-        Route::post('/{member}/update', [MemberController::class, 'update'])->name('members.update');
-        Route::delete('/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
         Route::get('/filter/{departmentId}', [MemberController::class, 'filter'])->name('members.filter');
+        
+        // Delete routes should come FIRST, before other member routes
+        Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])
+            ->name('members.destroy-with-tasks');
+        Route::delete('/{member}', [MemberController::class, 'destroy'])
+            ->name('members.destroy');
+        
+        // Other member routes
+        Route::get('/{member}/data', [MemberController::class, 'getMemberData'])
+            ->name('members.data');
+        Route::post('/{member}/update', [MemberController::class, 'update'])
+            ->name('members.update');
+        Route::get('/{member}', [MemberController::class, 'show'])
+            ->name('members.show');
         
         // Add this for serving member images directly
         Route::get('/storage/{filename}', function ($filename) {

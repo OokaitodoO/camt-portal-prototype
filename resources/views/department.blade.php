@@ -136,7 +136,7 @@
                         <div class="popup-name">
                             <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
                         </div>
-                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(document.getElementById('editDepartmentId').value)">
                             <i class="fas fa-trash"></i>
                         </div>
                     </div>

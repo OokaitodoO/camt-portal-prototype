@@ -81,7 +81,8 @@
                 </div>
                 @foreach($departments as $department)
                     <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }}); updateURL('{{ route('members.index') }}')">
-                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
+                        <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
+                             class="nav-logo-img" alt="logo">
                         <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
                     </div>
                 @endforeach               
@@ -109,11 +110,7 @@
                                             @if(auth()->user()->isAdmin() || 
                                                 (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
                                                 <div class="card-edit" onclick="openEditPopup(this)" 
-                                                    data-member-id="{{ $member->id }}"
-                                                    data-first-name="{{ $member->first_name }}"
-                                                    data-last-name="{{ $member->last_name }}"
-                                                    data-position="{{ $member->position }}"
-                                                    data-department-id="{{ $member->department_id }}">
+                                                    data-member-id="{{ $member->id }}">
                                                     <i class="fas fa-edit"></i>
                                                 </div>
                                             @endif
@@ -156,11 +153,7 @@
                                         @if(auth()->user()->isAdmin() || 
                                             (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
                                             <div class="card-edit" onclick="openEditPopup(this)" 
-                                                data-member-id="{{ $member->id }}"
-                                                data-first-name="{{ $member->first_name }}"
-                                                data-last-name="{{ $member->last_name }}"
-                                                data-position="{{ $member->position }}"
-                                                data-department-id="{{ $member->department_id }}">
+                                                data-member-id="{{ $member->id }}">
                                                 <i class="fas fa-edit"></i>
                                             </div>
                                         @endif
@@ -289,7 +282,7 @@
     <div id="popupEdit" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="editMemberForm" onsubmit="updateMember(event)">
+                <form id="editMemberForm" enctype="multipart/form-data" onsubmit="updateMember(event)">
                     @csrf
                     <input type="hidden" id="editMemberId" name="id">
                     <div class="popup-header">
@@ -299,7 +292,7 @@
                         <div class="popup-name">
                             <h1 class="page-title sarabun-36">แก้ไขบุคลากร</h1>
                         </div>
-                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">    
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(this.closest('form').querySelector('#editMemberId').value)">    
                             <i class="fas fa-trash"></i>
                         </div>
                     </div>
@@ -427,12 +420,12 @@
                     </div>
                 </div>
                 <div class="popup-btn-wrapper">
-                    <div class="btn btn-cancel" onclick="closeDeleteConfirmation()">
-                        <p class="sarabun-20">ยกเลิก</p>
-                    </div>
-                    <div class="btn btn-confirm" onclick="deleteMember()">
-                        <p class="sarabun-20">ยืนยัน</p>
-                    </div>
+                    <button type="button" class="btn btn-cancel sarabun-20" onclick="closeDeleteConfirmation()">
+                        ยกเลิก
+                    </button>
+                    <button type="button" class="btn btn-confirm sarabun-20" onclick="deleteMember()">
+                        ยืนยัน
+                    </button>
                 </div>
             </div>
         </div>
@@ -466,7 +459,7 @@
                         ยกเลิก
                     </button>
                     <button type="button" class="btn btn-confirm sarabun-20" onclick="deleteMemberWithTasks()">
-                        ยืนยันการลบ
+                        ยืนยัน
                     </button>
                 </div>
             </div>

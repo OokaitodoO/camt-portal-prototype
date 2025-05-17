@@ -206,16 +206,8 @@ class MemberController extends Controller
 
     public function getMemberData(Member $member)
     {
-        // Check if the current user can view this member
-        if (!auth()->user()->canView($member)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'คุณไม่มีสิทธิ์ในการดูข้อมูลบุคลากรนี้'
-            ], 403);
-        }
-
         try {
-            $member->load('department');
+            $member->load(['department', 'assignedTasks']);
             
             return response()->json([
                 'success' => true,
@@ -230,13 +222,29 @@ class MemberController extends Controller
                     'email' => $member->email,
                     'phone' => $member->phone,
                     'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null,
-                    'department' => $member->department
-                ]
+                    'department' => [
+                        'id' => $member->department->id,
+                        'name' => $member->department->name
+                    ]
+                ],
+                'tasks' => $member->assignedTasks->map(function($task) {
+                    return [
+                        'id' => $task->id,
+                        'name' => $task->name,
+                        'description' => $task->description,
+                        'status' => $task->status
+                    ];
+                })
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error fetching member data:', [
+                'member_id' => $member->id,
+                'error' => $e->getMessage()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch member data'
+                'message' => 'เกิดข้อผิดพลาดในการโหลดข้อมูล'
             ], 500);
         }
     }
@@ -271,15 +279,32 @@ class MemberController extends Controller
     {
         try {
             DB::transaction(function () use ($member) {
-                // Delete all tasks
-                $member->tasks()->delete();
+                // Delete all tasks first
+                $member->assignedTasks()->delete();
+                
+                // Delete profile picture if exists
+                if ($member->profile_picture) {
+                    Storage::disk('public')->delete($member->profile_picture);
+                }
+                
                 // Delete the member
                 $member->delete();
             });
 
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'ลบบุคลากรและภาระงานสำเร็จ'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting member and tasks']);
+            \Log::error('Error deleting member and tasks:', [
+                'member_id' => $member->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการลบบุคลากรและภาระงาน'
+            ], 500);
         }
     }
 

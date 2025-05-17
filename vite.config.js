@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/department.js',
                 'resources/js/task.js',
+                'resources/js/member.js',            
                 // Add any other JS/CSS files you need to compile
             ],
             refresh: true,
@@ -23,4 +24,9 @@ export default defineConfig({
             usePolling: true,
         },
     },
+    resolve: {
+        alias: {
+            '@': '/resources/js'
+        }
+    }
 });

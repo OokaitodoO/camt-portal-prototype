@@ -2,7 +2,6 @@ import {
     // closeCreatePopup,
     // openEditPopup,
     // closeEditPopup,
-    // openDeleteConfirmationPopup,
     closeDeleteConfirmation
 } from './component/button.js';
 import axios from 'axios';
@@ -281,8 +280,8 @@ async function deleteDepartment() {
 
         if (response.data.success) {
             closeDeleteConfirmation();
-            // Redirect to refresh the page
-            window.location.href = '/department';
+            // Change from '/department' to '/departments'
+            window.location.href = '/departments';
         } else {
             throw new Error(response.data.message || 'Failed to delete department');
         }
@@ -334,9 +333,55 @@ window.filterByDepartment = filterByDepartment;
 window.createDepartment = createDepartment;
 window.deleteDepartment = deleteDepartment;
 
+async function openDeleteConfirmationPopup(departmentId) {
+    try {
+        console.log('Opening delete confirmation for department:', departmentId);
+
+        if (!departmentId) {
+            throw new Error('Department ID is required');
+        }
+
+        // Fetch department data
+        const response = await axios.get(`/departments/${departmentId}/data`);
+        if (!response.data.success) {
+            throw new Error('Failed to fetch department data');
+        }
+
+        const department = response.data.department;
+        const popup = document.getElementById('deleteConfirmationPopup');
+        
+        // Set department data in popup
+        popup.setAttribute('data-department-id', departmentId);
+        popup.querySelector('.card-name h3').textContent = department.name;
+        
+        // Set department logo
+        const logoImg = popup.querySelector('.card-logo-img');
+        if (department.icon_path) {
+            logoImg.src = `/storage/${department.icon_path}`;
+        } else {
+            logoImg.src = 'https://placehold.co/128';
+        }
+
+        // Show popup
+        popup.classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+
+        // Close the edit popup if it's open
+        const editPopup = document.getElementById('popupEdit');
+        if (editPopup) {
+            editPopup.classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+    } catch (error) {
+        console.error('Error opening delete confirmation:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');
+    }
+}
+
+// Update openEditPopup function
 async function openEditPopup(element) {
     try {
-        // Get department ID directly from the clicked element
         const departmentId = element.getAttribute('data-department-id');
         console.log('Opening edit popup for department ID:', departmentId);
 
@@ -345,45 +390,40 @@ async function openEditPopup(element) {
         }
 
         // Fetch department data
-        const response = await axios.get(`/departments/${departmentId}/data`);
-        console.log('Department data received:', response.data);
+        const response = await axios.get(`/departments/${departmentId}/data`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
 
         if (!response.data.success) {
-            throw new Error(response.data.message || 'Failed to fetch department data');
+            throw new Error('Failed to fetch department data');
         }
 
         const department = response.data.department;
 
-        // Get form elements using your exact class names from blade template
+        // Get popup elements
+        const popup = document.getElementById('popupEdit');
         const form = document.getElementById('editDepartmentForm');
         const idInput = document.getElementById('editDepartmentId');
-        const nameInput = form.querySelector('.input-text-name');  // Your class from blade
+        const nameInput = form.querySelector('input[name="name"]');
         const logoPreview = document.getElementById('editLogoPreview');
 
-        console.log('Found elements:', {
-            form: !!form,
-            idInput: !!idInput,
-            nameInput: !!nameInput,
-            logoPreview: !!logoPreview
-        });
-
         // Set values
-        idInput.value = departmentId;
+        idInput.value = department.id;
         nameInput.value = department.name;
 
-        // Set logo preview with proper URL construction
+        // Set logo preview
         if (department.icon_path) {
             logoPreview.src = `/storage/${department.icon_path}`;
-            console.log('Setting logo URL:', `/storage/${department.icon_path}`);
         } else {
             logoPreview.src = 'https://placehold.co/128';
         }
 
-        // Show popup using your classes
-        const popup = document.getElementById('popupEdit');
-        const overlay = document.getElementById('overlay');
-        popup.classList.add('active');  // or popup.classList.add('active') depending on your CSS
-        overlay.classList.add('active');  // or overlay.classList.add('active')
+        // Show popup
+        popup.classList.add('active');
+        document.getElementById('overlay').classList.add('active');
 
     } catch (error) {
         console.error('Error in openEditPopup:', error);
@@ -391,7 +431,8 @@ async function openEditPopup(element) {
     }
 }
 
-// Make sure it's available globally
+// Make functions available globally
+window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 window.openEditPopup = openEditPopup;
 
 // Remove any duplicate event listeners
