@@ -98,43 +98,75 @@ class MemberController extends Controller
 
     public function update(Request $request, Member $member)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-        ]);
-
-        $member->first_name = $request->first_name;
-        $member->last_name = $request->last_name;
-        $member->position = $request->position;
-        $member->department_id = $request->department_id;
-
-        if ($request->hasFile('profile_picture')) {
-            // Delete old profile picture if exists
-            if ($member->profile_picture) {
-                Storage::disk('public')->delete($member->profile_picture);
-            }
+        try {
+            \Log::info('Updating member with data:', $request->all());
             
-            $path = $request->file('profile_picture')->store('members', 'public');
-            $member->profile_picture = $path;
-        }
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'position' => 'required|string|max:255',
+                'department_id' => 'required|exists:departments,id',
+                'sub_department' => 'nullable|string|max:255',
+                'role' => 'required|string|in:admin,manager,headstaff,staff',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            ]);
 
-        $member->save();
+            // Handle profile picture upload
+            if ($request->hasFile('profile_picture')) {
+                \Log::info('Processing profile picture upload');
+                
+                // Delete old profile picture if exists
+                if ($member->profile_picture) {
+                    Storage::disk('public')->delete($member->profile_picture);
+                }
+                
+                // Store new profile picture
+                $path = $request->file('profile_picture')->store('members', 'public');
+                \Log::info('New profile picture path:', ['path' => $path]);
+                
+                // Update the member's profile picture path
+                $member->profile_picture = $path;
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'อัปเดตข้อมูลบุคลากรสำเร็จ',
-            'member' => [
+            // Update other member details
+            $member->fill(array_diff_key($validated, ['profile_picture' => '']));
+            $member->save();
+
+            \Log::info('Member updated successfully:', [
                 'id' => $member->id,
-                'first_name' => $member->first_name,
-                'last_name' => $member->last_name,
-                'position' => $member->position,
-                'department_name' => $member->department->name,
-                'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
-            ]
-        ]);
+                'profile_picture' => $member->profile_picture
+            ]);
+
+            // Load the department relation for the response
+            $member->load('department');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'อัปเดตข้อมูลบุคลากรสำเร็จ',
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department_name' => $member->department->name,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error updating member:', [
+                'member_id' => $member->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Member $member)

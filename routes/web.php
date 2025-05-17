@@ -45,22 +45,12 @@ Route::middleware(['auth'])->group(function () {
     // Member routes
     Route::prefix('members')->group(function () {
         Route::get('/', [MemberController::class, 'index'])->name('members.index');
-        Route::post('/create', [MemberController::class, 'store'])->name('members.store');
+        Route::post('/', [MemberController::class, 'store'])->name('members.store');
+        Route::post('/{member}/update', [MemberController::class, 'update'])->name('members.update');
+        Route::delete('/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
+        Route::get('/{member}/data', [MemberController::class, 'getMemberData'])->name('members.getData');
         Route::get('/filter/{departmentId}', [MemberController::class, 'filter'])->name('members.filter');
-        
-        // Delete routes should come FIRST, before other member routes
-        Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])
-            ->name('members.destroy-with-tasks');
-        Route::delete('/{member}', [MemberController::class, 'destroy'])
-            ->name('members.destroy');
-        
-        // Other member routes
-        Route::get('/{member}/data', [MemberController::class, 'getMemberData'])
-            ->name('members.data');
-        Route::post('/{member}/update', [MemberController::class, 'update'])
-            ->name('members.update');
-        Route::get('/{member}', [MemberController::class, 'show'])
-            ->name('members.show');
+        Route::get('/{member}', [MemberController::class, 'show'])->name('members.show');
         
         // Add this for serving member images directly
         Route::get('/storage/{filename}', function ($filename) {

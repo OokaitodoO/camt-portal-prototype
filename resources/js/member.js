@@ -3,45 +3,33 @@ let currentCard = null;
 
 // Edit popup functionality
 async function openEditPopup(element) {
+    const memberId = element.getAttribute('data-member-id');
     try {
-        const memberId = element.getAttribute('data-member-id');
-        if (!memberId) {
-            console.error('No member ID found');
-            return;
-        }
-
-        // Fetch member data
         const response = await axios.get(`/members/${memberId}/data`);
-        const data = response.data;
+        const member = response.data.member;
 
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to fetch member details');
-        }
-
-        const member = data.member;
-
-        // Populate the edit form
-        document.getElementById('editMemberId').value = member.id;
-        document.getElementById('editPreviewImage').src = member.profile_picture 
-            ? member.profile_picture  // Already contains Storage::url path
-            : 'https://placehold.co/128';
-        
         const form = document.getElementById('editMemberForm');
-        form.querySelector('input[name="first_name"]').value = member.first_name || '';
-        form.querySelector('input[name="last_name"]').value = member.last_name || '';
-        form.querySelector('input[name="position"]').value = member.position || '';
-        form.querySelector('select[name="department_id"]').value = member.department_id || '';
+        form.querySelector('#editMemberId').value = member.id;
+        form.querySelector('input[name="first_name"]').value = member.first_name;
+        form.querySelector('input[name="last_name"]').value = member.last_name;
+        form.querySelector('input[name="position"]').value = member.position;
+        form.querySelector('select[name="department_id"]').value = member.department_id;
         form.querySelector('input[name="sub_department"]').value = member.sub_department || '';
-        form.querySelector('select[name="role"]').value = member.role || '';
+        form.querySelector('select[name="role"]').value = member.role;
         form.querySelector('input[name="email"]').value = member.email || '';
         form.querySelector('input[name="phone"]').value = member.phone || '';
+        
+        // Update profile picture preview
+        const previewImage = document.getElementById('editPreviewImage');
+        previewImage.src = member.profile_picture || 'https://placehold.co/128';
 
-        // Show the popup
+        // Show popup
         document.getElementById('popupEdit').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
+        document.getElementById('overlay').classList.add('active');        
+        document.body.classList.add('lock-scroll');
 
     } catch (error) {
-        console.error('Error opening edit popup:', error);
+        console.error('Error loading member data:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
     }
 }
@@ -50,23 +38,27 @@ async function openEditPopup(element) {
 function openCreatePopup() {
     document.getElementById('createPopup').classList.add('active');
     document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
 }
 
 function closeCreatePopup() {
     document.getElementById('createPopup').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
-    document.querySelector('#createPopup form').reset();
-    document.getElementById('createPreviewImage').src = 'https://placehold.co/128';
+    document.getElementById('createMemberForm').reset();
+    document.getElementById('previewImage').src = 'https://placehold.co/128';
+    document.body.classList.remove('lock-scroll');
 }
 
 function closeEditPopup() {
     document.getElementById('popupEdit').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 function closeDeleteConfirmation() {
     document.getElementById('deleteConfirmationPopup').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Delete confirmation functionality
@@ -230,150 +222,244 @@ function previewImage(input, previewId) {
     }
 }
 
-// Member management functions
-async function createMember() {
-    const form = document.getElementById('createMemberForm');
-    if (!form) {
-        console.error('Create form not found');
-        return;
-    }
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const cancelBtn = form.querySelector('button[type="button"]');
+// Function to handle file input change and preview
+function handleProfilePictureChange(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
     
-    if (!submitBtn || !cancelBtn) {
-        console.error('Buttons not found');
+    if (!input || !preview) {
+        console.error('Required elements not found:', { inputId, previewId });
         return;
     }
+    
+    input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
 
+// Initialize file input handlers when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    handleProfilePictureChange('memberProfilePicture', 'previewImage');
+    handleProfilePictureChange('editMemberProfilePicture', 'editPreviewImage');
+});
+
+// Utility function to log with persistence
+function debugLog(message, data = null) {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        message,
+        data
+    };
+    
+    // Store in localStorage
+    let logs = JSON.parse(localStorage.getItem('debugLogs') || '[]');
+    logs.push(logEntry);
+    localStorage.setItem('debugLogs', JSON.stringify(logs));
+    
+    // Also log to console
+    console.log(message, data);
+}
+
+// Function to show stored logs
+function showDebugLogs() {
+    // Check for logs in both localStorage and sessionStorage
+    const currentLogs = JSON.parse(localStorage.getItem('debugLogs') || '[]');
+    const previousLogs = JSON.parse(sessionStorage.getItem('previousLogs') || '[]');
+    const allLogs = [...previousLogs, ...currentLogs];
+    
+    console.log('=== Stored Debug Logs ===');
+    allLogs.forEach(log => {
+        console.log(`[${log.timestamp}] ${log.message}`, log.data);
+    });
+}
+
+window.showDebugLogs = showDebugLogs;
+
+// Member management functions
+async function createMember(event) {
+    debugLog('Create member function called');
     try {
-        // Disable buttons and show loading state
-        submitBtn.disabled = true;
-        cancelBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสร้าง...';
+        if (event) {
+            event.preventDefault();
+            debugLog('Default form submission prevented');
+        }
+        
+        const form = document.getElementById('createMemberForm');
+        debugLog('Form found:', form ? 'yes' : 'no');
 
-        const formData = new FormData(form);
-
-        // Log form data for debugging
-        console.log('Sending form data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
+        if (!form) {
+            throw new Error('Create form not found');
         }
 
-        const response = await axios.post('/members/create', formData, {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const cancelBtn = form.querySelector('button[type="button"]');
+        
+        // Disable buttons and show loading state
+        if (submitBtn) submitBtn.disabled = true;
+        if (cancelBtn) cancelBtn.disabled = true;
+        if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสร้าง...';
+
+        const formData = new FormData(form);
+        debugLog('Form data created');
+
+        // Log form data
+        const formDataObj = {};
+        for (let [key, value] of formData.entries()) {
+            formDataObj[key] = value instanceof File ? 'File' : value;
+        }
+        debugLog('Form data contents:', formDataObj);
+
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        debugLog('CSRF token found:', token ? 'yes' : 'no');
+
+        debugLog('Sending request to server...');
+        const response = await axios.post('/members', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': token
             }
         });
-
-        console.log('Server response:', response.data);
+        debugLog('Server response:', response.data);
 
         if (response.data.success) {
-            // Show success state
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> สำเร็จ';
-            submitBtn.style.backgroundColor = '#28a745';
-
-            // Close popup and reset form
-            setTimeout(() => {
-                closeCreatePopup();
-                form.reset();
-                // Refresh the page or update the UI
-                window.location.reload();
-            }, 1000);
+            debugLog('Member created successfully');
+            // alert('เพิ่มบุคลากรสำเร็จ');
+            // showDebugLogs(); // Show logs before refresh
+            // await new Promise(resolve => setTimeout(resolve, 1000));
+            window.location.reload();
         } else {
             throw new Error(response.data.message || 'Failed to create member');
         }
 
     } catch (error) {
-        console.error('Error creating member:', error);
-        console.error('Error details:', error.response?.data);
+        debugLog('Error occurred:', {
+            message: error.message,
+            response: error.response?.data,
+            stack: error.stack
+        });
         
         let errorMessage = 'เกิดข้อผิดพลาดในการสร้างบุคลากร';
-        
         if (error.response?.data?.errors) {
-            // Handle validation errors
-            errorMessage = Object.values(error.response.data.errors)
-                .flat()
-                .join('\n');
+            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
         } else if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
         }
-
-        // Show error state
-        submitBtn.innerHTML = '<i class="fas fa-times"></i> ผิดพลาด';
-        submitBtn.style.backgroundColor = '#dc3545';
-
-        // Reset button state after delay
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            cancelBtn.disabled = false;
-            submitBtn.innerHTML = 'ตกลง';
-            submitBtn.style.backgroundColor = '#F48E2E';
-        }, 1500);
-
+        
         alert(errorMessage);
+        showDebugLogs(); // Show logs on error
+    } finally {
+        const form = document.getElementById('createMemberForm');
+        const submitBtn = form?.querySelector('button[type="submit"]');
+        const cancelBtn = form?.querySelector('button[type="button"]');
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'ตกลง';
+        }
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+        }
     }
 }
 
+window.createMember = createMember;
+
 async function updateMember(event) {
-    event.preventDefault();
-    
-    const form = document.getElementById('editMemberForm');
-    if (!form) return;
-
-    const memberId = document.getElementById('editMemberId').value;
-    if (!memberId) {
-        console.error('No member ID found');
-        return;
-    }
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const cancelBtn = form.querySelector('button[type="button"]');
-    
+    debugLog('Update member function started');
     try {
-        // Disable buttons and show loading state
-        submitBtn.disabled = true;
-        cancelBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
-
-        const formData = new FormData(form);
-        
-        // Log form data for debugging (optional)
-        console.log('Sending form data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
+        if (event) {
+            event.preventDefault();
+            debugLog('Default form submission prevented');
         }
 
+        const form = document.getElementById('editMemberForm');
+        debugLog('Edit form found:', form ? 'yes' : 'no');
+
+        if (!form) {
+            throw new Error('Edit form not found');
+        }
+
+        const memberId = form.querySelector('#editMemberId').value;
+        debugLog('Member ID:', memberId);
+
+        const formData = new FormData(form);
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        debugLog('CSRF token found:', token ? 'yes' : 'no');
+
+        // Disable submit button and show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const cancelBtn = form.querySelector('button[type="button"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
+        }
+        if (cancelBtn) cancelBtn.disabled = true;
+
+        debugLog('Sending update request...');
         const response = await axios.post(`/members/${memberId}/update`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': token
             }
         });
+        debugLog('Server response:', response.data);
 
         if (response.data.success) {
-            // Show success state
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> สำเร็จ';
-            submitBtn.style.backgroundColor = '#28a745';
-
-            // Close popup and refresh page
-            setTimeout(() => {
-                closeEditPopup();
-                window.location.reload();
-            }, 1000);
+            debugLog('Update successful');
+            // alert('อัปเดตข้อมูลสำเร็จ');
+            
+            // Show logs and wait before refresh
+            // showDebugLogs();
+            // await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Store logs in sessionStorage before refresh
+            const logs = JSON.parse(localStorage.getItem('debugLogs') || '[]');
+            sessionStorage.setItem('previousLogs', JSON.stringify(logs));
+            
+            window.location.reload();
         } else {
             throw new Error(response.data.message || 'Failed to update member');
         }
 
     } catch (error) {
-        console.error('Error updating member:', error);
-        submitBtn.disabled = false;
-        cancelBtn.disabled = false;
-        submitBtn.innerHTML = 'ตกลง';
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
+        debugLog('Error occurred:', {
+            message: error.message,
+            response: error.response?.data,
+            stack: error.stack
+        });
+        
+        let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
+        if (error.response?.data?.errors) {
+            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        }
+        
+        alert(errorMessage);
+        showDebugLogs();
+    } finally {
+        const form = document.getElementById('editMemberForm');
+        const submitBtn = form?.querySelector('button[type="submit"]');
+        const cancelBtn = form?.querySelector('button[type="button"]');
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'ตกลง';
+        }
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+        }
     }
 }
+
+window.updateMember = updateMember;
 
 function showTaskConfirmationPopup(data) {
     const popup = document.getElementById('taskConfirmationPopup');
@@ -562,9 +648,35 @@ function searchMembers() {
     });
 }
 
+// Add this function for handling image preview
+function handleImagePreview(inputElement, previewImageId) {
+    if (inputElement.files && inputElement.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(previewImageId).src = e.target.result;
+        };
+        reader.readAsDataURL(inputElement.files[0]);
+    }
+}
+
 // Update the event listeners
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, setting up member listeners');
+
+    // Add image preview handlers
+    const createImageInput = document.getElementById('memberProfilePicture');
+    if (createImageInput) {
+        createImageInput.addEventListener('change', function() {
+            handleImagePreview(this, 'previewImage');
+        });
+    }
+
+    const editImageInput = document.getElementById('editMemberProfilePicture');
+    if (editImageInput) {
+        editImageInput.addEventListener('change', function() {
+            handleImagePreview(this, 'editPreviewImage');
+        });
+    }
 
     // Add click handlers for edit buttons
     document.querySelectorAll('.icon-action[onclick="openEditPopup(this)"]').forEach(button => {
@@ -616,4 +728,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Debug: Log if script is properly loaded
     console.log('Member.js initialized');
+});
+
+// Clear logs on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Clear only localStorage logs, keep sessionStorage
+    localStorage.removeItem('debugLogs');
 });

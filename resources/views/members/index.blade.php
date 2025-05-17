@@ -189,10 +189,10 @@
     </section>
 
     <!-- popup create new member-->
-    <div id="popupCreate" class="popup-container">
+    <div id="createPopup" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="createMemberForm" enctype="multipart/form-data">
+                <form id="createMemberForm" enctype="multipart/form-data" onsubmit="event.preventDefault(); createMember(event);">
                     @csrf
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeCreatePopup()">
@@ -268,7 +268,7 @@
                             <button type="button" class="btn btn-cancel sarabun-20" onclick="closeCreatePopup()">
                                 ยกเลิก
                             </button>
-                            <button type="submit" class="btn btn-confirm sarabun-20" onclick="createMember(event); closeCreatePopup()">
+                            <button type="button" class="btn btn-confirm sarabun-20" onclick="createMember(event)">
                                 ตกลง
                             </button>
                         </div>
@@ -282,7 +282,7 @@
     <div id="popupEdit" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="editMemberForm" enctype="multipart/form-data" onsubmit="updateMember(event)">
+                <form id="editMemberForm" enctype="multipart/form-data" onsubmit="event.preventDefault(); updateMember(event);">
                     @csrf
                     <input type="hidden" id="editMemberId" name="id">
                     <div class="popup-header">
@@ -300,7 +300,11 @@
                         <div class="card-logo-container">
                             <div class="card-logo" onclick="document.getElementById('editMemberProfilePicture').click()">
                                 <img src="https://placehold.co/128" class="card-logo-img" id="editPreviewImage" alt="logo">
-                                <input type="file" name="profile_picture" id="editMemberProfilePicture" style="display: none;" accept="image/*">
+                                <input type="file" 
+                                       name="profile_picture" 
+                                       id="editMemberProfilePicture" 
+                                       style="display: none;" 
+                                       accept="image/*">
                             </div>
                             <div>
                                 <i class="fas fa-camera"></i>
@@ -363,7 +367,7 @@
                             <button type="button" class="btn btn-cancel sarabun-20" onclick="closeEditPopup()">
                                 ยกเลิก
                             </button>
-                            <button type="submit" class="btn btn-confirm sarabun-20">
+                            <button type="button" class="btn btn-confirm sarabun-20" onclick="updateMember(event)">
                                 ตกลง
                             </button>
                         </div>
