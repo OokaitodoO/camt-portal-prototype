@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="{{ asset('css/pages/individual.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/pages/task.css') }}">
+    <meta name="member-id" content="{{ $member->id }}">
+    <meta name="member-name" content="{{ $member->first_name }} {{ $member->last_name }}">
+    <meta name="department-id" content="{{ $member->department_id }}">
 </head>
 <body class="body-bg">
     <!-- Header -->
@@ -303,17 +306,17 @@
                                 </div>
                                 <div id="createSelectedMembers" class="selected-members-wrapper">
                                     <!-- Default selected member (current user) -->
-                                    <div class="selected-member-tag" data-member-id="{{ $member->id }}">
+                                    <!-- <div class="selected-member-tag" data-member-id="{{ $member->id }}">
                                         <span>{{ $member->first_name }} {{ $member->last_name }}</span>
-                                        <i class="fas fa-times" onclick="removeMemberTag(this)"></i>
+                                        <i class="fas fa-times" onclick="removeSearchedMember(this)"></i>
                                         <input type="hidden" name="assigned_to[]" value="{{ $member->id }}">
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="text" name="deadline" class="sarabun-16" placeholder="dd/mm/yyyy" required>
+                                    <input type="date" name="deadline" class="input-text sarabun-16">
                                 </div>
                             </div>
                         </div>
@@ -386,7 +389,10 @@
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" id="editTaskDeadline" name="deadline" required>
+                                    <input type="date" 
+                                           name="deadline" 
+                                           id="editTaskDeadline" 
+                                           class="input-text sarabun-16">
                                 </div>
                             </div>
                         </div>

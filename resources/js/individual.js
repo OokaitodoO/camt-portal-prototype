@@ -1,50 +1,116 @@
-// Function to initialize date picker
-function initializeDatePicker() {
-    const dateInputs = document.querySelectorAll('.date-picker input[type="text"]');
+function openEditPopup(element) {
+    const taskId = element.getAttribute('data-task-id');
     
-    dateInputs.forEach(input => {
-        flatpickr(input, {
-            dateFormat: "d/m/Y",
-            allowInput: true,
-            locale: "th",
-            disableMobile: true
+    axios.get(`/tasks/${taskId}/edit`)
+        .then(response => {
+            const task = response.data.task;
+            
+            // Set form values
+            document.getElementById('editTaskId').value = task.id;
+            document.getElementById('editTaskTitle').value = task.title;
+            document.getElementById('editTaskDescription').value = task.description || '';
+            document.getElementById('editTaskLink').value = task.link || '';
+            
+            // Set logo preview
+            const logoPreview = document.getElementById('editTaskLogoPreview');
+            if (task.logo_path) {
+                const cleanPath = task.logo_path
+                    .replace(/^storage\//, '')
+                    .replace(/^http:\/\/localhost\/storage\//, '')
+                    .replace(/^http:\/\/localhost\//, '');
+                logoPreview.src = `/storage/${cleanPath}`;
+            } else {
+                logoPreview.src = 'https://placehold.co/128';
+            }
+            
+            // Set deadline - Keep YYYY-MM-DD format for type="date" input
+            const deadlineInput = document.getElementById('editTaskDeadline');
+            if (task.deadline) {
+                deadlineInput.value = task.deadline; // Already in YYYY-MM-DD format
+            } else {
+                deadlineInput.value = '';
+            }
+
+            // Set assigned member
+            if (task.assigned_to_user) {
+                document.getElementById('editTaskAssignedTo').value = 
+                    `${task.assigned_to_user.first_name} ${task.assigned_to_user.last_name}`;
+                document.getElementById('editTaskAssignedToId').value = task.assigned_to;
+            }
+
+            // Load subtasks with consistent styling
+            const subtasksContainer = document.getElementById('editSubTasksContainer');
+            subtasksContainer.innerHTML = ''; // Clear existing subtasks
+
+            if (task.sub_tasks && task.sub_tasks.length > 0) {
+                task.sub_tasks.forEach((subtask, index) => {
+                    const subtaskHtml = `
+                        <div class="popup-sub-task">
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ชื่อภาระงานย่อย ${index + 1}</h2>
+                                <input type="text" 
+                                       name="sub_tasks[${index}][title]" 
+                                       value="${subtask.title || ''}" 
+                                       class="input-text sarabun-16" 
+                                       placeholder="ภาระงานย่อย...">
+                            </div>
+                            <div class="popup-input-wrapper">
+                                <h2 class="sarabun-16">ลิ้งก์</h2>
+                                <input type="text" 
+                                       name="sub_tasks[${index}][link]" 
+                                       value="${subtask.link || ''}" 
+                                       class="input-text sarabun-16" 
+                                       placeholder="ลิ้งก์...">
+                                <input type="hidden" 
+                                       name="sub_tasks[${index}][id]" 
+                                       value="${subtask.id}">
+                            </div>
+                            <div class="remove-subtask-btn btn-pointer" onclick="removeSubTask(this, 'edit')">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                        </div>
+                    `;
+                    subtasksContainer.insertAdjacentHTML('beforeend', subtaskHtml);
+                });
+            }
+
+            // Show the popup and initialize date picker
+            document.getElementById('popupEdit').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+            document.body.classList.add('lock-scroll');
+        })
+        .catch(error => {
+            console.error('Error fetching task:', error);
+            alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
         });
-    });
 }
 
-// Function to handle logo upload preview
-function handleLogoUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('taskLogoPreview').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// Function to create new task
-async function createNewTask() {
+async function updateTask() {
     try {
-        const form = document.getElementById('createTaskForm');
-        if (!form) {
-            console.error('Create task form not found');
-            return;
-        }
-
+        const form = document.getElementById('editTaskForm');
+        const taskId = document.getElementById('editTaskId').value;
         const formData = new FormData(form);
 
-        // Validate required fields
-        const title = formData.get('title');
-        if (!title) {
-            alert('กรุณากรอกชื่อภาระงาน');
-            return;
+        // Handle the date input
+        const deadlineInput = document.getElementById('editTaskDeadline');
+        if (deadlineInput && deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd if needed
+            const [day, month, year] = deadlineInput.value.split('/');
+            if (day && month && year) {
+                const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                formData.set('deadline', formattedDate);
+            } else {
+                // If the date is already in yyyy-mm-dd format
+                formData.set('deadline', deadlineInput.value);
+            }
+        } else {
+            formData.delete('deadline');
         }
 
         // Handle subtasks
-        const subtasks = Array.from(document.querySelectorAll('#createSubTasksContainer .popup-sub-task'))
+        const subtasks = Array.from(document.querySelectorAll('#editSubTasksContainer .popup-sub-task'))
             .map(subtask => ({
+                id: subtask.querySelector('input[name*="[id]"]')?.value,
                 title: subtask.querySelector('input[name*="[title]"]')?.value?.trim() || '',
                 link: subtask.querySelector('input[name*="[link]"]')?.value?.trim() || ''
             }))
@@ -52,8 +118,7 @@ async function createNewTask() {
 
         formData.set('sub_tasks', JSON.stringify(subtasks));
 
-        // Send request
-        const response = await axios.post('/tasks', formData, {
+        const response = await axios.post(`/tasks/${taskId}/update`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -61,172 +126,18 @@ async function createNewTask() {
         });
 
         if (response.data.success) {
-            closeCreatePopup();
             location.reload();
         } else {
-            throw new Error(response.data.message || 'Failed to create task');
+            throw new Error(response.data.message);
         }
-
     } catch (error) {
-        console.error('Error creating task:', error);
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างภาระงาน');
+        console.error('Error updating task:', error);
+        alert('เกิดข้อผิดพลาดในการอัปเดตภาระงาน: ' + (error.response?.data?.message || error.message));
     }
 }
 
-// Function to open create popup
-function openCreatePopup() {
-    document.getElementById('popupCreate').classList.add('active');
-    document.getElementById('overlay').classList.add('active');
-    document.body.classList.add('lock-scroll');
+// Helper function to validate date format
+function isValidDate(dateString) {
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date) && dateString.match(/^\d{4}-\d{2}-\d{2}$/);
 }
-
-// Function to close create popup
-function closeCreatePopup() {
-    document.getElementById('popupCreate').classList.remove('active');
-    document.getElementById('overlay').classList.remove('active');
-    document.body.classList.remove('lock-scroll');
-}
-
-// Initialize event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Logo upload
-    const logoInput = document.getElementById('taskLogo');
-    if (logoInput) {
-        logoInput.addEventListener('change', handleLogoUpload);
-    }
-    
-    initializeDatePicker();
-});
-
-// Make functions globally available
-window.openCreatePopup = openCreatePopup;
-window.closeCreatePopup = closeCreatePopup;
-window.createNewTask = createNewTask;
-window.addNewSubTask = addNewSubTask;
-window.removeSubTask = removeSubTask;
-
-function toggleFavorite(event, taskId, element) {
-    event.stopPropagation();
-    
-    const isFavorite = element.getAttribute('data-favorite') === '1';
-    
-    axios.post(`/tasks/${taskId}/toggle-favorite`, {
-        _token: document.querySelector('meta[name="csrf-token"]').content
-    })
-    .then(response => {
-        if (response.data.success) {
-            // Toggle the favorite status
-            element.setAttribute('data-favorite', isFavorite ? '0' : '1');
-            element.querySelector('i').classList.toggle('favorite-active');
-            
-            // Refresh the page to show the updated order
-            window.location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error toggling favorite:', error);
-    });
-}
-
-window.toggleFavorite = toggleFavorite;
-
-// Member search functionality
-let searchTimeout;
-const memberSearchInput = document.getElementById('createTaskMemberSearch');
-const memberSearchDropdown = document.querySelector('.member-search-dropdown');
-const selectedMembersContainer = document.getElementById('createSelectedMembers');
-
-memberSearchInput.addEventListener('input', function(e) {
-    clearTimeout(searchTimeout);
-    const searchTerm = e.target.value.trim();
-
-    if (searchTerm.length >= 2) {
-        searchTimeout = setTimeout(() => {
-            searchMembers(searchTerm);
-        }, 300);
-    } else {
-        memberSearchDropdown.innerHTML = '';
-        memberSearchDropdown.style.display = 'none';
-    }
-});
-
-function searchMembers(searchTerm) {
-    const departmentId = document.querySelector('meta[name="user-department-id"]').content;
-    
-    axios.get('/tasks/search-members', {
-        params: {
-            search: searchTerm,
-            department_id: departmentId
-        }
-    })
-    .then(response => {
-        memberSearchDropdown.innerHTML = '';
-        const members = response.data.members;
-        
-        if (members.length === 0) {
-            const noResults = document.createElement('div');
-            noResults.className = 'member-search-item no-results';
-            noResults.textContent = 'ไม่พบข้อมูล';
-            memberSearchDropdown.appendChild(noResults);
-        } else {
-            members.forEach(member => {
-                // Check if member is already selected
-                if (!document.querySelector(`.selected-member-tag[data-member-id="${member.id}"]`)) {
-                    const memberElement = document.createElement('div');
-                    memberElement.className = 'member-search-item';
-                    memberElement.innerHTML = `
-                        <div class="member-info">
-                            <span class="member-name">${member.first_name} ${member.last_name}</span>
-                            <span class="member-position">${member.position || ''}</span>
-                        </div>
-                    `;
-                    memberElement.onclick = () => selectMember(member);
-                    memberSearchDropdown.appendChild(memberElement);
-                }
-            });
-        }
-        
-        memberSearchDropdown.style.display = 'block';
-    })
-    .catch(error => {
-        console.error('Error searching members:', error);
-        memberSearchDropdown.innerHTML = '<div class="member-search-item error">เกิดข้อผิดพลาดในการค้นหา</div>';
-        memberSearchDropdown.style.display = 'block';
-    });
-}
-
-function selectMember(member) {
-    if (!document.querySelector(`.selected-member-tag[data-member-id="${member.id}"]`)) {
-        const memberTag = document.createElement('div');
-        memberTag.className = 'selected-member-tag';
-        memberTag.setAttribute('data-member-id', member.id);
-        memberTag.innerHTML = `
-            <span>${member.first_name} ${member.last_name}</span>
-            <i class="fas fa-times" onclick="removeMemberTag(this)"></i>
-            <input type="hidden" name="assigned_to[]" value="${member.id}">
-        `;
-        selectedMembersContainer.appendChild(memberTag);
-    }
-    
-    memberSearchInput.value = '';
-    memberSearchDropdown.style.display = 'none';
-}
-
-function removeMemberTag(element) {
-    const tag = element.parentElement;
-    if (selectedMembersContainer.children.length > 1) {
-        tag.remove();
-    } else {
-        alert('ต้องมีผู้รับผิดชอบอย่างน้อย 1 คน');
-    }
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.member-search-container')) {
-        memberSearchDropdown.style.display = 'none';
-    }
-});
-
-// Make functions globally available
-window.removeMemberTag = removeMemberTag; 

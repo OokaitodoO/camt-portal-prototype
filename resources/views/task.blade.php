@@ -84,12 +84,18 @@
                 </div>
                 @foreach($departments as $department)
                     <div class="btn-side-nav" onclick="filterTasksByDepartment({{ $department->id }})">
-                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
-                        <div class="btn-side-nav-text sarabun-18">
-                            {{ $department->name }}
-                        </div>
+                        <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
+                             class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
                     </div>
                 @endforeach
+                <!-- @foreach($departments as $department)
+                    <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }}); updateURL('{{ route('members.index') }}')">
+                        <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
+                             class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
+                    </div>
+                @endforeach  -->
             </div> 
         </div>
 
@@ -302,7 +308,11 @@
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" id="editTaskDeadline" name="deadline" required>
+                                    <input type="date" 
+                                           name="deadline" 
+                                           id="editTaskDeadline" 
+                                           class="input-text sarabun-16"
+                                           pattern="\d{4}-\d{2}-\d{2}">
                                 </div>
                             </div>
                         </div>

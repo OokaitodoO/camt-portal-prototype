@@ -29,7 +29,7 @@ class Task extends Model
 
     protected $casts = [
         'is_favorite' => 'boolean',
-        'deadline' => 'datetime'
+        'deadline' => 'date'
     ];
 
     protected $dates = [

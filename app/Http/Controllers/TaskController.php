@@ -87,15 +87,20 @@ class TaskController extends Controller
             // Log the incoming request data
             Log::info('Task creation request data:', $request->all());
 
-            // Validate the request
+            // Update validation rules
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'link' => 'nullable|string|max:255',
-                'deadline' => 'nullable|date',
-                'assigned_to' => 'required|string', // Changed to handle comma-separated string
+                'deadline' => 'nullable|date_format:Y-m-d|after_or_equal:today',  // Updated validation
+                'assigned_to' => 'required|string',
                 'logo' => 'nullable|image|max:2048'
             ]);
+
+            // Handle empty deadline
+            if (empty($validated['deadline'])) {
+                $validated['deadline'] = null;
+            }
 
             // Parse assigned_to into array
             $assignedToIds = array_filter(explode(',', $validated['assigned_to']));
@@ -117,7 +122,7 @@ class TaskController extends Controller
                     'title' => $validated['title'],
                     'description' => $validated['description'] ?? null,
                     'link' => $validated['link'] ?? null,
-                    'deadline' => $validated['deadline'] ?? null,
+                    'deadline' => $validated['deadline'],
                     'assigned_to' => $memberId,
                     'assigned_by' => auth()->id(),
                     'logo_path' => $logoPath,
@@ -289,13 +294,11 @@ class TaskController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'link' => 'nullable|string',
-                'deadline' => 'nullable|date',
-                'assigned_to' => 'required|exists:members,id',
+                'deadline' => 'nullable|date_format:Y-m-d',  // Updated validation
                 'sub_tasks' => 'nullable|json',
                 'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
-            // Start transaction
             DB::beginTransaction();
 
             // Handle file upload if present
@@ -311,9 +314,8 @@ class TaskController extends Controller
             $task->title = $validatedData['title'];
             $task->description = $validatedData['description'] ?? null;
             $task->link = $validatedData['link'] ?? null;
-            $task->deadline = $request->has('deadline') ? $validatedData['deadline'] : null;
-            $task->assigned_to = $validatedData['assigned_to'];
-            
+            $task->deadline = $validatedData['deadline'] ?? null;
+
             // Save the task
             $task->save();
 
@@ -340,15 +342,13 @@ class TaskController extends Controller
                 'success' => true,
                 'message' => 'Task updated successfully'
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Task update error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
+            Log::error('Error updating task: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating task: ' . $e->getMessage()
+                'message' => 'Failed to update task: ' . $e->getMessage()
             ], 500);
         }
     }

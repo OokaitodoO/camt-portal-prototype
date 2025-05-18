@@ -81,7 +81,7 @@ Route::middleware(['auth'])->group(function () {
                 'members' => $members
             ]);
         })->name('tasks.department.members');
-        Route::put('/{task}', [TaskController::class, 'update'])->name('tasks.update');
+        Route::post('/{task}/update', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::get('/search-members', [TaskController::class, 'searchMembers'])->name('tasks.search-members');
         Route::get('/{task}/data', [TaskController::class, 'getData'])->name('tasks.getData');
