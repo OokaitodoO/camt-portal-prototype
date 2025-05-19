@@ -60,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
             }
             return response()->file($path);
         });
+
+        // Add this new route for deleting member with tasks
+        Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])->name('members.destroyWithTasks');
     });
 
     // Task routes

@@ -548,6 +548,12 @@ async function openEditPopup(element) {
         // Load subtasks
         await loadSubTasks(taskId, 'edit');
 
+        // Add event listener for logo upload in edit popup
+        const editLogoInput = document.getElementById('editTaskLogo');
+        if (editLogoInput) {
+            editLogoInput.addEventListener('change', handleEditLogoUpload);
+        }
+
         // Show popup
         const popup = document.getElementById('popupEdit');
         const overlay = document.getElementById('overlay');
@@ -1060,4 +1066,19 @@ window.onclick = function(event) {
 
 window.toggleUserDropdown = toggleUserDropdown;
 // Make function globally available
-window.initializeDatePicker = initializeDatePicker; 
+window.initializeDatePicker = initializeDatePicker;
+
+// Function to handle logo preview for edit popup
+function handleEditLogoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editTaskLogoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Make the function globally available
+window.handleEditLogoUpload = handleEditLogoUpload; 

@@ -310,32 +310,25 @@ class MemberController extends Controller
     public function destroyWithTasks(Member $member)
     {
         try {
-            DB::transaction(function () use ($member) {
-                // Delete all tasks first
-                $member->assignedTasks()->delete();
-                
-                // Delete profile picture if exists
-                if ($member->profile_picture) {
-                    Storage::disk('public')->delete($member->profile_picture);
-                }
-                
-                // Delete the member
-                $member->delete();
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'ลบบุคลากรและภาระงานสำเร็จ'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error deleting member and tasks:', [
-                'member_id' => $member->id,
-                'error' => $e->getMessage()
-            ]);
+            DB::beginTransaction();
+            
+            // Delete all tasks associated with the member
+            $member->assignedTasks()->delete();
+            
+            // Delete the member
+            $member->delete();
+            
+            DB::commit();
             
             return response()->json([
+                'success' => true,
+                'message' => 'Member and associated tasks deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
                 'success' => false,
-                'message' => 'เกิดข้อผิดพลาดในการลบบุคลากรและภาระงาน'
+                'message' => 'Failed to delete member and tasks: ' . $e->getMessage()
             ], 500);
         }
     }

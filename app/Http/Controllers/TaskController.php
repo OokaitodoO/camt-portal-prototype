@@ -17,6 +17,13 @@ class TaskController extends Controller
     public function index()
     {
         $user = auth()->user();
+        
+        // Redirect staff to their individual page
+        if ($user->isStaff()) {
+            return redirect()->route('members.show', $user->id);
+        }
+
+        // For non-staff users, continue with existing logic
         $departments = $user->getVisibleDepartments();
 
         switch ($user->role) {
@@ -35,24 +42,18 @@ class TaskController extends Controller
                 ->get();
                 break;
 
-            case 'staff':
-                $tasks = Task::where('assigned_to', $user->id)
-                            ->with(['assignedTo', 'assignedBy'])
-                            ->get();
-                break;
-
             default:
                 $tasks = collect();
         }
 
         // Group tasks by department
         $tasksByDepartment = $tasks->groupBy(function($task) {
-            return $task->assignedTo->department->name ?? 'Unassigned';
+            return $task->assignedTo->department->name ?? 'ไม่ระบุหน่วยงาน';
         });
 
         $totalTasks = $tasks->count();
 
-        return view('task', compact('departments', 'tasksByDepartment', 'tasks', 'totalTasks'));
+        return view('task', compact('departments', 'tasksByDepartment', 'totalTasks'));
     }
 
     public function filterByDepartment($departmentId)
