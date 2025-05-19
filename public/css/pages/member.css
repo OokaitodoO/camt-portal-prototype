@@ -291,3 +291,62 @@
     margin: 20px 0;
 }
 
+.cards-headstaff {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 132.33px;
+    padding: 30px;
+    width: 100%;
+    /* max-width: 1200px; */
+    /* margin: 0 auto; */
+}
+
+.card-wrapper-headstaff {
+    flex: 0 1 300px; /* This ensures cards are ~300px wide but can shrink if needed */
+    min-width: 250px; /* Minimum width before wrapping */
+    max-width: 350px; /* Maximum width */
+    /* animation: fadeInUp 0.5s ease-out; */
+}
+
+/* Ensure maximum of 3 cards per row */
+@media (min-width: 1200px) {
+    .card-wrapper-headstaff {
+        flex-basis: calc(33.333% - 30px);
+    }
+}
+
+/* Two cards per row on medium screens */
+@media (max-width: 1199px) and (min-width: 768px) {
+    .card-wrapper-headstaff {
+        flex-basis: calc(50% - 30px);
+    }
+}
+
+/* One card per row on mobile */
+@media (max-width: 767px) {
+    .card-wrapper-headstaff {
+        flex-basis: 100%;
+    }
+}
+
+/* Add a subtle highlight for headstaff cards */
+.card-wrapper-headstaff{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* .card-wrapper-headstaff .card-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(244, 142, 46, 0.2);
+} */
+
+/* White divider after headstaff section */
+.divider-white {
+    width: 100%;
+    height: 2px;
+    background-color: #F48E2E;
+    margin: 20px 0;
+}
+
