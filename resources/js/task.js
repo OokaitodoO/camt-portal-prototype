@@ -787,6 +787,11 @@ function initializeMemberSearch() {
 }
 
 function setupMemberSearch(input, selectedContainer, mode) {
+    // Remove any existing dropdowns first
+    const existingDropdowns = input.parentNode.querySelectorAll('.member-search-dropdown');
+    existingDropdowns.forEach(dropdown => dropdown.remove());
+
+    // Create new dropdown
     let dropdownContainer = document.createElement('div');
     dropdownContainer.className = 'member-search-dropdown';
     input.parentNode.appendChild(dropdownContainer);
@@ -866,6 +871,8 @@ function setupMemberSearch(input, selectedContainer, mode) {
         observer.disconnect();
     });
 }
+
+window.setupMemberSearch = setupMemberSearch;
 
 function selectSearchedMember(memberId, memberName, mode) {
     const container = document.querySelector(`#${mode}SelectedMembers`);

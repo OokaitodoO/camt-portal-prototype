@@ -300,12 +300,8 @@
                                             class="input-text sarabun-16" 
                                             placeholder="พิมพ์ชื่อบุคลากร...">
                                     </div>
-                                    <div class="member-search-dropdown dropdown-content">
-                                        <!-- Search results will appear here -->
-                                    </div>
                                 </div>
                                 <div id="createSelectedMembers" class="selected-members-wrapper">
-                                    <!-- Default selected member (current user) -->
                                     <div class="selected-member-tag" data-member-id="{{ $member->id }}">
                                         <span>{{ $member->first_name }} {{ $member->last_name }}</span>
                                         <i class="fas fa-times" onclick="removeSearchedMember(this)"></i>
