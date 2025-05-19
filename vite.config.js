@@ -25,6 +25,7 @@ export default defineConfig({
                 'resources/js/department.js',
                 'resources/js/member.js',
                 'resources/js/task.js',
+                'resources/js/individual.js',
             ],
             refresh: true,
         }),
