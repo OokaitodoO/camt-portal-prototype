@@ -121,6 +121,7 @@
 
 .subtasks-dropdown {
     z-index: 3;
+    width: 100%;
 }
 
 .subtask-item {

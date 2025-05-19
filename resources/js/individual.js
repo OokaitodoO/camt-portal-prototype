@@ -141,3 +141,125 @@ function isValidDate(dateString) {
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date) && dateString.match(/^\d{4}-\d{2}-\d{2}$/);
 }
+
+// Initialize member search when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMemberSearch();
+});
+
+// Function to initialize member search
+function initializeMemberSearch() {
+    const createMemberInput = document.querySelector('#createTaskMemberSearch');
+    const editMemberInput = document.querySelector('#editTaskMemberSearch');
+    const createSelectedMembers = document.querySelector('#createSelectedMembers');
+    const editSelectedMembers = document.querySelector('#editSelectedMembers');
+
+    if (createMemberInput) {
+        setupMemberSearch(createMemberInput, createSelectedMembers, 'create');
+    }
+    if (editMemberInput) {
+        setupMemberSearch(editMemberInput, editSelectedMembers, 'edit');
+    }
+}
+
+// Function to setup member search
+function setupMemberSearch(input, selectedContainer, mode) {
+    let dropdownContainer = document.createElement('div');
+    dropdownContainer.className = 'member-search-dropdown';
+    input.parentNode.appendChild(dropdownContainer);
+
+    let selectedMembers = new Set();
+
+    input.addEventListener('input', debounce(async (e) => {
+        const query = e.target.value;
+
+        if (query.length < 2) {
+            dropdownContainer.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await axios.get('/tasks/search-members', {
+                params: { query }
+            });
+
+            if (response.data.success) {
+                if (response.data.members.length === 0) {
+                    dropdownContainer.innerHTML = '<div class="member-search-item">ไม่พบบุคลากร</div>';
+                    return;
+                }
+
+                dropdownContainer.innerHTML = response.data.members
+                    .filter(member => !selectedMembers.has(member.id))
+                    .map(member => `
+                        <div class="member-search-item" onclick="selectSearchedMember(${member.id}, '${member.first_name} ${member.last_name}', '${mode}')">
+                            ${member.first_name} ${member.last_name}
+                            <span class="member-department">${member.department_name || ''}</span>
+                        </div>
+                    `).join('');
+            }
+        } catch (error) {
+            console.error('Error searching members:', error);
+            dropdownContainer.innerHTML = '<div class="member-search-item">เกิดข้อผิดพลาดในการค้นหา</div>';
+        }
+    }, 300));
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdownContainer.contains(e.target)) {
+            dropdownContainer.innerHTML = '';
+        }
+    });
+
+    // Track selected members
+    selectedMembers = new Set();
+    const updateSelectedMembers = () => {
+        const selectedTags = selectedContainer.querySelectorAll('.selected-member-tag input[type="hidden"]');
+        selectedMembers.clear();
+        selectedTags.forEach(input => selectedMembers.add(parseInt(input.value)));
+    };
+
+    // Initialize selected members
+    updateSelectedMembers();
+}
+
+// Function to select searched member
+function selectSearchedMember(memberId, memberName, mode) {
+    const container = document.querySelector(`#${mode}SelectedMembers`);
+    const input = document.querySelector(`#${mode}TaskMemberSearch`);
+    
+    const memberTag = document.createElement('div');
+    memberTag.className = 'selected-member-tag';
+    memberTag.innerHTML = `
+        ${memberName}
+        <input type="hidden" name="assigned_to[]" value="${memberId}">
+        <span class="remove-member" onclick="removeSearchedMember(this)">&times;</span>
+    `;
+    
+    container.appendChild(memberTag);
+    input.value = '';
+    document.querySelector('.member-search-dropdown').innerHTML = '';
+}
+
+// Function to remove searched member
+function removeSearchedMember(element) {
+    element.closest('.selected-member-tag').remove();
+}
+
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Make functions globally available
+window.selectSearchedMember = selectSearchedMember;
+window.removeSearchedMember = removeSearchedMember;
+window.initializeMemberSearch = initializeMemberSearch;

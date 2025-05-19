@@ -306,11 +306,11 @@
                                 </div>
                                 <div id="createSelectedMembers" class="selected-members-wrapper">
                                     <!-- Default selected member (current user) -->
-                                    <!-- <div class="selected-member-tag" data-member-id="{{ $member->id }}">
+                                    <div class="selected-member-tag" data-member-id="{{ $member->id }}">
                                         <span>{{ $member->first_name }} {{ $member->last_name }}</span>
                                         <i class="fas fa-times" onclick="removeSearchedMember(this)"></i>
                                         <input type="hidden" name="assigned_to[]" value="{{ $member->id }}">
-                                    </div> -->
+                                    </div>
                                 </div>
                             </div>
                             <div class="popup-input-wrapper">

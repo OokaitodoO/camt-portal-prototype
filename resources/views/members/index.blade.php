@@ -152,7 +152,7 @@
                                     <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
                                         @if(auth()->user()->isAdmin() || 
                                             (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
-                                            <div class="card-edit" onclick="openEditPopup(this)" 
+                                            <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
                                                 data-member-id="{{ $member->id }}">
                                                 <i class="fas fa-edit"></i>
                                             </div>

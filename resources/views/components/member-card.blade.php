@@ -1,6 +1,6 @@
 <div class="card-wrapper fade-in">
-    <div class="card-container" data-member-id="{{ $member->id }}">
-        <div class="card-edit" onclick="openEditPopup(this)" 
+    <div class="card-container" data-member-id="{{ $member->id }}" onclick="window.location.href='{{{ route('members.show', $member->id) }}'">
+        <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
             data-member-id="{{ $member->id }}"
             data-first-name="{{ $member->first_name }}"
             data-last-name="{{ $member->last_name }}"
