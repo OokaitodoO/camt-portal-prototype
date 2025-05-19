@@ -6,43 +6,70 @@ let subtaskCount = 1;
 // Function to handle department filtering
 async function filterTasksByDepartment(departmentId) {
     try {
-        // Hide all department tables first
-        document.querySelectorAll('.task-department').forEach(table => {
-            table.style.display = 'none';
-        });
+        const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+        const allDepartmentTables = document.querySelectorAll('.task-department');
+        
+        // For headstaff, only allow viewing their own department
+        if (userRole === 'headstaff' && departmentId !== 'all' && departmentId != userDepartmentId) {
+            console.warn('Access restricted: Can only view own department');
+            return;
+        }
 
+        // Show all tables if 'all' is selected
         if (departmentId === 'all') {
-            // Show all tables if 'all' is selected
-            document.querySelectorAll('.task-department').forEach(table => {
-                table.style.display = 'block';
-            });
+            if (userRole === 'headstaff') {
+                // For headstaff, "all" means their department only
+                allDepartmentTables.forEach(table => {
+                    const tableDeptId = table.getAttribute('data-department-id');
+                    table.style.display = (tableDeptId == userDepartmentId) ? 'block' : 'none';
+                });
+            } else {
+                // For admin/manager, show all departments
+                allDepartmentTables.forEach(table => {
+                    table.style.display = 'grid';
+                });
+            }
         } else {
-            // Show only the selected department's table
-            const departmentTables = document.querySelectorAll('.task-department');
-            departmentTables.forEach(table => {
-                const tableHeader = table.querySelector('h1');
-                if (tableHeader && table.querySelector(`#taskTableBody-${departmentId}`)) {
-                    table.style.display = 'block';
-                }
+            // Hide all tables first
+            allDepartmentTables.forEach(table => {
+                table.style.display = 'none';
             });
+            
+            // Show only the selected department's table
+            const selectedTable = document.querySelector(`.task-department[data-department-id="${departmentId}"]`);
+            if (selectedTable) {
+                selectedTable.style.display = 'grid';
+            }
         }
 
         // Update active state of side navigation buttons
         document.querySelectorAll('.btn-side-nav').forEach(btn => {
             btn.classList.remove('active');
         });
+        
         if (departmentId !== 'all') {
-            document.querySelector(`.btn-side-nav[onclick="filterTasksByDepartment(${departmentId})"]`)
-                ?.classList.add('active');
+            const activeBtn = document.querySelector(`.btn-side-nav[onclick="filterTasksByDepartment(${departmentId})"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
         }
 
         // Update task count
-        const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
-        document.querySelector('.task-remain p').textContent = visibleTasks;
+        updateTaskCount();
 
     } catch (error) {
         console.error('Error filtering tasks:', error);
         alert('เกิดข้อผิดพลาดในการกรองข้อมูล');
+    }
+}
+
+// Add this helper function to update task count
+function updateTaskCount() {
+    const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
+    const taskCountElement = document.querySelector('.task-remain p');
+    if (taskCountElement) {
+        taskCountElement.textContent = visibleTasks;
     }
 }
 
@@ -80,6 +107,28 @@ function handleLogoUpload(event) {
     }
 }
 
+// Function to delete subtask in create mode
+function deleteSubTask(element) {
+    const subtaskContainer = document.getElementById('createSubTasksContainer');
+    if (subtaskContainer) {
+        const subtaskItem = element.closest('.popup-sub-task');
+        if (subtaskItem) {
+            subtaskItem.remove();
+        }
+    }
+}
+
+// Function to delete subtask in edit mode
+function deleteEditSubTask(element) {
+    const subtaskContainer = document.getElementById('editSubTasksContainer');
+    if (subtaskContainer) {
+        const subtaskItem = element.closest('.popup-sub-task');
+        if (subtaskItem) {
+            subtaskItem.remove();
+        }
+    }
+}
+
 // Function to add new subtask
 function addNewSubTask(mode = 'create') {
     const containerId = mode === 'edit' ? 'editSubTasksContainer' : 'createSubTasksContainer';
@@ -91,85 +140,48 @@ function addNewSubTask(mode = 'create') {
     }
 
     const subtaskCount = container.children.length + 1;
-    const subtaskHtml = `
-        <div class="popup-sub-task">
-            <div class="popup-sub-task-detail">
-                <div class="popup-input-wrapper">
-                    <h2 class="sarabun-16">ภาระงานย่อย ${subtaskCount}</h2>
-                    <input type="text" name="sub_tasks[${subtaskCount-1}][title]" class="input-text sarabun-16" required>
-                </div>
-                <div class="popup-input-wrapper">
-                    <h2 class="sarabun-16">ลิ้งก์</h2>
-                    <input type="text" name="sub_tasks[${subtaskCount-1}][link]" class="input-text sarabun-16">
-                </div>
+    const newSubtask = document.createElement('div');
+    newSubtask.className = 'popup-sub-task';
+    newSubtask.innerHTML = `
+        <div class="popup-sub-task-detail">
+            <div class="input-group">
+                <label class="sarabun-16">ภาระงานย่อย ${subtaskCount}</label>
+                <input type="text" 
+                       name="sub_tasks[${subtaskCount-1}][title]" 
+                       class="input-text sarabun-16" 
+                       placeholder="text...">
             </div>
-            <div class="popup-sub-task-delete btn-pointer" onclick="deleteSubTask(this)">
-                <i class="fas fa-trash-can"></i>
+            <div class="input-group">
+                <label class="sarabun-16">ลิ้งก์</label>
+                <input type="text" 
+                       name="sub_tasks[${subtaskCount-1}][link]" 
+                       class="input-text sarabun-16" 
+                       placeholder="text...">
             </div>
         </div>
+        <div class="popup-sub-task-delete">
+            <button type="button" class="remove-subtask" onclick="removeSubTask(this)">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
     `;
-    container.insertAdjacentHTML('beforeend', subtaskHtml);
-}
-
-// Function to delete subtask
-function deleteSubTask(element) {
-    const subtaskDiv = element.closest('.popup-sub-task');
-    if (subtaskDiv) {
-        subtaskDiv.remove();
-        // Renumber remaining subtasks
-        const container = subtaskDiv.parentElement;
-        container.querySelectorAll('.popup-sub-task').forEach((subtask, index) => {
-            subtask.querySelector('h2').textContent = `ภาระงานย่อย ${index + 1}`;
-        });
-    }
-}
-
-// Function to sort tasks by deadline for a specific department
-function sortByDeadline(departmentId) {
-    const tbody = document.getElementById(`taskTableBody-${departmentId}`);
-    const rows = Array.from(tbody.getElementsByTagName('tr'));
     
-    // Get current sort order from the table
-    const currentOrder = tbody.getAttribute('data-sort') || 'asc';
-    const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-    
-    rows.sort((a, b) => {
-        const dateA = new Date(a.cells[4].textContent.split('/').reverse().join('-'));
-        const dateB = new Date(b.cells[4].textContent.split('/').reverse().join('-'));
-        
-        return newOrder === 'asc' 
-            ? dateA - dateB 
-            : dateB - dateA;
-    });
-    
-    // Update the sort order
-    tbody.setAttribute('data-sort', newOrder);
-    
-    // Update sort icon
-    const sortIcon = tbody.closest('table').querySelector('th i.fas');
-    sortIcon.className = newOrder === 'asc' 
-        ? 'fas fa-sort-up' 
-        : 'fas fa-sort-down';
-    
-    // Reappend sorted rows
-    rows.forEach(row => tbody.appendChild(row));
+    container.appendChild(newSubtask);
 }
 
 // Function to load departments into dropdown
-async function loadDepartments(dropdownId) {
+async function loadDepartments() {
     try {
         const response = await axios.get('/departments');
-        const departments = response.data;
-        const dropdownContent = document.getElementById(dropdownId);
-        
-        if (dropdownContent) {
-            dropdownContent.innerHTML = departments.map(dept => `
-                <a href="#" onclick="selectDepartment(this, ${dept.id}, '${dept.name}', '${dropdownId}')" 
-                   data-department-id="${dept.id}">${dept.name}</a>
-            `).join('');
+        if (response.data.success) {
+            return response.data.departments;
+        } else {
+            console.error('Failed to load departments:', response.data);
+            return [];
         }
     } catch (error) {
         console.error('Error loading departments:', error);
+        return []; // Return empty array on error
     }
 }
 
@@ -179,7 +191,7 @@ function toggleDropdownDepartment(dropdownId) {
     if (dropdown) {
         // Load departments if not already loaded
         if (!dropdown.children.length) {
-            loadDepartments(dropdownId);
+            loadDepartments();
         }
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
@@ -261,59 +273,47 @@ function selectMember(element, memberId, memberName, dropdownId) {
 async function createNewTask() {
     try {
         const form = document.getElementById('createTaskForm');
-        if (!form) {
-            console.error('Create task form not found');
-            return;
-        }
-
         const formData = new FormData(form);
+
+        // Handle deadline format conversion
+        const deadlineInput = form.querySelector('input[name="deadline"]');
+        if (deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd
+            const [day, month, year] = deadlineInput.value.split('/');
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            formData.set('deadline', formattedDate);
+        } else {
+            formData.delete('deadline');
+        }
+
+        // Get selected members
+        const selectedMembers = document.querySelectorAll('#createSelectedMembers .selected-member-tag input[type="hidden"]');
+        console.log('Selected members:', selectedMembers.length); // Debug log
         
-        // Get description
-        const description = document.querySelector('input[name="description"]')?.value || '';
-        formData.append('description', description);
-
-        // Get department and member IDs
-        const departmentId = document.querySelector('#createTaskDepartment')?.getAttribute('data-department-id');
-        const memberId = document.querySelector('#createTaskAssignedTo')?.getAttribute('data-member-id');
-
-        if (!departmentId) {
-            alert('กรุณาเลือกหน่วยงาน');
+        const memberIds = Array.from(selectedMembers).map(input => {
+            const memberId = input.value;
+            console.log('Member ID:', memberId); // Debug log
+            return memberId;
+        }).filter(id => id);
+        
+        if (memberIds.length === 0) {
+            alert('กรุณาเลือกผู้รับผิดชอบอย่างน้อย 1 คน');
             return;
         }
 
-        formData.append('department_id', departmentId);
-        formData.append('assigned_to', memberId || '');
+        formData.set('assigned_to', memberIds.join(','));
 
-        // Get deadline if exists
-        const deadline = document.querySelector('input[name="deadline"]')?.value;
-        if (deadline) {
-            formData.append('deadline', deadline);
-        }
-
-        // Get subtasks
-        const subtasks = document.querySelectorAll('#createSubTasksContainer .popup-sub-task');
-        const subTasksData = [];
-        
-        subtasks.forEach((subtask, index) => {
-            const titleInput = subtask.querySelector('input[name*="[title]"]');
-            const linkInput = subtask.querySelector('input[name*="[link]"]');
-            
-            if (titleInput && titleInput.value.trim()) {
-                subTasksData.push({
-                    title: titleInput.value.trim(),
-                    link: linkInput ? linkInput.value.trim() : ''
-                });
+        // Handle subtasks
+        const subTasks = [];
+        document.querySelectorAll('#createSubTasksContainer .sub-task-item').forEach(item => {
+            const title = item.querySelector('input[name="sub_task_title"]').value;
+            const link = item.querySelector('input[name="sub_task_link"]').value;
+            if (title.trim()) {
+                subTasks.push({ title, link });
             }
         });
+        formData.append('sub_tasks', JSON.stringify(subTasks));
 
-        formData.append('sub_tasks', JSON.stringify(subTasksData));
-
-        // Log form data for debugging
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        // Send request
         const response = await axios.post('/tasks', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -322,16 +322,12 @@ async function createNewTask() {
         });
 
         if (response.data.success) {
-            closeCreatePopup();
             location.reload();
-        } else {
-            throw new Error(response.data.message || 'Failed to create task');
         }
-
     } catch (error) {
         console.error('Error creating task:', error);
         console.error('Error details:', error.response?.data);
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างภาระงาน');
+        alert('เกิดข้อผิดพลาดในการสร้างภาระงาน: ' + (error.response?.data?.message || error.message));
     }
 }
 
@@ -372,12 +368,14 @@ function openCreatePopup() {
     // Show popup using active class
     document.getElementById('popupCreate').classList.add('active');
     document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
 }
 
 // Function to close create popup
 function closeCreatePopup() {
     document.getElementById('popupCreate').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Function to reset create form
@@ -417,7 +415,7 @@ function resetCreateForm() {
 
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    loadDepartments();
+    // loadDepartments();
     resetCreateForm();  // Reset form on page load
     
     // Disable member dropdown initially
@@ -441,6 +439,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoInput) {
         logoInput.addEventListener('change', handleLogoUpload);
     }
+    initializeMemberSearch();
+    initializeDatePicker();
+
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+
+    if (userRole === 'headstaff') {
+        // Hide departments in side nav that aren't the user's department
+        document.querySelectorAll('.btn-side-nav').forEach(btn => {
+            const onclick = btn.getAttribute('onclick');
+            if (onclick && onclick.includes('filterTasksByDepartment')) {
+                const deptId = onclick.match(/filterTasksByDepartment\((\d+)\)/)?.[1];
+                if (deptId && deptId != userDepartmentId && deptId !== 'all') {
+                    btn.style.display = 'none';
+                }
+            }
+        });
+
+        // Initially filter to show only user's department
+        filterTasksByDepartment(userDepartmentId);
+    }
 });
 
 // Make functions available globally
@@ -448,6 +467,7 @@ window.createNewTask = createNewTask;
 window.resetCreateForm = resetCreateForm;
 window.addNewSubTask = addNewSubTask;
 window.deleteSubTask = deleteSubTask;
+window.deleteEditSubTask = deleteEditSubTask;
 window.selectDepartment = selectDepartment;
 window.selectMember = selectMember;
 window.toggleDropdownDepartment = toggleDropdownDepartment;
@@ -459,120 +479,91 @@ window.closeCreatePopup = closeCreatePopup;
 
 async function openEditPopup(element) {
     try {
+        console.log('Opening edit popup');
         const taskId = element.getAttribute('data-task-id');
-        
-        // Show loading state
-        document.getElementById('overlay').classList.add('active');
-        document.getElementById('popupEdit').classList.add('active');
-        
-        // Fetch task details
-        const response = await axios.get(`/tasks/${taskId}/edit`);
+        console.log('Task ID:', taskId);
+
+        // Get task data
+        const response = await axios.get(`/tasks/${taskId}/data`);
+        console.log('Task data:', response.data);
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch task data');
+        }
+
         const task = response.data.task;
 
-        console.log('Fetched task data:', task); // Debug log
+        // Get form elements
+        const form = document.getElementById('editTaskForm');
+        const editTaskId = document.getElementById('editTaskId');
+        const editTaskTitle = document.getElementById('editTaskTitle');
+        const editTaskDescription = document.getElementById('editTaskDescription');
+        const editTaskLink = document.getElementById('editTaskLink');
+        const editTaskDeadline = document.getElementById('editTaskDeadline');
+        const editTaskLogoPreview = document.getElementById('editTaskLogoPreview');
+        const editTaskAssignedTo = document.getElementById('editTaskAssignedTo');
 
-        // Populate form fields
-        document.getElementById('editTaskId').value = task.id;
-        document.getElementById('editTaskTitle').value = task.title || '';
-        document.getElementById('editTaskDescription').value = task.description || '';
-        document.getElementById('editTaskLink').value = task.link || '';
-        
-        // Format and set deadline
+        // Set form values
+        editTaskId.value = taskId;
+        editTaskTitle.value = task.title || '';
+        editTaskDescription.value = task.description || '';
+        editTaskLink.value = task.link || '';
+
+        // Format and set deadline if exists
         if (task.deadline) {
+            // Convert to Thai date format for display
             const deadlineDate = new Date(task.deadline);
-            const formattedDate = deadlineDate.toISOString().split('T')[0];
-            document.getElementById('editTaskDeadline').value = formattedDate;
-        }
-        
-        // Set department
-        const departmentSpan = document.querySelector('#editTaskDepartment');
-        if (task.department) {
-            departmentSpan.textContent = task.department.name;
-            departmentSpan.setAttribute('data-department-id', task.department.id);
-        } else {
-            departmentSpan.textContent = 'เลือกหน่วยงาน';
-            departmentSpan.setAttribute('data-department-id', '');
-        }
-
-        // Set assigned member
-        const memberSpan = document.querySelector('#editTaskAssignedTo');
-        if (task.assigned_to && task.assigned_to.first_name) {
-            memberSpan.textContent = `${task.assigned_to.first_name} ${task.assigned_to.last_name || ''}`;
-            memberSpan.setAttribute('data-member-id', task.assigned_to.id);
-        } else {
-            memberSpan.textContent = 'เลือกบุคลากร';
-            memberSpan.setAttribute('data-member-id', '');
-        }
-
-        // Set logo
-        const logoPreview = document.getElementById('editTaskLogoPreview');
-        if (task.logo_path) {
-            console.log('Setting logo path:', task.logo_path); // Debug log
-            logoPreview.src = task.logo_path;
+            const day = String(deadlineDate.getDate()).padStart(2, '0');
+            const month = String(deadlineDate.getMonth() + 1).padStart(2, '0');
+            const year = deadlineDate.getFullYear();
             
-            // Add error handling for image load
-            logoPreview.onerror = function() {
-                console.error('Failed to load image:', task.logo_path);
-                this.src = 'https://placehold.co/128';
-            };
+            // For flatpickr input
+            editTaskDeadline.value = `${day}/${month}/${year}`;
+            
+            // Initialize flatpickr with the date
+            if (editTaskDeadline._flatpickr) {
+                editTaskDeadline._flatpickr.setDate(`${day}/${month}/${year}`);
+            }
         } else {
-            console.log('No logo path, using placeholder'); // Debug log
-            logoPreview.src = 'https://placehold.co/128';
+            editTaskDeadline.value = '';
+            if (editTaskDeadline._flatpickr) {
+                editTaskDeadline._flatpickr.clear();
+            }
         }
 
-        // Handle subtasks
-        const subTasksContainer = document.getElementById('editSubTasksContainer');
-        subTasksContainer.innerHTML = ''; // Clear existing subtasks
-
-        if (task.sub_tasks && task.sub_tasks.length > 0) {
-            console.log('Loading subtasks:', task.sub_tasks); // Debug log
-            task.sub_tasks.forEach((subTask, index) => {
-                const subTaskHtml = `
-                    <div class="popup-sub-task" data-subtask-id="${subTask.id}">
-                        <div class="popup-sub-task-detail">
-                            <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">ภาระงานย่อย ${index + 1}</h2>
-                                <input type="text" 
-                                       name="sub_tasks[${index}][title]" 
-                                       value="${subTask.title || ''}" 
-                                       class="input-text sarabun-16" 
-                                       required>
-                                <input type="hidden" 
-                                       name="sub_tasks[${index}][id]" 
-                                       value="${subTask.id}">
-                            </div>
-                            <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">ลิ้งก์</h2>
-                                <input type="text" 
-                                       name="sub_tasks[${index}][link]" 
-                                       value="${subTask.link || ''}" 
-                                       class="input-text sarabun-16">
-                            </div>
-                        </div>
-                        <div class="popup-sub-task-delete btn-pointer" onclick="deleteSubTask(this)">
-                            <i class="fas fa-trash-can"></i>
-                        </div>
-                    </div>
-                `;
-                subTasksContainer.insertAdjacentHTML('beforeend', subTaskHtml);
-            });
+        // Set assigned to
+        if (task.assigned_to) {
+            editTaskAssignedTo.value = `${task.assigned_to.first_name} ${task.assigned_to.last_name}`;
+            editTaskAssignedTo.setAttribute('data-member-id', task.assigned_to.id);
         }
 
-        // Load department members for dropdown
-        if (task.department && task.department.id) {
-            await loadDepartmentMembers(task.department.id, 'dropdownMenuMemberEdit');
+        // Set logo preview
+        if (task.logo_path) {
+            const cleanPath = task.logo_path.replace(/^\/storage\//, '');
+            editTaskLogoPreview.src = `/storage/${cleanPath}`;
+        } else {
+            editTaskLogoPreview.src = 'https://placehold.co/128';
         }
+
+        // Load subtasks
+        await loadSubTasks(taskId, 'edit');
+
+        // Add event listener for logo upload in edit popup
+        const editLogoInput = document.getElementById('editTaskLogo');
+        if (editLogoInput) {
+            editLogoInput.addEventListener('change', handleEditLogoUpload);
+        }
+
+        // Show popup
+        const popup = document.getElementById('popupEdit');
+        const overlay = document.getElementById('overlay');
+        popup.classList.add('active');
+        overlay.classList.add('active');
+        document.body.classList.add('lock-scroll');
 
     } catch (error) {
-        console.error('Error fetching task details:', error);
-        if (error.response) {
-            console.error('Server error:', error.response.data);
-        }
+        console.error('Error opening edit popup:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลภาระงาน');
-        
-        // Hide overlay and popup if there's an error
-        document.getElementById('overlay').classList.remove('active');
-        document.getElementById('popupEdit').classList.remove('active');
     }
 }
 
@@ -580,6 +571,7 @@ async function openEditPopup(element) {
 function closeEditPopup() {
     document.getElementById('popupEdit').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
 }
 
 // Make only the necessary functions globally available
@@ -596,7 +588,6 @@ async function openDeleteConfirmationPopup() {
         document.getElementById('deleteTaskLogo').src = task.logo_path || 'https://placehold.co/128';
         document.getElementById('deleteTaskTitle').textContent = task.title;
         document.getElementById('deleteTaskDescription').textContent = task.description || '-';
-        document.getElementById('deleteTaskDepartment').textContent = task.department?.name || '-';
         document.getElementById('deleteTaskAssignedTo').textContent = 
             task.assigned_to ? `${task.assigned_to.first_name} ${task.assigned_to.last_name}` : '-';
         document.getElementById('deleteTaskDeadline').textContent = 
@@ -618,7 +609,7 @@ async function openDeleteConfirmationPopup() {
         // Show the delete confirmation popup
         document.getElementById('deleteConfirmationPopup').classList.add('active');
         document.getElementById('overlay').classList.add('active');
-        
+        document.body.classList.add('lock-scroll');
         // Hide the edit popup
         document.getElementById('popupEdit').classList.remove('active');
     } catch (error) {
@@ -630,6 +621,7 @@ async function openDeleteConfirmationPopup() {
 function closeDeleteConfirmation() {
     document.getElementById('deleteConfirmationPopup').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
     document.getElementById('popupEdit').classList.add('active');
 }
 
@@ -653,67 +645,38 @@ window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 window.closeDeleteConfirmation = closeDeleteConfirmation;
 window.deleteTask = deleteTask;
 
+// Function to update task
 async function updateTask() {
     try {
         const form = document.getElementById('editTaskForm');
-        if (!form) {
-            console.error('Edit task form not found');
-            return;
-        }
-
         const taskId = document.getElementById('editTaskId').value;
         const formData = new FormData(form);
-        
-        // Get description
-        const description = document.querySelector('#editTaskDescription')?.value || '';
-        formData.append('description', description);
 
-        // Get department and member IDs
-        const departmentId = document.querySelector('#editTaskDepartment')?.getAttribute('data-department-id');
-        const memberId = document.querySelector('#editTaskAssignedTo')?.getAttribute('data-member-id');
-
-        if (!departmentId) {
-            alert('กรุณาเลือกหน่วยงาน');
-            return;
+        // Handle the date input properly
+        const deadlineInput = document.getElementById('editTaskDeadline');
+        if (deadlineInput && deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd
+            const [day, month, year] = deadlineInput.value.split('/');
+            if (day && month && year) {
+                const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                formData.set('deadline', formattedDate);
+            }
+        } else {
+            formData.delete('deadline');
         }
 
-        formData.append('department_id', departmentId);
-        formData.append('assigned_to', memberId || '');
-        formData.append('_method', 'PUT');
-
-        // Get deadline if exists
-        const deadline = document.querySelector('#editTaskDeadline')?.value;
-        if (deadline) {
-            formData.append('deadline', deadline);
-        }
-
-        // Get subtasks
-        const subtasks = document.querySelectorAll('#editSubTasksContainer .popup-sub-task');
-        const subTasksData = [];
-        
-        subtasks.forEach((subtask) => {
-            const titleInput = subtask.querySelector('input[name*="[title]"]');
-            const linkInput = subtask.querySelector('input[name*="[link]"]');
-            const idInput = subtask.querySelector('input[name*="[id]"]');
-            
-            if (titleInput && titleInput.value.trim()) {
-                subTasksData.push({
-                    id: idInput ? idInput.value : null,
-                    title: titleInput.value.trim(),
-                    link: linkInput ? linkInput.value.trim() : ''
-                });
+        // Handle subtasks
+        const subTasks = [];
+        document.querySelectorAll('#editSubTasksContainer .popup-sub-task').forEach((item, index) => {
+            const title = item.querySelector('input[name^="sub_tasks"]').value;
+            const link = item.querySelector('input[name^="sub_tasks"][name$="[link]"]').value;
+            if (title.trim()) {
+                subTasks.push({ title, link });
             }
         });
+        formData.append('sub_tasks', JSON.stringify(subTasks));
 
-        formData.append('sub_tasks', JSON.stringify(subTasksData));
-
-        // Log form data for debugging
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        // Send request
-        const response = await axios.post(`/tasks/${taskId}`, formData, {
+        const response = await axios.post(`/tasks/${taskId}/update`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -721,22 +684,18 @@ async function updateTask() {
         });
 
         if (response.data.success) {
-            closeEditPopup();
-            location.reload();
+            window.location.reload();
         } else {
-            throw new Error(response.data.message || 'Failed to update task');
+            throw new Error(response.data.message);
         }
-
     } catch (error) {
         console.error('Error updating task:', error);
-        if (error.response?.data) {
-            console.error('Server error:', error.response.data);
-        }
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัพเดทภาระงาน');
+        console.log('Full error details:', error.response?.data);
+        alert('เกิดข้อผิดพลาดในการอัปเดตภาระงาน: ' + (error.response?.data?.message || error.message));
     }
 }
 
-// Add to window object for global access
+// Make function globally available
 window.updateTask = updateTask;
 
 function toggleSubtasks(event, taskId) {
@@ -810,4 +769,323 @@ function openTaskLink(event, link) {
 }
 
 // Make the function globally available
-window.openTaskLink = openTaskLink; 
+window.openTaskLink = openTaskLink;
+
+// Add these new functions for member search
+function initializeMemberSearch() {
+    const createMemberInput = document.querySelector('#createTaskMemberSearch');
+    const editMemberInput = document.querySelector('#editTaskMemberSearch');
+    const createSelectedMembers = document.querySelector('#createSelectedMembers');
+    const editSelectedMembers = document.querySelector('#editSelectedMembers');
+
+    if (createMemberInput) {
+        setupMemberSearch(createMemberInput, createSelectedMembers, 'create');
+    }
+    if (editMemberInput) {
+        setupMemberSearch(editMemberInput, editSelectedMembers, 'edit');
+    }
+}
+
+function setupMemberSearch(input, selectedContainer, mode) {
+    // Remove any existing dropdowns first
+    const existingDropdowns = input.parentNode.querySelectorAll('.member-search-dropdown');
+    existingDropdowns.forEach(dropdown => dropdown.remove());
+
+    // Create new dropdown
+    let dropdownContainer = document.createElement('div');
+    dropdownContainer.className = 'member-search-dropdown';
+    input.parentNode.appendChild(dropdownContainer);
+
+    let selectedMembers = new Set();
+
+    input.addEventListener('input', debounce(async (e) => {
+        const query = e.target.value;
+
+        if (query.length < 2) {
+            dropdownContainer.innerHTML = '';
+            return;
+        }
+
+        try {
+            // Remove department filter from the search
+            const response = await axios.get('/tasks/search-members', {
+                params: { query }
+            });
+
+            if (response.data.success) {
+                if (response.data.members.length === 0) {
+                    dropdownContainer.innerHTML = '<div class="member-search-item">ไม่พบบุคลากร</div>';
+                    return;
+                }
+
+                dropdownContainer.innerHTML = response.data.members
+                    .filter(member => !selectedMembers.has(member.id))
+                    .map(member => `
+                        <div class="member-search-item" onclick="selectSearchedMember(${member.id}, '${member.first_name} ${member.last_name}', '${mode}')">
+                            ${member.first_name} ${member.last_name}
+                            <span class="member-department">${member.department_name || ''}</span>
+                        </div>
+                    `).join('');
+            }
+        } catch (error) {
+            console.error('Error searching members:', error);
+            dropdownContainer.innerHTML = '<div class="member-search-item">เกิดข้อผิดพลาดในการค้นหา</div>';
+        }
+    }, 300));
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdownContainer.contains(e.target)) {
+            dropdownContainer.innerHTML = '';
+        }
+    });
+
+    // Track selected members
+    selectedMembers = new Set();
+    const updateSelectedMembers = () => {
+        const selectedTags = selectedContainer.querySelectorAll('.selected-member-tag input[type="hidden"]');
+        selectedMembers.clear();
+        selectedTags.forEach(input => selectedMembers.add(parseInt(input.value)));
+    };
+
+    // Initialize selected members
+    updateSelectedMembers();
+
+    // Use MutationObserver instead of DOMNodeRemoved
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                updateSelectedMembers();
+            }
+        });
+    });
+
+    // Configure and start the observer
+    observer.observe(selectedContainer, {
+        childList: true,
+        subtree: true
+    });
+
+    // Clean up observer when needed (e.g., when the component is destroyed)
+    window.addEventListener('unload', () => {
+        observer.disconnect();
+    });
+}
+
+window.setupMemberSearch = setupMemberSearch;
+
+function selectSearchedMember(memberId, memberName, mode) {
+    const container = document.querySelector(`#${mode}SelectedMembers`);
+    const input = document.querySelector(`#${mode}TaskMemberSearch`);
+    
+    const memberTag = document.createElement('div');
+    memberTag.className = 'selected-member-tag';
+    memberTag.innerHTML = `
+        ${memberName}
+        <input type="hidden" name="assigned_to[]" value="${memberId}">
+        <span class="remove-member" onclick="removeSearchedMember(this)">&times;</span>
+    `;
+    
+    container.appendChild(memberTag);
+    input.value = '';
+    document.querySelector('.member-search-dropdown').innerHTML = '';
+}
+
+function removeSearchedMember(element) {
+    element.closest('.selected-member-tag').remove();
+}
+
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Make functions globally available
+window.selectSearchedMember = selectSearchedMember;
+window.removeSearchedMember = removeSearchedMember;
+
+function sortByDeadline() {
+    // Get all visible department tables
+    const visibleTables = document.querySelectorAll('.task-department:not([style*="display: none"]) .department-task-body');
+    
+    // Toggle sort order
+    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+    
+    // Update sort icon
+    const sortIcon = document.querySelector('th i.fas');
+    if (sortIcon) {
+        sortIcon.className = currentSortOrder === 'asc' 
+            ? 'fas fa-sort-up' 
+            : 'fas fa-sort-down';
+    }
+    
+    visibleTables.forEach(tableBody => {
+        const rows = Array.from(tableBody.getElementsByTagName('tr'));
+        
+        rows.sort((a, b) => {
+            const dateA = a.cells[3].textContent.trim();
+            const dateB = b.cells[3].textContent.trim();
+            
+            // Handle cases where there's no deadline
+            if (dateA === 'ไม่มีวันครบกำหนด') return currentSortOrder === 'asc' ? 1 : -1;
+            if (dateB === 'ไม่มีวันครบกำหนด') return currentSortOrder === 'asc' ? -1 : 1;
+            
+            // Convert Thai date format (dd/mm/yyyy) to Date objects
+            const [dayA, monthA, yearA] = dateA.split('/');
+            const [dayB, monthB, yearB] = dateB.split('/');
+            
+            const dateObjA = new Date(yearA, monthA - 1, dayA);
+            const dateObjB = new Date(yearB, monthB - 1, dayB);
+            
+            return currentSortOrder === 'asc' 
+                ? dateObjA - dateObjB 
+                : dateObjB - dateObjA;
+        });
+        
+        rows.forEach(row => tableBody.appendChild(row));
+    });
+}
+
+// Make sure sortByDeadline is available globally
+window.sortByDeadline = sortByDeadline;
+
+// Make sure axios is configured globally with the CSRF token
+axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+axios.defaults.withCredentials = true;
+
+async function loadSubTasks(taskId, mode) {
+    try {
+        const response = await axios.get(`/tasks/${taskId}/subtasks`);
+        if (!response.data.success) {
+            throw new Error(response.data.message);
+        }
+
+        const container = document.getElementById(`${mode}SubTasksContainer`);
+        if (!container) return;
+
+        container.innerHTML = '';
+        response.data.subtasks.forEach((subtask, index) => {
+            container.innerHTML += `
+                <div class="popup-sub-task">
+                    <div class="popup-sub-task-detail">
+                        <div class="input-group">
+                            <label class="sarabun-16">ภาระงานย่อย ${index + 1}</label>
+                            <input type="text" 
+                                   name="sub_tasks[${index}][title]" 
+                                   value="${subtask.title}" 
+                                   class="input-text sarabun-16" 
+                                   placeholder="text...">
+                        </div>
+                        <div class="input-group">
+                            <label class="sarabun-16">ลิ้งก์</label>
+                            <input type="text" 
+                                   name="sub_tasks[${index}][link]" 
+                                   value="${subtask.link || ''}" 
+                                   class="input-text sarabun-16" 
+                                   placeholder="text...">
+                        </div>
+                    </div>
+                    <div class="popup-sub-task-delete">
+                        <button type="button" class="remove-subtask" onclick="removeSubTask(this)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error('Error loading subtasks:', error);
+    }
+}
+
+// Function to remove subtask
+function removeSubTask(element) {
+    const subtaskItem = element.closest('.popup-sub-task');
+    if (subtaskItem) {
+        subtaskItem.remove();
+    }
+}
+
+// Make functions available globally
+window.removeSubTask = removeSubTask;
+window.addNewSubTask = addNewSubTask;
+
+// Function to initialize date picker
+function initializeDatePicker() {
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    
+    if (typeof flatpickr === 'undefined') {
+        console.error('Flatpickr is not loaded');
+        return;
+    }
+    
+    dateInputs.forEach(input => {
+        input.type = 'text';
+        input.placeholder = 'dd/mm/yyyy';
+        
+        flatpickr(input, {
+            dateFormat: "d/m/Y",
+            allowInput: true,
+            locale: "th",
+            altFormat: "Y-m-d",  // Backend format
+            altInput: false,     // We'll handle the format conversion ourselves
+            disableMobile: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                console.log('Selected date:', dateStr);
+            }
+        });
+    });
+}
+
+// Call this function when the document is ready and after Flatpickr is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof flatpickr !== 'undefined') {
+        initializeDatePicker();
+    } else {
+        console.error('Flatpickr library not found');
+    }
+});
+
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    dropdown.classList.toggle('show');
+}
+
+// Close the dropdown if clicked outside
+window.onclick = function(event) {
+    if (!event.target.matches('.btn-status') && !event.target.matches('.btn-status *')) {
+        const dropdowns = document.getElementsByClassName('dropdown-menu');
+        for (let dropdown of dropdowns) {
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+window.toggleUserDropdown = toggleUserDropdown;
+// Make function globally available
+window.initializeDatePicker = initializeDatePicker;
+
+// Function to handle logo preview for edit popup
+function handleEditLogoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editTaskLogoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Make the function globally available
+window.handleEditLogoUpload = handleEditLogoUpload; 

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน่วยงาน</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
 
     <link rel="stylesheet" href="{{ secure_asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ secure_asset('css/pages/department.css') }}">    
@@ -16,32 +18,47 @@
     <!-- Header -->
     <header>
         <div class="role-container">
-            <ul>
-                <li class="btn-status btn-text sarabun-20">
-                    @php
-                        $roleLabels = [
-                            'admin' => 'ผู้ดูแลระบบ',
-                            'manager' => 'ผู้บริหาร',
-                            'headstaff' => 'หัวหน้างาน',
-                            'staff' => 'บุคลากร'
-                        ];
-                    @endphp
-                    {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
-                </li>
-            </ul>
+            <div class="user-dropdown">
+                <div class="btn-status btn-text sarabun-20" onclick="toggleUserDropdown()">
+                    {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="userDropdown">
+                    <div class="dropdown-item sarabun-16">
+                        @php
+                            $roleLabels = [
+                                'admin' => 'ผู้ดูแลระบบ',
+                                'manager' => 'ผู้บริหาร',
+                                'headstaff' => 'หัวหน้างาน',
+                                'staff' => 'บุคลากร'
+                            ];
+                        @endphp
+                        {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item sarabun-16">
+                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
         <nav class="nav-bar">
             <div class="nav-bar-action-container">
                 <img src="{{ secure_asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x60'">
                 <ul class="nav-action">
-                    <li><a href="{{route('department')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{route('departments.index')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
+            @if(auth()->user()->isAdmin())
+                <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มหน่วยงาน
-            </div>
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in sarabun-36">
@@ -55,7 +72,11 @@
 
     <!-- department card -->
     <section class="content-container">        
-        @foreach($departments as $department)
+        @php
+            $visibleDepartments = Auth::user()->getVisibleDepartments();
+        @endphp
+        
+        @foreach($visibleDepartments as $department)
             @include('components.department-card', ['department' => $department])
         @endforeach
     </section>
@@ -64,7 +85,8 @@
     <div id="popupCreate" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="createDepartmentForm">
+                <form id="createDepartmentForm" enctype="multipart/form-data">
+                    @csrf
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeCreatePopup()">
                             <   
@@ -74,11 +96,18 @@
                         </div>
                     </div>
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                        <label for="departmentLogo" class="logo-upload-label">
+                            <img src="https://placehold.co/128" alt="" class="card-logo-img" id="createLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="departmentLogo" accept="image/*" style="display: none;">
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
-                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
@@ -97,7 +126,9 @@
     <div id="popupEdit" class="popup-container">
         <div class="create-popup-department">
             <div class="popup-content">
-                <form id="editDepartmentForm">
+                <form id="editDepartmentForm" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="editDepartmentId" name="id">
                     <div class="popup-header">
                         <div class="btn-close close-popup" onclick="closeEditPopup()">
                             <
@@ -105,17 +136,23 @@
                         <div class="popup-name">
                             <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
                         </div>
-                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup()">
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(document.getElementById('editDepartmentId').value)">
                             <i class="fas fa-trash"></i>
                         </div>
                     </div>
-                    <input type="hidden" name="id" id="editDepartmentId">
                     <div class="popup-image">
-                        <img src="https://placehold.co/128" alt="" class="card-logo-img">
+                        <label for="editDepartmentLogo" class="logo-upload-label">
+                            <img src="" alt="" class="card-logo-img" id="editLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="editDepartmentLogo" accept="image/*" style="display: none;">
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
-                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16">
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup sarabun-20" onclick="closeEditPopup()">

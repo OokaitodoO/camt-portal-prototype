@@ -1,6 +1,6 @@
 <div class="card-wrapper fade-in">
-    <div class="card-container">
-        <div class="card-edit" onclick="openEditPopup(this)" 
+    <div class="card-container" data-member-id="{{ $member->id }}" onclick="window.location.href='{{{ route('members.show', $member->id) }}'">
+        <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
             data-member-id="{{ $member->id }}"
             data-first-name="{{ $member->first_name }}"
             data-last-name="{{ $member->last_name }}"
@@ -11,8 +11,9 @@
         
         <a href="{{ route('members.show', $member->id) }}" class="card-content">
             <div class="card-logo">
-                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                     class="card-logo-img" alt="profile picture">
+                <img src="{{ $member->profile_picture ?? 'https://placehold.co/128' }}" 
+                     class="card-logo-img" 
+                     alt="{{ $member->first_name }}'s profile picture">
             </div>
             <div class="divider"></div>
             <div class="card-container-info">

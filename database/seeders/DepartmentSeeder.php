@@ -10,15 +10,14 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $departments = [
-            ['name' => 'IT Department'],
-            ['name' => 'Marketing'],
-            ['name' => 'Sales'],
-            ['name' => 'HR'],
-            ['name' => 'Finance']
+            'การเงินและบัญชี',        
         ];
 
-        foreach ($departments as $department) {
-            Department::create($department);
+        foreach ($departments as $name) {
+            Department::firstOrCreate(
+                ['name' => $name], // Check if exists by name
+                ['created_at' => now(), 'updated_at' => now()]
+            );
         }
     }
 } 

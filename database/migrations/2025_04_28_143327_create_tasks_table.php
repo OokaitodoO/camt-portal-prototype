@@ -12,11 +12,12 @@ class CreateTasksTable extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->foreignId('department_id')->constrained('departments');
             $table->string('link')->nullable();
+            $table->string('status')->default('pending');
+            $table->boolean('is_favorite')->default(false);
             $table->foreignId('assigned_to')->nullable()->constrained('members');
             $table->foreignId('assigned_by')->nullable()->constrained('members');
-            $table->date('deadline');
+            $table->dateTime('deadline')->nullable();
             $table->string('logo_path')->nullable();
             $table->timestamps();
         });
@@ -33,7 +34,7 @@ class CreateTasksTable extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('tasks');
         Schema::dropIfExists('subtasks');
+        Schema::dropIfExists('tasks');
     }
 }
