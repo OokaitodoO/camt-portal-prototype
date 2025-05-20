@@ -296,7 +296,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">เพิ่มบุคลากร</h1>
+                            <h1 class="popup-header-title sarabun-36">เพิ่มบุคลากร</h1>
                         </div>
                     </div>
                     <div class="popup-image">
@@ -387,7 +387,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">แก้ไขบุคลากร</h1>
+                            <h1 class="popup-header-title sarabun-36">แก้ไขบุคลากร</h1>
                         </div>
                         <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(this.closest('form').querySelector('#editMemberId').value)">    
                             <i class="fas fa-trash"></i>
@@ -480,7 +480,7 @@
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
-                        <h1 class="page-title sarabun-36">ต้องการลบบุคลากรนี้หรือไม่?</h1>
+                        <h1 class="popup-header-title sarabun-36">ต้องการลบบุคลากรนี้หรือไม่?</h1>
                     </div>
                 </div>
                 <div class = "card-logo">
@@ -538,7 +538,7 @@
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
-                        <h1 class="page-title sarabun-36">ยืนยันการลบบุคลากรและภาระงาน</h1>
+                        <h1 class="popup-header-title sarabun-36">ยืนยันการลบบุคลากรและภาระงาน</h1>
                     </div>
                 </div>
                 <div class="member-info">

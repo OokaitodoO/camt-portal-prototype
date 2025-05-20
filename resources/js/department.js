@@ -241,6 +241,7 @@ function closeEditPopup() {
     const overlay = document.getElementById('overlay');
     if (popup) popup.classList.remove('active');
     if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('lock-scroll');
     
     // Reset form if it exists
     const form = document.getElementById('editDepartmentForm');
@@ -365,12 +366,14 @@ async function openDeleteConfirmationPopup(departmentId) {
         // Show popup
         popup.classList.add('active');
         document.getElementById('overlay').classList.add('active');
+        document.body.classList.add('lock-scroll');
 
         // Close the edit popup if it's open
         const editPopup = document.getElementById('popupEdit');
         if (editPopup) {
             editPopup.classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
+            document.body.classList.remove('lock-scroll');
         }
 
     } catch (error) {
@@ -424,7 +427,7 @@ async function openEditPopup(element) {
         // Show popup
         popup.classList.add('active');
         document.getElementById('overlay').classList.add('active');
-
+        document.body.classList.add('lock-scroll');
     } catch (error) {
         console.error('Error in openEditPopup:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');

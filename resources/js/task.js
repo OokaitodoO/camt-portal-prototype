@@ -303,11 +303,11 @@ async function createNewTask() {
 
         formData.set('assigned_to', memberIds.join(','));
 
-        // Handle subtasks
+        // Handle subtasks - Fixed container ID
         const subTasks = [];
-        document.querySelectorAll('#createSubTasksContainer .sub-task-item').forEach(item => {
-            const title = item.querySelector('input[name="sub_task_title"]').value;
-            const link = item.querySelector('input[name="sub_task_link"]').value;
+        document.querySelectorAll('#createSubTasksContainer .popup-sub-task').forEach((item, index) => {
+            const title = item.querySelector('input[name^="sub_tasks"][name$="[title]"]').value;
+            const link = item.querySelector('input[name^="sub_tasks"][name$="[link]"]').value;
             if (title.trim()) {
                 subTasks.push({ title, link });
             }

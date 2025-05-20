@@ -92,7 +92,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">เพิ่มหน่วยงาน</h1>
+                            <h1 class="popup-header-title sarabun-36">เพิ่มหน่วยงาน</h1>
                         </div>
                     </div>
                     <div class="popup-image">
@@ -134,7 +134,7 @@
                             <
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
+                            <h1 class="popup-header-title sarabun-36">แก้ไขหน่วยงาน</h1>
                         </div>
                         <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(document.getElementById('editDepartmentId').value)">
                             <i class="fas fa-trash"></i>
