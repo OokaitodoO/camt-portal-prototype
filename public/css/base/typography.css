@@ -59,6 +59,9 @@
 .btn-side-nav-text {
     font-weight: 400;
     font-size: 18px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .page-title {

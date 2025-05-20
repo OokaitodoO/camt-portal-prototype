@@ -17,7 +17,7 @@
             <hr class="divider">
             <div class="card-container-info">
                 <div class="card-name sarabun-20">
-                    <h3>{{ $department->name }}</h3>
+                    <h3 class="department-name">{{ $department->name }}</h3>
                 </div>                
             </div>
         </div>
