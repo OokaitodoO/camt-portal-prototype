@@ -47,6 +47,18 @@
     justify-content: left;
     align-items: center;
     padding: 0px 25px;
+    width: 100%;
+}
+
+.side-nav-info-item h2 {
+    min-width: fit-content;
+    padding-right: 10px;
+}
+
+.side-nav-info-item p {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .side-nav-pin {

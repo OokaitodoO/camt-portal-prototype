@@ -210,7 +210,7 @@
                                     </div>
                                 </div>
                                 <div class="card-container-info-item">
-                                    <div class="card-details">
+                                    <div class="card-details-description">
                                         <p class="sarabun-16">{{ $task->description }}</p>
                                     </div>
                                     <div class="card-details">
