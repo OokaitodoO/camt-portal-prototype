@@ -34,10 +34,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click listener to popup overlay for closing
     const popupOverlays = document.querySelectorAll('.popup-overlay');
     popupOverlays.forEach(overlay => {
-        overlay.addEventListener('click', function(event) {
+        let mouseDownOnPopup = false;
+
+        // Track if mouse down started inside popup
+        overlay.querySelector('.popup-content').addEventListener('mousedown', () => {
+            mouseDownOnPopup = true;
+        });
+
+        // Reset flag when mouse is released
+        document.addEventListener('mouseup', () => {
+            mouseDownOnPopup = false;
+        });
+
+        // Only close if click started and ended on overlay
+        overlay.addEventListener('mousedown', function(event) {
             if (event.target === this) {
+                mouseDownOnPopup = false;
+            }
+        });
+
+        overlay.addEventListener('mouseup', function(event) {
+            if (event.target === this && !mouseDownOnPopup) {
                 closeEditPopup();
-                closeDeletePopup();
+                closeDeleteConfirmation();
+                closeCreatePopup();
             }
         });
     });
