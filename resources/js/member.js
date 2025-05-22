@@ -148,7 +148,7 @@ async function filterByDepartment(departmentId) {
         const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
 
         // If staff or headstaff, only allow viewing their own department
-        if ((userRole === 'staff' || userRole === 'headstaff') && 
+        if ((userRole === 'staff') && 
             departmentId !== 'all' && 
             departmentId != userDepartmentId) {
             console.warn('Access restricted: Can only view own department');

@@ -12,7 +12,7 @@
                 <img src="{{ $department->icon_path ? asset('storage/'.$department->icon_path) : asset('images/placeholder.png') }}" 
                      alt="{{ $department->name }}" 
                      class="card-logo-img"
-                     onerror="this.src='https://placehold.co/128'">
+                     onerror="this.src='https://placehold.co/128x128'">
             </div>
             <hr class="divider">
             <div class="card-container-info">

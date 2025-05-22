@@ -87,21 +87,21 @@ class Member extends Authenticatable
      */
     public function getVisibleDepartments()
     {
-        if ($this->isAdmin() || $this->isManager()) {
+        if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
             return Department::all();
         }
         
-        // For staff and headstaff, only show their own department
+        // For staff, only show their own department
         return Department::where('id', $this->department_id)->get();
     }
 
     public function getVisibleMembers()
     {
-        if ($this->isAdmin() || $this->isManager()) {
+        if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
             return Member::with('department')->get();
         }
         
-        // For staff and headstaff, only show members from their department
+        // For staff, only show members from their department
         return Member::with('department')
             ->where('department_id', $this->department_id)
             ->get();
@@ -110,11 +110,11 @@ class Member extends Authenticatable
     // Add this method for side navigation
     public function getVisibleDepartmentsForSideNav()
     {
-        if ($this->isAdmin() || $this->isManager()) {
+        if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
             return Department::all();
         }
         
-        // For staff and headstaff, only show their own department
+        // For staff, only show their own department
         return Department::where('id', $this->department_id)->get();
     }
 
@@ -122,14 +122,14 @@ class Member extends Authenticatable
     public function canView(Member $targetMember)
     {
         // Admin and Manager can view all members
-        if ($this->isAdmin() || $this->isManager()) {
+        if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
             return true;
         }
         
         // Headstaff can only view members in their department
-        if ($this->isHeadstaff()) {
-            return $this->department_id === $targetMember->department_id;
-        }
+        // if ($this->isHeadstaff()) {
+        //     return $this->department_id === $targetMember->department_id;
+        // }
         
         // Staff can only view themselves
         if ($this->isStaff()) {

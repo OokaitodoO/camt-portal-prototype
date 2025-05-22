@@ -23,27 +23,14 @@ class TaskController extends Controller
             return redirect()->route('members.show', $user->id);
         }
 
-        // For non-staff users, continue with existing logic
-        $departments = $user->getVisibleDepartments();
+        // For non-staff users (including headstaff), continue with existing logic
+        $departments = Department::all(); // Allow all departments to be visible
 
-        switch ($user->role) {
-            case 'admin':
-            case 'manager':
-                $tasks = Task::with(['assignedTo', 'assignedBy'])->get();
-                break;
-
-            case 'headstaff':
-                $tasks = Task::where(function($query) use ($user) {
-                    $query->whereHas('assignedTo', function($q) use ($user) {
-                        $q->where('department_id', $user->department_id);
-                    });
-                })
-                ->with(['assignedTo', 'assignedBy'])
-                ->get();
-                break;
-
-            default:
-                $tasks = collect();
+        // Get all tasks for admin, manager, and headstaff
+        if ($user->isAdmin() || $user->isManager() || $user->isHeadstaff()) {
+            $tasks = Task::with(['assignedTo', 'assignedBy'])->get();
+        } else {
+            $tasks = collect();
         }
 
         // Group tasks by department
@@ -58,16 +45,7 @@ class TaskController extends Controller
 
     public function filterByDepartment($departmentId)
     {
-        $user = auth()->user();
-
-        // For headstaff, only allow accessing their own department
-        if ($user->isHeadstaff() && $departmentId != $user->department_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Access denied'
-            ], 403);
-        }
-
+        // Allow filtering for all roles with access
         $tasks = Task::whereHas('assignedTo', function($query) use ($departmentId) {
             $query->where('department_id', $departmentId);
         })

@@ -72,12 +72,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])->name('tasks.filter');
         Route::get('/department/{departmentId}/members', function($departmentId) {
             $user = auth()->user();
-            if ($user->isHeadstaff() && $departmentId != $user->department_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Access denied'
-                ], 403);
-            }
             $members = Member::where('department_id', $departmentId)->get();
             return response()->json([
                 'success' => true,
