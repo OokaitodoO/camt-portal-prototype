@@ -43,6 +43,7 @@ async function openEditPopup(element) {
 
 // Popup functions
 function openCreatePopup() {
+    document.getElementById('createMemberForm').reset();
     document.getElementById('createPopup').classList.add('active');
     document.getElementById('overlay').classList.add('active');
     document.body.classList.add('lock-scroll');
