@@ -23,6 +23,13 @@ async function openEditPopup(element) {
         const previewImage = document.getElementById('editPreviewImage');
         previewImage.src = member.profile_picture || 'https://placehold.co/128';
 
+        // Format phone number when populating edit form
+        const phoneInput = form.querySelector('input[name="phone"]');
+        if (phoneInput && member.phone) {
+            phoneInput.value = member.phone;
+            formatPhoneNumber(phoneInput);
+        }
+
         // Show popup
         document.getElementById('popupEdit').classList.add('active');
         document.getElementById('overlay').classList.add('active');        
@@ -248,6 +255,31 @@ function handleProfilePictureChange(inputId, previewId) {
 document.addEventListener('DOMContentLoaded', function() {
     handleProfilePictureChange('memberProfilePicture', 'previewImage');
     handleProfilePictureChange('editMemberProfilePicture', 'editPreviewImage');
+
+    // Setup phone number inputs
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        input.classList.add('phone-input');
+        input.setAttribute('placeholder', 'XXX-XXX-XXXX');
+        input.setAttribute('maxlength', '12'); // Account for hyphens
+        input.setAttribute('pattern', '[0-9]{3}-[0-9]{3}-[0-9]{4}');
+        
+        input.addEventListener('input', function(e) {
+            formatPhoneNumber(this);
+        });
+
+        input.addEventListener('keypress', function(e) {
+            // Allow only numbers
+            if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Format existing number if any
+        if (input.value) {
+            formatPhoneNumber(input);
+        }
+    });
 });
 
 // Utility function to log with persistence
@@ -308,6 +340,12 @@ async function createMember(event) {
 
         const formData = new FormData(form);
         debugLog('Form data created');
+
+        // Clean phone number before sending
+        const phoneNumber = formData.get('phone');
+        if (phoneNumber) {
+            formData.set('phone', phoneNumber.replace(/-/g, ''));
+        }
 
         // Log form data
         const formDataObj = {};
@@ -735,3 +773,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear only localStorage logs, keep sessionStorage
     localStorage.removeItem('debugLogs');
 });
+
+// Add this function to format phone numbers
+function formatPhoneNumber(input) {
+    // Remove all non-numeric characters
+    let number = input.value.replace(/\D/g, '');
+    
+    // Ensure max length of 10 digits
+    number = number.substring(0, 10);
+    
+    // Format number as XXX-XXX-XXXX
+    if (number.length > 0) {
+        if (number.length <= 3) {
+            number = number;
+        } else if (number.length <= 6) {
+            number = number.slice(0, 3) + "-" + number.slice(3);
+        } else {
+            number = number.slice(0, 3) + "-" + number.slice(3, 6) + "-" + number.slice(6);
+        }
+    }
+    
+    input.value = number;
+}

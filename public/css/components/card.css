@@ -8,7 +8,8 @@
 .card-wrapper {
   display: flex;
   justify-content: center;
-  align-items: center;
+  height: fit-content;
+  /* align-items: center; */
 }
 
 .card-container {

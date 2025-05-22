@@ -50,7 +50,23 @@
                 <ul class="nav-action">
                     <li><a href="{{ route('departments.index') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
-                    <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
+                    @if(Auth::user()->isStaff())
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav{{ Request::routeIs('tasks.*') ? '-active' : '' }} btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li class="task-dropdown">
+                        <div class="btn-nav{{ Request::routeIs('tasks.*', 'individual.*') ? '-active' : '' }} btn-text sarabun-20">
+                            ภาระงาน <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="task-dropdown-menu">
+                            <a href="{{ route('tasks.index') }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-tasks"></i> ภาระงานทั้งหมด
+                            </a>
+                            <a href="{{ route('members.show', Auth::user()->id) }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-user-clock"></i> ภาระงานรายบุคคล
+                            </a>
+                        </div>
+                    </li>
+                    @endif
                 </ul>
             </div>
             @if(auth()->user()->isAdmin() || auth()->user()->isHeadstaff())
@@ -358,7 +374,11 @@
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                                <input type="tel" 
+                                       name="phone" 
+                                       class="input-text phone-input sarabun-16" 
+                                       placeholder="XXX-XXX-XXXX"
+                                       maxlength="12">
                             </div>
                         </div>
                         <div class="popup-btn-wrapper">
@@ -457,7 +477,11 @@
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                                <input type="tel" 
+                                       name="phone" 
+                                       class="input-text phone-input sarabun-16" 
+                                       placeholder="XXX-XXX-XXXX"
+                                       maxlength="12">
                             </div>
                         </div>
                         <div class="popup-btn-wrapper">
