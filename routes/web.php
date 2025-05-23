@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\Auth\CMUOAuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TaskController;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Storage;
 Route::get('/', [LoginController::class, 'index'])->name('home');
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// CMU OAuth Routes
+Route::get('/auth/cmu', [CMUOAuthController::class, 'redirect'])->name('auth.cmu');
+Route::get('/auth/cmu/callback', [CMUOAuthController::class, 'callback'])->name('auth.cmu.callback');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
