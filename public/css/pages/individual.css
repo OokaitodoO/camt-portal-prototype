@@ -121,6 +121,7 @@
 
 .subtasks-dropdown {
     z-index: 3;
+    width: 100%;
 }
 
 .subtask-item {
@@ -257,6 +258,78 @@
 
 .subtask-item:hover {
     background-color: #f5f5f5;
+}
+
+.member-search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.member-search-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ECE3DB;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+}
+
+.member-search-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.member-search-item:hover {
+    background-color: #F5F5F5;
+}
+
+.member-department {
+    color: #666;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+.selected-members-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.selected-member-tag {
+    background-color: #F48E2E;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selected-member-tag i {
+    cursor: pointer;
+}
+
+.popup-content {
+    overflow: visible !important;
+}
+
+.popup-input-wrapper {
+    overflow: visible !important;
 }
 
 

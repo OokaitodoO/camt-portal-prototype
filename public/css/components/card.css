@@ -84,3 +84,10 @@
   margin: 20px 0; 
   width: 100%; 
 }
+
+.divider-white {
+  border: none;
+  border-top: 4px solid #F48E2E;
+  margin: 20px 0;
+  width: 100%;
+}

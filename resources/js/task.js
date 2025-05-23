@@ -6,13 +6,30 @@ let subtaskCount = 1;
 // Function to handle department filtering
 async function filterTasksByDepartment(departmentId) {
     try {
+        const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
         const allDepartmentTables = document.querySelectorAll('.task-department');
         
+        // For headstaff, only allow viewing their own department
+        if (userRole === 'headstaff' && departmentId !== 'all' && departmentId != userDepartmentId) {
+            console.warn('Access restricted: Can only view own department');
+            return;
+        }
+
         // Show all tables if 'all' is selected
         if (departmentId === 'all') {
-            allDepartmentTables.forEach(table => {
-                table.style.display = 'block';
-            });
+            if (userRole === 'headstaff') {
+                // For headstaff, "all" means their department only
+                allDepartmentTables.forEach(table => {
+                    const tableDeptId = table.getAttribute('data-department-id');
+                    table.style.display = (tableDeptId == userDepartmentId) ? 'block' : 'none';
+                });
+            } else {
+                // For admin/manager, show all departments
+                allDepartmentTables.forEach(table => {
+                    table.style.display = 'grid';
+                });
+            }
         } else {
             // Hide all tables first
             allDepartmentTables.forEach(table => {
@@ -22,7 +39,7 @@ async function filterTasksByDepartment(departmentId) {
             // Show only the selected department's table
             const selectedTable = document.querySelector(`.task-department[data-department-id="${departmentId}"]`);
             if (selectedTable) {
-                selectedTable.style.display = 'block';
+                selectedTable.style.display = 'grid';
             }
         }
 
@@ -39,15 +56,20 @@ async function filterTasksByDepartment(departmentId) {
         }
 
         // Update task count
-        const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
-        const taskCountElement = document.querySelector('.task-remain p');
-        if (taskCountElement) {
-            taskCountElement.textContent = visibleTasks;
-        }
+        updateTaskCount();
 
     } catch (error) {
         console.error('Error filtering tasks:', error);
         alert('เกิดข้อผิดพลาดในการกรองข้อมูล');
+    }
+}
+
+// Add this helper function to update task count
+function updateTaskCount() {
+    const visibleTasks = document.querySelectorAll('.task-department:not([style*="display: none"]) .table-task').length;
+    const taskCountElement = document.querySelector('.task-remain p');
+    if (taskCountElement) {
+        taskCountElement.textContent = visibleTasks;
     }
 }
 
@@ -148,20 +170,18 @@ function addNewSubTask(mode = 'create') {
 }
 
 // Function to load departments into dropdown
-async function loadDepartments(dropdownId) {
+async function loadDepartments() {
     try {
         const response = await axios.get('/departments');
-        const departments = response.data;
-        const dropdownContent = document.getElementById(dropdownId);
-        
-        if (dropdownContent) {
-            dropdownContent.innerHTML = departments.map(dept => `
-                <a href="#" onclick="selectDepartment(this, ${dept.id}, '${dept.name}', '${dropdownId}')" 
-                   data-department-id="${dept.id}">${dept.name}</a>
-            `).join('');
+        if (response.data.success) {
+            return response.data.departments;
+        } else {
+            console.error('Failed to load departments:', response.data);
+            return [];
         }
     } catch (error) {
         console.error('Error loading departments:', error);
+        return []; // Return empty array on error
     }
 }
 
@@ -171,7 +191,7 @@ function toggleDropdownDepartment(dropdownId) {
     if (dropdown) {
         // Load departments if not already loaded
         if (!dropdown.children.length) {
-            loadDepartments(dropdownId);
+            loadDepartments();
         }
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
@@ -253,50 +273,47 @@ function selectMember(element, memberId, memberName, dropdownId) {
 async function createNewTask() {
     try {
         const form = document.getElementById('createTaskForm');
-        if (!form) {
-            console.error('Create task form not found');
-            return;
-        }
-
         const formData = new FormData(form);
+
+        // Handle deadline format conversion
+        const deadlineInput = form.querySelector('input[name="deadline"]');
+        if (deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd
+            const [day, month, year] = deadlineInput.value.split('/');
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            formData.set('deadline', formattedDate);
+        } else {
+            formData.delete('deadline');
+        }
+
+        // Get selected members
+        const selectedMembers = document.querySelectorAll('#createSelectedMembers .selected-member-tag input[type="hidden"]');
+        console.log('Selected members:', selectedMembers.length); // Debug log
         
-        // Log form data for debugging
-        console.log('Form data before submission:');
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value);
-        }
-
-        // Get selected member IDs
-        const selectedMembers = Array.from(
-            document.querySelectorAll('#createSelectedMembers .selected-member-tag input[type="hidden"]')
-        ).map(input => input.value);
-
-        if (selectedMembers.length === 0) {
-            alert('กรุณาเลือกบุคลากรอย่างน้อย 1 คน');
+        const memberIds = Array.from(selectedMembers).map(input => {
+            const memberId = input.value;
+            console.log('Member ID:', memberId); // Debug log
+            return memberId;
+        }).filter(id => id);
+        
+        if (memberIds.length === 0) {
+            alert('กรุณาเลือกผู้รับผิดชอบอย่างน้อย 1 คน');
             return;
         }
 
-        // Add selected members as comma-separated string
-        formData.set('assigned_to', selectedMembers.join(','));
-
-        // Validate required fields
-        const title = formData.get('title');
-        if (!title) {
-            alert('กรุณากรอกชื่อภาระงาน');
-            return;
-        }
+        formData.set('assigned_to', memberIds.join(','));
 
         // Handle subtasks
-        const subtasks = Array.from(document.querySelectorAll('#createSubTasksContainer .popup-sub-task'))
-            .map(subtask => ({
-                title: subtask.querySelector('input[name*="[title]"]')?.value?.trim() || '',
-                link: subtask.querySelector('input[name*="[link]"]')?.value?.trim() || ''
-            }))
-            .filter(subtask => subtask.title !== '');
+        const subTasks = [];
+        document.querySelectorAll('#createSubTasksContainer .sub-task-item').forEach(item => {
+            const title = item.querySelector('input[name="sub_task_title"]').value;
+            const link = item.querySelector('input[name="sub_task_link"]').value;
+            if (title.trim()) {
+                subTasks.push({ title, link });
+            }
+        });
+        formData.append('sub_tasks', JSON.stringify(subTasks));
 
-        formData.set('sub_tasks', JSON.stringify(subtasks));
-
-        // Send request
         const response = await axios.post('/tasks', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -305,16 +322,12 @@ async function createNewTask() {
         });
 
         if (response.data.success) {
-            closeCreatePopup();
             location.reload();
-        } else {
-            throw new Error(response.data.message || 'Failed to create task');
         }
-
     } catch (error) {
         console.error('Error creating task:', error);
         console.error('Error details:', error.response?.data);
-        alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างภาระงาน');
+        alert('เกิดข้อผิดพลาดในการสร้างภาระงาน: ' + (error.response?.data?.message || error.message));
     }
 }
 
@@ -402,7 +415,7 @@ function resetCreateForm() {
 
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    loadDepartments();
+    // loadDepartments();
     resetCreateForm();  // Reset form on page load
     
     // Disable member dropdown initially
@@ -428,6 +441,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     initializeMemberSearch();
     initializeDatePicker();
+
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
+
+    if (userRole === 'headstaff') {
+        // Hide departments in side nav that aren't the user's department
+        document.querySelectorAll('.btn-side-nav').forEach(btn => {
+            const onclick = btn.getAttribute('onclick');
+            if (onclick && onclick.includes('filterTasksByDepartment')) {
+                const deptId = onclick.match(/filterTasksByDepartment\((\d+)\)/)?.[1];
+                if (deptId && deptId != userDepartmentId && deptId !== 'all') {
+                    btn.style.display = 'none';
+                }
+            }
+        });
+
+        // Initially filter to show only user's department
+        filterTasksByDepartment(userDepartmentId);
+    }
 });
 
 // Make functions available globally
@@ -479,13 +511,24 @@ async function openEditPopup(element) {
 
         // Format and set deadline if exists
         if (task.deadline) {
+            // Convert to Thai date format for display
             const deadlineDate = new Date(task.deadline);
             const day = String(deadlineDate.getDate()).padStart(2, '0');
             const month = String(deadlineDate.getMonth() + 1).padStart(2, '0');
             const year = deadlineDate.getFullYear();
+            
+            // For flatpickr input
             editTaskDeadline.value = `${day}/${month}/${year}`;
+            
+            // Initialize flatpickr with the date
+            if (editTaskDeadline._flatpickr) {
+                editTaskDeadline._flatpickr.setDate(`${day}/${month}/${year}`);
+            }
         } else {
             editTaskDeadline.value = '';
+            if (editTaskDeadline._flatpickr) {
+                editTaskDeadline._flatpickr.clear();
+            }
         }
 
         // Set assigned to
@@ -505,18 +548,22 @@ async function openEditPopup(element) {
         // Load subtasks
         await loadSubTasks(taskId, 'edit');
 
+        // Add event listener for logo upload in edit popup
+        const editLogoInput = document.getElementById('editTaskLogo');
+        if (editLogoInput) {
+            editLogoInput.addEventListener('change', handleEditLogoUpload);
+        }
+
         // Show popup
         const popup = document.getElementById('popupEdit');
         const overlay = document.getElementById('overlay');
+        popup.classList.add('active');
+        overlay.classList.add('active');
         document.body.classList.add('lock-scroll');
-        if (popup && overlay) {
-            popup.classList.add('active');
-            overlay.classList.add('active');
-        }
 
     } catch (error) {
-        console.error('Error in openEditPopup:', error);
-        alert('เกิดข้อผิดพลาดในการเปิดหน้าต่างแก้ไข');
+        console.error('Error opening edit popup:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลภาระงาน');
     }
 }
 
@@ -598,77 +645,53 @@ window.openDeleteConfirmationPopup = openDeleteConfirmationPopup;
 window.closeDeleteConfirmation = closeDeleteConfirmation;
 window.deleteTask = deleteTask;
 
+// Function to update task
 async function updateTask() {
     try {
         const form = document.getElementById('editTaskForm');
         const taskId = document.getElementById('editTaskId').value;
-        
-        // Create FormData object
         const formData = new FormData(form);
-        
-        // Get assigned_to from the readonly input
-        const assignedToInput = document.getElementById('editTaskAssignedTo');
-        const assignedToId = assignedToInput.getAttribute('data-member-id');
-        
-        if (!assignedToId) {
-            throw new Error('ไม่พบข้อมูลผู้รับผิดชอบ');
-        }
-        
-        // Add method override for PUT request
-        formData.append('_method', 'PUT');
-        formData.append('assigned_to', assignedToId);
 
-        // Handle deadline - if empty, remove it from FormData
-        const deadline = document.getElementById('editTaskDeadline').value;
-        if (!deadline) {
+        // Handle the date input properly
+        const deadlineInput = document.getElementById('editTaskDeadline');
+        if (deadlineInput && deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd
+            const [day, month, year] = deadlineInput.value.split('/');
+            if (day && month && year) {
+                const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                formData.set('deadline', formattedDate);
+            }
+        } else {
             formData.delete('deadline');
         }
 
         // Handle subtasks
-        const subtasks = Array.from(document.querySelectorAll('#editSubTasksContainer .popup-sub-task'))
-            .map(subtask => ({
-                title: subtask.querySelector('input[name*="[title]"]')?.value?.trim() || '',
-                link: subtask.querySelector('input[name*="[link]"]')?.value?.trim() || ''
-            }))
-            .filter(subtask => subtask.title !== '');
+        const subTasks = [];
+        document.querySelectorAll('#editSubTasksContainer .popup-sub-task').forEach((item, index) => {
+            const title = item.querySelector('input[name^="sub_tasks"]').value;
+            const link = item.querySelector('input[name^="sub_tasks"][name$="[link]"]').value;
+            if (title.trim()) {
+                subTasks.push({ title, link });
+            }
+        });
+        formData.append('sub_tasks', JSON.stringify(subTasks));
 
-        formData.append('sub_tasks', JSON.stringify(subtasks));
-
-        // Log the FormData contents for debugging
-        console.log('Form data being sent:');
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
-        }
-
-        const response = await axios.post(`/tasks/${taskId}`, formData, {
+        const response = await axios.post(`/tasks/${taskId}/update`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
         });
 
-        console.log('Server response:', response.data);
-
         if (response.data.success) {
-            closeEditPopup();
-            location.reload();
+            window.location.reload();
         } else {
-            throw new Error(response.data.message || 'Update failed');
+            throw new Error(response.data.message);
         }
     } catch (error) {
         console.error('Error updating task:', error);
-        console.error('Full error details:', error.response?.data);
-        
-        let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตภาระงาน: ';
-        if (error.response?.data?.message) {
-            errorMessage += error.response.data.message;
-        } else if (error.response?.data?.error) {
-            errorMessage += error.response.data.error;
-        } else if (error.message) {
-            errorMessage += error.message;
-        }
-        
-        alert(errorMessage);
+        console.log('Full error details:', error.response?.data);
+        alert('เกิดข้อผิดพลาดในการอัปเดตภาระงาน: ' + (error.response?.data?.message || error.message));
     }
 }
 
@@ -764,6 +787,11 @@ function initializeMemberSearch() {
 }
 
 function setupMemberSearch(input, selectedContainer, mode) {
+    // Remove any existing dropdowns first
+    const existingDropdowns = input.parentNode.querySelectorAll('.member-search-dropdown');
+    existingDropdowns.forEach(dropdown => dropdown.remove());
+
+    // Create new dropdown
     let dropdownContainer = document.createElement('div');
     dropdownContainer.className = 'member-search-dropdown';
     input.parentNode.appendChild(dropdownContainer);
@@ -843,6 +871,8 @@ function setupMemberSearch(input, selectedContainer, mode) {
         observer.disconnect();
     });
 }
+
+window.setupMemberSearch = setupMemberSearch;
 
 function selectSearchedMember(memberId, memberName, mode) {
     const container = document.querySelector(`#${mode}SelectedMembers`);
@@ -990,7 +1020,6 @@ window.addNewSubTask = addNewSubTask;
 
 // Function to initialize date picker
 function initializeDatePicker() {
-    // Initialize for both create and edit forms
     const dateInputs = document.querySelectorAll('input[type="date"]');
     
     if (typeof flatpickr === 'undefined') {
@@ -999,22 +1028,17 @@ function initializeDatePicker() {
     }
     
     dateInputs.forEach(input => {
-        // Set the input type to "text" to prevent browser's default date picker
         input.type = 'text';
-        
-        // Set placeholder
         input.placeholder = 'dd/mm/yyyy';
         
-        // Initialize Flatpickr with Thai locale
         flatpickr(input, {
             dateFormat: "d/m/Y",
             allowInput: true,
             locale: "th",
-            altFormat: "d/m/Y",
-            altInput: false,
+            altFormat: "Y-m-d",  // Backend format
+            altInput: false,     // We'll handle the format conversion ourselves
             disableMobile: true,
             onChange: function(selectedDates, dateStr, instance) {
-                // Optional: Add any onChange handling here
                 console.log('Selected date:', dateStr);
             }
         });
@@ -1049,4 +1073,19 @@ window.onclick = function(event) {
 
 window.toggleUserDropdown = toggleUserDropdown;
 // Make function globally available
-window.initializeDatePicker = initializeDatePicker; 
+window.initializeDatePicker = initializeDatePicker;
+
+// Function to handle logo preview for edit popup
+function handleEditLogoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editTaskLogoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Make the function globally available
+window.handleEditLogoUpload = handleEditLogoUpload; 

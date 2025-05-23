@@ -6,3 +6,7 @@ services:
   php:
     depends_on:
       - traefik
+
+# volumes:
+#   - ./storage:/var/www/html/storage
+#   - ./public:/var/www/html/public

@@ -1,18 +1,32 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/css/app.css',
+                'resources/sass/app.scss',
                 'resources/js/app.js',
-                'resources/js/task.js', 
-                'resources/js/individual.js',
+                'resources/js/department.js',
+                'resources/js/task.js',
+                'resources/js/member.js',            
+                // Add any other JS/CSS files you need to compile
             ],
             refresh: true,
         }),
-        tailwindcss(),
-    ],    
+    ],
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+        host: '0.0.0.0',
+        watch: {
+            usePolling: true,
+        },
+    },
+    resolve: {
+        alias: {
+            '@': '/resources/js'
+        }
+    }
 });

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
     <title>ภาระงาน</title>
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
@@ -47,14 +49,16 @@
             <div class="nav-bar-action-container">
                 <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
-                    <li><a href="{{ route('department') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{ route('departments.index') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
                 </ul>
             </div>
-            <div id="popupButton" class="btn-create btn-text sarabun-20" onclick="openCreatePopup()">
-                    <i class="fas fa-plus"></i> เพิ่มภาระงาน
-            </div>
+            @if(!auth()->user()->isManager())
+                <div id="popupButton" class="btn-create btn-text sarabun-20" onclick="openCreatePopup()">
+                        <i class="fas fa-plus"></i> เพิ่มภาระงาน
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in sarabun-36">
@@ -80,12 +84,18 @@
                 </div>
                 @foreach($departments as $department)
                     <div class="btn-side-nav" onclick="filterTasksByDepartment({{ $department->id }})">
-                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="logo">
-                        <div class="btn-side-nav-text sarabun-18">
-                            {{ $department->name }}
-                        </div>
+                        <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
+                             class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
                     </div>
                 @endforeach
+                <!-- @foreach($departments as $department)
+                    <div class="btn-side-nav" onclick="filterByDepartment({{ $department->id }}); updateURL('{{ route('members.index') }}')">
+                        <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
+                             class="nav-logo-img" alt="logo">
+                        <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
+                    </div>
+                @endforeach  -->
             </div> 
         </div>
 
@@ -141,10 +151,12 @@
                                             ไม่มีวันครบกำหนด
                                         @endif
                                     </td>
-                                    <td class="border-top" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
-                                        <div class="btn-edit">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
+                                    <td class="border-top">
+                                        @if(auth()->user()->isNotManager())
+                                            <div class="btn-edit" onclick="openEditPopup(this)" data-task-id="{{ $task->id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -296,7 +308,11 @@
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" id="editTaskDeadline" name="deadline" required>
+                                    <input type="date" 
+                                           name="deadline" 
+                                           id="editTaskDeadline" 
+                                           class="input-text sarabun-16"
+                                           pattern="\d{4}-\d{2}-\d{2}">
                                 </div>
                             </div>
                         </div>

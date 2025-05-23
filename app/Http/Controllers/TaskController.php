@@ -16,25 +16,64 @@ class TaskController extends Controller
 {
     public function index()
     {
-        // Get tasks grouped by department through the assigned members
-        $tasksByDepartment = Task::with(['assignedTo.department', 'assignedBy', 'subTasks'])
-            ->get()
-            ->groupBy(function ($task) {
-                return $task->assignedTo->department->name ?? 'ไม่ระบุหน่วยงาน';
-            });
-
-        $departments = Department::all();
-        $totalTasks = Task::count();
+        $user = auth()->user();
         
-        return view('task', compact('tasksByDepartment', 'departments', 'totalTasks'));
+        // Redirect staff to their individual page
+        if ($user->isStaff()) {
+            return redirect()->route('members.show', $user->id);
+        }
+
+        // For non-staff users, continue with existing logic
+        $departments = $user->getVisibleDepartments();
+
+        switch ($user->role) {
+            case 'admin':
+            case 'manager':
+                $tasks = Task::with(['assignedTo', 'assignedBy'])->get();
+                break;
+
+            case 'headstaff':
+                $tasks = Task::where(function($query) use ($user) {
+                    $query->whereHas('assignedTo', function($q) use ($user) {
+                        $q->where('department_id', $user->department_id);
+                    });
+                })
+                ->with(['assignedTo', 'assignedBy'])
+                ->get();
+                break;
+
+            default:
+                $tasks = collect();
+        }
+
+        // Group tasks by department
+        $tasksByDepartment = $tasks->groupBy(function($task) {
+            return $task->assignedTo->department->name ?? 'ไม่ระบุหน่วยงาน';
+        });
+
+        $totalTasks = $tasks->count();
+
+        return view('task', compact('departments', 'tasksByDepartment', 'totalTasks'));
     }
 
     public function filterByDepartment($departmentId)
     {
-        $tasks = Task::where('department_id', $departmentId)
-                     ->with(['department', 'assignedTo', 'assignedBy'])
-                     ->get();
-                     
+        $user = auth()->user();
+
+        // For headstaff, only allow accessing their own department
+        if ($user->isHeadstaff() && $departmentId != $user->department_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        $tasks = Task::whereHas('assignedTo', function($query) use ($departmentId) {
+            $query->where('department_id', $departmentId);
+        })
+        ->with(['assignedTo', 'assignedBy'])
+        ->get();
+
         return response()->json([
             'success' => true,
             'tasks' => $tasks
@@ -49,15 +88,20 @@ class TaskController extends Controller
             // Log the incoming request data
             Log::info('Task creation request data:', $request->all());
 
-            // Validate the request
+            // Update validation rules
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'link' => 'nullable|string|max:255',
-                'deadline' => 'nullable|date',
-                'assigned_to' => 'required|string', // Changed to handle comma-separated string
+                'deadline' => 'nullable|date_format:Y-m-d|after_or_equal:today',  // Updated validation
+                'assigned_to' => 'required|string',
                 'logo' => 'nullable|image|max:2048'
             ]);
+
+            // Handle empty deadline
+            if (empty($validated['deadline'])) {
+                $validated['deadline'] = null;
+            }
 
             // Parse assigned_to into array
             $assignedToIds = array_filter(explode(',', $validated['assigned_to']));
@@ -79,7 +123,7 @@ class TaskController extends Controller
                     'title' => $validated['title'],
                     'description' => $validated['description'] ?? null,
                     'link' => $validated['link'] ?? null,
-                    'deadline' => $validated['deadline'] ?? null,
+                    'deadline' => $validated['deadline'],
                     'assigned_to' => $memberId,
                     'assigned_by' => auth()->id(),
                     'logo_path' => $logoPath,
@@ -251,13 +295,11 @@ class TaskController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'link' => 'nullable|string',
-                'deadline' => 'nullable|date',
-                'assigned_to' => 'required|exists:members,id',
+                'deadline' => 'nullable|date_format:Y-m-d',  // Updated validation
                 'sub_tasks' => 'nullable|json',
                 'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
-            // Start transaction
             DB::beginTransaction();
 
             // Handle file upload if present
@@ -273,9 +315,8 @@ class TaskController extends Controller
             $task->title = $validatedData['title'];
             $task->description = $validatedData['description'] ?? null;
             $task->link = $validatedData['link'] ?? null;
-            $task->deadline = $request->has('deadline') ? $validatedData['deadline'] : null;
-            $task->assigned_to = $validatedData['assigned_to'];
-            
+            $task->deadline = $validatedData['deadline'] ?? null;
+
             // Save the task
             $task->save();
 
@@ -302,15 +343,13 @@ class TaskController extends Controller
                 'success' => true,
                 'message' => 'Task updated successfully'
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Task update error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
+            Log::error('Error updating task: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating task: ' . $e->getMessage()
+                'message' => 'Failed to update task: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="{{ asset('css/pages/individual.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/pages/task.css') }}">
+    <meta name="member-id" content="{{ $member->id }}">
+    <meta name="member-name" content="{{ $member->first_name }} {{ $member->last_name }}">
+    <meta name="department-id" content="{{ $member->department_id }}">
 </head>
 <body class="body-bg">
     <!-- Header -->
@@ -46,14 +49,22 @@
             <div class="nav-bar-action-container">
                 <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x50'">
                 <ul class="nav-action">
-                    <li><a href="{{route('department')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
+                    @if(!Auth::user()->isStaff())
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>                
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
                     <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li><a href="{{route('departments.index')}}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>                
+                    <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav-active btn-text sarabun-20">ภาระงาน</a></li>
+                    @endif
                 </ul>
             </div>
-            <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
-                    <i class="fas fa-plus"></i> เพิ่มภาระงาน
-            </div>
+            @if(Auth::user()->isNotManager())
+                <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
+                        <i class="fas fa-plus"></i> เพิ่มภาระงาน
+                </div>
+            @endif
         </nav>
         <div class="search-tab">
             <div class="title slide-in">
@@ -91,7 +102,17 @@
                 </div>
                 <div class="side-nav-info-item">
                     <h2 class="sarabun-18">บทบาท: </h2>
-                    <p class="sarabun-18">{{ $member->role }}</p>
+                    <p class="sarabun-18">
+                        @php
+                            $roleLabels = [
+                                'admin' => 'ผู้ดูแลระบบ',
+                                'manager' => 'ผู้บริหาร',
+                                'headstaff' => 'หัวหน้างาน',
+                                'staff' => 'บุคลากร'
+                            ];
+                        @endphp
+                        {{ $roleLabels[$member->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                    </p>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
@@ -102,7 +123,20 @@
                 </div>
                 <div class="side-nav-info-item">
                     <h2 class="sarabun-18">เบอร์โทร: </h2>
-                    <p class="sarabun-18">{{ $member->phone ?? '-' }}</p>
+                    <p class="sarabun-18">
+                        @php
+                            $phone = $member->phone;
+                            if ($phone) {
+                                // Remove any non-digit characters
+                                $phone = preg_replace('/[^0-9]/', '', $phone);
+                                // Format as xxx-xxx-xxxx
+                                $phone = substr($phone, 0, 3) . '-' . 
+                                        substr($phone, 3, 3) . '-' . 
+                                        substr($phone, 6);
+                            }
+                        @endphp
+                        {{ $phone ?? '-' }}
+                    </p>
                 </div>
                 <div class="side-nav-info-item">
                     <div class="divider"></div>
@@ -144,14 +178,18 @@
                         <div class="card-container"  onclick="openTaskLink(event, '{{ $task->link }}')">
                             <div class="card-header">
                                 <div class="card-top">
+                                    @if($task->assigned_to == Auth::user()->id)
                                     <div class="card-favorite" onclick="toggleFavorite(event, {{ $task->id }}, this)" 
                                          data-favorite="{{ $task->is_favorite }}">
                                         <i class="fas fa-star {{ $task->is_favorite ? 'favorite-active' : '' }}"></i>
                                     </div>
+                                    @endif
+                                    @if(Auth::user()->isNotManager())
                                     <div class="card-edit" onclick="openEditPopup(this); event.stopPropagation();" 
                                          data-task-id="{{ $task->id }}">
                                         <i class="fas fa-edit"></i>
                                     </div>
+                                    @endif
                                 </div>
                                 <div class="card-logo">
                                     @if($task->logo_path)
@@ -177,7 +215,7 @@
                                     </div>
                                     <div class="card-details">
                                         <p class="card-date-title sarabun-16">วันครบกำหนด</p>
-                                        <p class="sarabun-16">{{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : 'ไม่มีกำหนด' }}</p>
+                                        <p class="sarabun-16">{{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : 'ไม่มีวันครบกำหนด' }}</p>
                                     </div>
                                     <div class="card-details">
                                         <p class="card-date-title sarabun-16">มอบหมายโดย</p>
@@ -216,7 +254,7 @@
             </div>
         </div>
 
-        <!-- popup -->
+        <!-- popup create task -->
         <div id="popupCreate" class="popup-container">
             <div class="create-popup-department">
                 <div class="popup-content">
@@ -254,17 +292,27 @@
                                 <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
-                                <input type="text" 
-                                       value="{{ $member->first_name }} {{ $member->last_name }}" 
-                                       class="input-text sarabun-16" 
-                                       readonly>
-                                <input type="hidden" name="assigned_to" value="{{ $member->id }}">
+                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
+                                <div class="member-search-container">
+                                    <div class="search-input-wrapper">
+                                        <input type="text" 
+                                            id="createTaskMemberSearch" 
+                                            class="input-text sarabun-16" 
+                                            placeholder="พิมพ์ชื่อบุคลากร...">
+                                    </div>
+                                </div>
+                                <div id="createSelectedMembers" class="selected-members-wrapper">
+                                    <div class="selected-member-tag" data-member-id="{{ $member->id }}">
+                                        <span>{{ $member->first_name }} {{ $member->last_name }}</span>
+                                        <i class="fas fa-times" onclick="removeSearchedMember(this)"></i>
+                                        <input type="hidden" name="assigned_to[]" value="{{ $member->id }}">
+                                    </div>
+                                </div>
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="text" name="deadline" class="sarabun-16" placeholder="dd/mm/yyyy" required>
+                                    <input type="date" name="deadline" class="input-text sarabun-16">
                                 </div>
                             </div>
                         </div>
@@ -288,7 +336,7 @@
             </div>
         </div>
 
-        <!-- Add the edit popup HTML -->
+        <!-- Edit Task Popup -->
         <div id="popupEdit" class="popup-container">
             <div class="create-popup-department">
                 <div class="popup-content">
@@ -326,37 +374,21 @@
                                 <input type="text" name="description" id="editTaskDescription" placeholder="รายละเอียด..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">หน่วยงาน</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownDepartment('dropdownMenuDepartmentEdit')">
-                                        <span id="editTaskDepartment" class="selected-text" data-department-id="">เลือกหน่วยงาน</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuDepartmentEdit" class="dropdown-content">
-                                        <!-- Departments will be loaded here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
                                 <input type="text" name="link" id="editTaskLink" placeholder="ลิ้งก์..." class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
-                                <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
-                                <div class="dropdown">
-                                    <button type="button" class="dropdown-btn" onclick="toggleDropdownMember('dropdownMenuMemberEdit')">
-                                        <span id="editTaskAssignedTo" class="selected-text" data-member-id="">เลือกบุคลากร</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="dropdownMenuMemberEdit" class="dropdown-content">
-                                        <!-- Members will be loaded here -->
-                                    </div>
-                                </div>
+                                <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>
+                                <input type="text" id="editTaskAssignedTo" class="input-text sarabun-16" readonly>
+                                <input type="hidden" name="assigned_to" id="editTaskAssignedToId">
                             </div>
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" id="editTaskDeadline" name="deadline" required>
+                                    <input type="date" 
+                                           name="deadline" 
+                                           id="editTaskDeadline" 
+                                           class="input-text sarabun-16">
                                 </div>
                             </div>
                         </div>
@@ -380,7 +412,7 @@
             </div>
         </div>
 
-        <!-- Add the delete confirmation popup -->
+        <!-- Delete Confirmation Popup -->
         <div id="deleteConfirmationPopup" class="popup-container">
             <div class="confirmation-popup">
                 <div class="popup-content">
