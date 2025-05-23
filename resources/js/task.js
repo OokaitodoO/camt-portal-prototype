@@ -1079,4 +1079,97 @@ function handleEditLogoUpload(event) {
 }
 
 // Make the function globally available
-window.handleEditLogoUpload = handleEditLogoUpload; 
+window.handleEditLogoUpload = handleEditLogoUpload;
+
+// Add search functionality for tasks
+function searchTasks(event) {
+    const searchTerm = event.target.value.toLowerCase().trim();
+    const taskDepartments = document.querySelectorAll('.task-department');
+    let totalVisibleTasks = 0;
+
+    taskDepartments.forEach(department => {
+        const taskRows = department.querySelectorAll('.table-task');
+        let hasVisibleTasks = false;
+
+        taskRows.forEach(row => {
+            const taskTitle = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+            const assignedTo = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const assignedBy = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            
+            if (searchTerm === '' || 
+                taskTitle.includes(searchTerm) || 
+                assignedTo.includes(searchTerm) || 
+                assignedBy.includes(searchTerm)) {
+                row.style.display = '';
+                hasVisibleTasks = true;
+                totalVisibleTasks++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/hide department section based on visible tasks
+        if (!hasVisibleTasks && searchTerm !== '') {
+            department.style.display = 'none';
+        } else {
+            department.style.display = '';
+        }
+
+        // Show/hide department title
+        const departmentTitle = department.querySelector('.page-title');
+        if (departmentTitle) {
+            if (!hasVisibleTasks && searchTerm !== '') {
+                departmentTitle.style.opacity = '0';
+                setTimeout(() => {
+                    departmentTitle.style.display = 'none';
+                }, 300);
+            } else {
+                departmentTitle.style.display = '';
+                departmentTitle.style.opacity = '1';
+            }
+            departmentTitle.style.transition = 'opacity 0.3s ease-in-out';
+        }
+    });
+
+    // Update task count
+    const taskCountElement = document.querySelector('.task-remain p');
+    if (taskCountElement) {
+        taskCountElement.textContent = totalVisibleTasks;
+    }
+
+    // Update side navigation visibility
+    const sideNavItems = document.querySelectorAll('.side-nav .btn-side-nav');
+    sideNavItems.forEach(item => {
+        const departmentId = item.getAttribute('onclick')?.match(/\d+/)?.[0];
+        if (!departmentId) return; // Skip if no department ID (e.g., "all" button)
+
+        const hasTasks = document.querySelector(`.task-department[data-department-id="${departmentId}"] .table-task:not([style*="display: none"])`);
+        if (!hasTasks && searchTerm !== '') {
+            item.style.opacity = '0';
+            setTimeout(() => {
+                item.style.display = 'none';
+            }, 300);
+        } else {
+            item.style.display = '';
+            item.style.opacity = '1';
+        }
+        item.style.transition = 'opacity 0.3s ease-in-out';
+    });
+}
+
+// Add event listener when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchTasks(e);
+            }, 300);
+        });
+    }
+});
+
+// Make the function globally available
+window.searchTasks = searchTasks; 
