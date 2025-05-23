@@ -163,8 +163,7 @@
                                 @endif
                             @endif
 
-                            <!-- Regular Staff Section -->
-                            <!-- <h2 class="sarabun-24">บุคลากร</h2> -->
+                            <!-- Regular Staff Section -->                            
                             <div class="cards-member">
                                 @foreach($regularMembers as $member)
                                     <div class="card-wrapper fade-in" data-department-id="{{ $member->department_id }}">
@@ -202,101 +201,8 @@
                             </div>
                         @endif
                     @endforeach
-                </div>
+                </div>                
 
-                <!-- Individual department sections -->
-                @foreach($departments as $department)
-                    <div class="department-section" data-department="{{ $department->id }}" style="display: none;">
-                        <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
-                        
-                        <!-- Head Staff Section -->
-                        @php
-                            $headstaffMembers = $members->where('department_id', $department->id)
-                                                  ->where('role', 'headstaff');
-                            $regularMembers = $members->where('department_id', $department->id)
-                                                  ->where('role', '!=', 'headstaff');
-                        @endphp
-                        @if($headstaffMembers->count() > 0)
-                            <h2 class="sarabun-24">หัวหน้างาน</h2>
-                            <div class="cards-member">
-                                @foreach($headstaffMembers as $member)
-                                    <div class="card-wrapper fade-in">
-                                        <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
-                                            @if(auth()->user()->isAdmin())
-                                                <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
-                                                    data-member-id="{{ $member->id }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </div>
-                                            @endif
-                                            @if(auth()->user()->canView($member))
-                                                <a href="{{ route('members.show', $member->id) }}">
-                                            @endif
-                                                <div class="card-logo">
-                                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                         class="card-logo-img" alt="logo">
-                                                </div>
-                                                <hr class="divider">
-                                                <div class="card-container-info">
-                                                    <div class="card-name sarabun-20">
-                                                        {{ $member->first_name }} {{ $member->last_name }}
-                                                    </div>
-                                                    <div class="card-description sarabun-16">
-                                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                    </div>
-                                                </div>
-                                            @if(auth()->user()->canView($member))
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($regularMembers->count() > 0)
-                                <div class="divider-white"></div>
-                            @endif
-                        @endif
-
-                        <!-- Regular Staff Section -->
-                        <h2 class="sarabun-24">บุคลากร</h2>
-                        <div class="cards-member">
-                            @foreach($members->where('department_id', $department->id)->where('role', '!=', 'headstaff') as $member)
-                                <div class="card-wrapper fade-in">
-                                    <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
-                                        @if(auth()->user()->isAdmin() || 
-                                            (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
-                                            <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
-                                                data-member-id="{{ $member->id }}">
-                                                <i class="fas fa-edit"></i>
-                                            </div>
-                                        @endif
-                                        
-                                        @if(auth()->user()->canView($member))
-                                            <a href="{{ route('members.show', $member->id) }}">
-                                        @endif
-                                            <div class="card-logo">
-                                                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                     class="card-logo-img" alt="logo">
-                                            </div>
-                                            <hr class="divider">
-                                            <div class="card-container-info">
-                                                <div class="card-name sarabun-20">
-                                                    {{ $member->first_name }} {{ $member->last_name }}
-                                                </div>
-                                                <div class="card-description sarabun-16">
-                                                    <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                    <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                </div>
-                                            </div>
-                                        @if(auth()->user()->canView($member))
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
             </div>
         </div>
     </section>

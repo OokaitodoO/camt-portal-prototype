@@ -731,25 +731,135 @@ function updateMemberCard(memberId, memberData) {
 }
 
 // Search functionality
-function searchMembers() {
-    const searchInput = document.querySelector('.serach-bar input[type="text"]');
-    const searchTerm = searchInput.value.toLowerCase();
-    const cards = document.querySelectorAll('.member-card:not(.create-card)');
-    
-    cards.forEach(card => {
-        const memberName = card.querySelector('h3').textContent.toLowerCase();
-        const position = card.querySelector('p').textContent.toLowerCase();
-        const department = card.querySelectorAll('p')[1].textContent.toLowerCase();
-        
-        if (memberName.includes(searchTerm) || 
-            position.includes(searchTerm) || 
-            department.includes(searchTerm)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
+function searchMembers(searchTerm) {
+    const searchTermLower = searchTerm.toLowerCase().trim();
+    const departmentSections = document.querySelectorAll('.department-section');
+    const contentContainer = document.querySelector('.content');
+    let hasAnyVisibleMembers = false;
+    let departmentsWithVisibleMembers = new Set();
+
+    // Initially hide all side nav items except "ทั้งหมด"
+    document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
+        const text = item.querySelector('.btn-side-nav-text');
+        if (text && !text.textContent.includes('ทั้งหมด')) {
+            item.style.display = 'none';
         }
     });
+
+    departmentSections.forEach(section => {
+        const departmentTitle = section.querySelector('.page-title.slide-in');
+        const headstaffCards = section.querySelectorAll('.cards-headstaff .card-wrapper-headstaff, .cards-headstaff .card-wrapper');
+        const regularCards = section.querySelectorAll('.cards-member .card-wrapper');
+        const dividerWhite = section.querySelector('.divider-white');
+        let hasVisibleHeadstaff = false;
+        let hasVisibleRegular = false;
+
+        // Search headstaff cards
+        headstaffCards.forEach(card => {
+            const name = card.querySelector('.card-name')?.textContent || '';
+            const departmentId = card.getAttribute('data-department-id');
+            if (searchTermLower === '' || name.toLowerCase().includes(searchTermLower)) {
+                card.style.display = '';
+                hasVisibleHeadstaff = true;
+                if (departmentId) departmentsWithVisibleMembers.add(departmentId);
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Search regular staff cards
+        regularCards.forEach(card => {
+            const name = card.querySelector('.card-name')?.textContent || '';
+            const departmentId = card.getAttribute('data-department-id');
+            if (searchTermLower === '' || name.toLowerCase().includes(searchTermLower)) {
+                card.style.display = '';
+                hasVisibleRegular = true;
+                if (departmentId) departmentsWithVisibleMembers.add(departmentId);
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const hasVisibleMembers = hasVisibleHeadstaff || hasVisibleRegular;
+        hasAnyVisibleMembers = hasAnyVisibleMembers || hasVisibleMembers;
+
+        // Handle department title visibility
+        if (departmentTitle) {
+            if (!hasVisibleMembers && searchTermLower !== '') {
+                departmentTitle.style.opacity = '0';
+                setTimeout(() => {
+                    departmentTitle.style.display = 'none';
+                }, 300);
+            } else {
+                departmentTitle.style.display = '';
+                departmentTitle.style.opacity = '1';
+            }
+            departmentTitle.style.transition = 'opacity 0.3s ease-in-out';
+        }
+
+        // Handle divider visibility
+        if (dividerWhite) {
+            if (!hasVisibleHeadstaff || !hasVisibleRegular || !hasVisibleMembers) {
+                dividerWhite.style.opacity = '0';
+                setTimeout(() => {
+                    dividerWhite.style.display = 'none';
+                }, 300);
+            } else {
+                dividerWhite.style.display = '';
+                dividerWhite.style.opacity = '1';
+            }
+            dividerWhite.style.transition = 'opacity 0.3s ease-in-out';
+        }
+    });
+
+    // Show side nav items only for departments with visible members
+    if (searchTermLower !== '') {
+        document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
+            const departmentId = item.querySelector('.btn-side-nav-text')?.getAttribute('data-department-id');
+            if (departmentId && departmentsWithVisibleMembers.has(departmentId)) {
+                item.style.display = '';
+            }
+        });
+    } else {
+        // Show all departments in side nav when search is empty
+        document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
+            item.style.display = '';
+        });
+    }
+
+    // Show/hide no results message
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (!hasAnyVisibleMembers && searchTermLower !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบบุคลากรที่ค้นหา';
+            contentContainer.appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
 }
+
+// Add event listener for search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        let debounceTimer;
+        
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchMembers(e.target.value);
+            }, 300);
+        });
+    }
+});
+
+// Make the function available globally
+window.searchMembers = searchMembers;
 
 // Add this function for handling image preview
 function handleImagePreview(inputElement, previewImageId) {
@@ -819,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Search input event listener
-    const searchInput = document.querySelector('.serach-bar input[type="text"]');
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
     if (searchInput) {
         searchInput.addEventListener('input', searchMembers);
     }

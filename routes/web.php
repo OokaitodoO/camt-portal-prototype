@@ -13,10 +13,11 @@ Route::get('/', [LoginController::class, 'index'])->name('home');
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::get('/oauth/redirect', [LoginController::class, 'redirectToProvider'])->name('oauth.redirect');
+Route::get('/oauth/callback', [LoginController::class, 'handleProviderCallback'])->name('oauth.callback');
+
 // OAuth routes - accessible to all authenticated users
-Route::middleware(['auth'])->group(function () {
-    Route::get('/oauth/redirect', [LoginController::class, 'redirectToProvider'])->name('oauth.redirect');
-    Route::get('/oauth/callback', [LoginController::class, 'handleProviderCallback'])->name('oauth.callback');
+Route::middleware(['auth'])->group(function () {    
     Route::post('/oauth/revoke', [LoginController::class, 'revokeAccess'])->name('oauth.revoke');
 });
 

@@ -31,20 +31,21 @@
 
 .content {
     grid-area: content;
-    display: flexbox;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     padding: 30px;
     gap: 15px;
 }
 
 .cards-member {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    justify-content: center;
-    align-content: center;
-    padding: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));    
     gap: 15px;
+    padding: 30px;
+    width: 100%;
+    /* max-width: 1200px; */
+    margin: 0 auto;
 }
 
 /* Profile picture styles */
@@ -359,5 +360,110 @@
 
 .phone-input::placeholder {
     letter-spacing: normal;
+}
+
+/* Card wrapper styles */
+.card-wrapper {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* No results message */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    width: 100%;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ensure cards don't stretch too wide */
+.card-container {
+    max-width: 360px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@media (min-width: 1200px) {
+    .cards-member {
+        grid-template-columns: repeat(3, 1fr); /* Force 3 columns on larger screens */
+    }
+}
+
+@media (max-width: 1199px) {
+    .cards-member {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .cards-member {
+        grid-template-columns: 1fr;
+    }
+}
+
+#departmentSections {
+    width: 100%;
+}
+
+/* Update section visibility handling */
+.department-section {
+    width: 100%;
+}
+
+.department-section[style*="display: none"] {
+    margin: 0;
+    padding: 0;
+    height: 0;
+}
+
+/* Update card wrapper visibility */
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Update headstaff section handling */
+.cards-headstaff:empty {
+    display: none;
+    margin: 0;
+    padding: 0;
+    height: 0;
+}
+
+/* Update divider handling */
+.divider-white[style*="display: none"] {
+    margin: 0;
+    padding: 0;
+    height: 0;
 }
 
