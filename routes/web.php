@@ -13,6 +13,13 @@ Route::get('/', [LoginController::class, 'index'])->name('home');
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// OAuth routes - accessible to all authenticated users
+Route::middleware(['auth'])->group(function () {
+    Route::get('/oauth/redirect', [LoginController::class, 'redirectToProvider'])->name('oauth.redirect');
+    Route::get('/oauth/callback', [LoginController::class, 'handleProviderCallback'])->name('oauth.callback');
+    Route::post('/oauth/revoke', [LoginController::class, 'revokeAccess'])->name('oauth.revoke');
+});
+
 // Protected routes
 Route::middleware(['auth'])->group(function () {
     // Dashboard redirect
@@ -32,14 +39,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{department}/update', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
         
-        // Update the storage route to use Storage::url
         Route::get('/storage/{path}', function ($path) {
             $fullPath = storage_path('app/public/departments/' . $path);
             if (!file_exists($fullPath)) {
                 return response()->json(['message' => 'Image not found'], 404);
             }
             return response()->file($fullPath);
-        })->where('path', '.*');  // Allow any path format
+        })->where('path', '.*');
     });
 
     // Member routes
@@ -52,7 +58,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/filter/{departmentId}', [MemberController::class, 'filter'])->name('members.filter');
         Route::get('/{member}', [MemberController::class, 'show'])->name('members.show');
         
-        // Add this for serving member images directly
         Route::get('/storage/{filename}', function ($filename) {
             $path = storage_path('app/public/members/' . $filename);
             if (!file_exists($path)) {
@@ -61,17 +66,16 @@ Route::middleware(['auth'])->group(function () {
             return response()->file($path);
         });
 
-        // Add this new route for deleting member with tasks
-        Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])->name('members.destroyWithTasks');
+        Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])
+            ->name('members.destroyWithTasks');
     });
 
-    // Task routes
+    // Task routes - accessible to all authenticated users
     Route::prefix('tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
         Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
         Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])->name('tasks.filter');
         Route::get('/department/{departmentId}/members', function($departmentId) {
-            $user = auth()->user();
             $members = Member::where('department_id', $departmentId)->get();
             return response()->json([
                 'success' => true,

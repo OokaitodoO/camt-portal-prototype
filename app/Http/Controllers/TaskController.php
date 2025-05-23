@@ -18,13 +18,13 @@ class TaskController extends Controller
     {
         $user = auth()->user();
         
-        // Redirect staff to their individual page
-        if ($user->isStaff()) {
+        // Only redirect regular staff, not headstaff
+        if ($user->isStaff() && !$user->isHeadstaff()) {
             return redirect()->route('members.show', $user->id);
         }
 
-        // For non-staff users (including headstaff), continue with existing logic
-        $departments = Department::all(); // Allow all departments to be visible
+        // Get all departments for admin, manager, and headstaff
+        $departments = Department::all();
 
         // Get all tasks for admin, manager, and headstaff
         if ($user->isAdmin() || $user->isManager() || $user->isHeadstaff()) {
@@ -45,17 +45,35 @@ class TaskController extends Controller
 
     public function filterByDepartment($departmentId)
     {
-        // Allow filtering for all roles with access
-        $tasks = Task::whereHas('assignedTo', function($query) use ($departmentId) {
-            $query->where('department_id', $departmentId);
-        })
-        ->with(['assignedTo', 'assignedBy'])
-        ->get();
+        $user = auth()->user();
+        
+        // Allow filtering for admin, manager, and headstaff
+        if ($user->isAdmin() || $user->isManager() || $user->isHeadstaff()) {
+            $tasks = Task::whereHas('assignedTo', function($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })
+            ->with(['assignedTo', 'assignedBy'])
+            ->get();
 
-        return response()->json([
-            'success' => true,
-            'tasks' => $tasks
-        ]);
+            return response()->json([
+                'success' => true,
+                'tasks' => $tasks
+            ]);
+        }
+
+        // For regular staff, only show their department's tasks
+        if ($user->isStaff()) {
+            $tasks = Task::whereHas('assignedTo', function($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })
+            ->with(['assignedTo', 'assignedBy'])
+            ->get();
+
+            return response()->json([
+                'success' => true,
+                'tasks' => $tasks
+            ]);
+        }
     }
 
     public function store(Request $request)

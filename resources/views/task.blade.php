@@ -92,13 +92,13 @@
         <div class="side-nav-container slide-right">
             <div class="side-nav">
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
-                @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isHeadstaff())
+                @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isHeadstaff())            
                     <div class="btn-side-nav" onclick="filterTasksByDepartment('all')">
                         <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="all">
                         <div class="btn-side-nav-text sarabun-18">
                             ทั้งหมด
                         </div>
-                    </div>
+                    </div>                    
                     @foreach($departments as $department)
                         <div class="btn-side-nav" onclick="filterTasksByDepartment({{ $department->id }})">
                             <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
@@ -106,17 +106,16 @@
                             <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
                         </div>
                     @endforeach
-                @endif
-                
-                    <!-- Show only user's department for staff -->
-                    <!-- @foreach($departments->where('id', auth()->user()->department_id) as $department)
+                @else
+                    <!-- Show only user's department for regular staff -->
+                    @foreach($departments->where('id', auth()->user()->department_id) as $department)
                         <div class="btn-side-nav active" onclick="filterTasksByDepartment({{ $department->id }})">
                             <img src="{{ $department->icon_path ? Storage::url($department->icon_path) : 'https://placehold.co/25' }}" 
-                                 class="nav-logo-img" alt="logo">
+                            class="nav-logo-img" alt="logo">
                             <div class="btn-side-nav-text sarabun-18">{{ $department->name }}</div>
-                        </div>
-                    @endforeach -->
-                            
+                        </div>                            
+                    @endforeach
+                @endif
             </div> 
         </div>
 

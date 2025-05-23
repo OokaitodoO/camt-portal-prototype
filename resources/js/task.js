@@ -11,25 +11,16 @@ async function filterTasksByDepartment(departmentId) {
         const allDepartmentTables = document.querySelectorAll('.task-department');
         
         // For headstaff, only allow viewing their own department
-        if (userRole === 'headstaff' && departmentId !== 'all' && departmentId != userDepartmentId) {
-            console.warn('Access restricted: Can only view own department');
-            return;
-        }
+        // if (userRole === 'headstaff' && departmentId !== 'all' && departmentId != userDepartmentId) {
+        //     console.warn('Access restricted: Can only view own department');
+        //     return;
+        // }
 
         // Show all tables if 'all' is selected
         if (departmentId === 'all') {
-            if (userRole === 'headstaff') {
-                // For headstaff, "all" means their department only
-                allDepartmentTables.forEach(table => {
-                    const tableDeptId = table.getAttribute('data-department-id');
-                    table.style.display = (tableDeptId == userDepartmentId) ? 'block' : 'none';
-                });
-            } else {
-                // For admin/manager, show all departments
-                allDepartmentTables.forEach(table => {
-                    table.style.display = 'grid';
-                });
-            }
+            allDepartmentTables.forEach(table => {
+                table.style.display = 'grid';
+            });
         } else {
             // Hide all tables first
             allDepartmentTables.forEach(table => {
@@ -445,21 +436,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const userRole = document.querySelector('meta[name="user-role"]')?.content;
     const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
 
-    if (userRole === 'headstaff') {
-        // Hide departments in side nav that aren't the user's department
-        document.querySelectorAll('.btn-side-nav').forEach(btn => {
-            const onclick = btn.getAttribute('onclick');
-            if (onclick && onclick.includes('filterTasksByDepartment')) {
-                const deptId = onclick.match(/filterTasksByDepartment\((\d+)\)/)?.[1];
-                if (deptId && deptId != userDepartmentId && deptId !== 'all') {
-                    btn.style.display = 'none';
-                }
-            }
-        });
+    // if (userRole === 'headstaff') {
+    //     // Hide departments in side nav that aren't the user's department
+    //     document.querySelectorAll('.btn-side-nav').forEach(btn => {
+    //         const onclick = btn.getAttribute('onclick');
+    //         if (onclick && onclick.includes('filterTasksByDepartment')) {
+    //             const deptId = onclick.match(/filterTasksByDepartment\((\d+)\)/)?.[1];
+    //             if (deptId && deptId != userDepartmentId && deptId !== 'all') {
+    //                 btn.style.display = 'none';
+    //             }
+    //         }
+    //     });
 
-        // Initially filter to show only user's department
-        filterTasksByDepartment(userDepartmentId);
-    }
+    //     // Initially filter to show only user's department
+    //     filterTasksByDepartment(userDepartmentId);
+    // }
 });
 
 // Make functions available globally
