@@ -2,11 +2,12 @@
 
 .content-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
+    grid-auto-flow: dense; /* This helps fill gaps */
 }
 
 .icon-action {
@@ -172,4 +173,40 @@
     object-fit: cover;
     border-radius: 8px;
     margin-bottom: 1rem;
+}
+
+/* Target the card wrapper instead of card container */
+.card-wrapper {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Style for no results message */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+/* Animation for cards */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

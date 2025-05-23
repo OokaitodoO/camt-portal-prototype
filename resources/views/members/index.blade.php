@@ -370,7 +370,7 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16">
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16" required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
@@ -473,7 +473,7 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text">
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text" required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>

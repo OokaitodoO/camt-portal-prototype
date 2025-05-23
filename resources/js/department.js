@@ -487,6 +487,64 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Add this function for searching departments
+function searchDepartments(searchTerm) {
+    const contentContainer = document.querySelector('.content-container');
+    const departmentCards = document.querySelectorAll('.card-wrapper');
+    const searchTermLower = searchTerm.toLowerCase().trim();
+    let hasVisibleCards = false;
+
+    departmentCards.forEach(card => {
+        const departmentName = card.querySelector('.department-name').textContent.toLowerCase();
+        
+        if (departmentName.includes(searchTermLower)) {
+            card.classList.remove('hidden');
+            card.style.display = ''; // Show the card
+            card.style.animation = 'fadeIn 0.5s ease-in-out';
+            hasVisibleCards = true;
+        } else {
+            card.classList.add('hidden');
+            card.style.display = 'none'; // Hide the card
+        }
+    });
+
+    // Show no results message if needed
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (!hasVisibleCards) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบหน่วยงานที่ค้นหา';
+            contentContainer.appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+// Add event listener for search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            searchDepartments(e.target.value);
+        });
+
+        // Add clear search functionality
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchDepartments('');
+            }
+        });
+    }
+});
+
+// Make the function available globally
+window.searchDepartments = searchDepartments;
+
 
 
 

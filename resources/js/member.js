@@ -385,10 +385,52 @@ async function createMember(event) {
         });
         
         let errorMessage = 'เกิดข้อผิดพลาดในการสร้างบุคลากร';
-        if (error.response?.data?.errors) {
-            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+        if (error.response?.status === 500) {
+            // Handle 500 error specifically for email validation
+            if (error.response?.data?.message?.includes('email')) {
+                errorMessage = 'กรุณากรอกอีเมล';
+            }
+        } else if (error.response?.data?.errors) {
+            const errors = error.response.data.errors;
+            const errorMessages = [];
+            
+            // Map field names to Thai messages
+            const errorMessageMap = {
+                'first_name': 'กรุณากรอกชื่อ',
+                'last_name': 'กรุณากรอกนามสกุล',
+                'position': 'กรุณากรอกตำแหน่ง',
+                'department_id': 'กรุณาเลือกหน่วยงาน',
+                'role': 'กรุณาเลือกบทบาท',
+                'email': {
+                    'required': 'กรุณากรอกอีเมล',
+                    'email': 'กรุณากรอกอีเมลให้ถูกต้อง'
+                }
+            };
+
+            // Convert each error to Thai message
+            Object.keys(errors).forEach(field => {
+                if (errorMessageMap[field]) {
+                    if (typeof errorMessageMap[field] === 'object') {
+                        // Handle email specific messages
+                        const errorType = errors[field][0].includes('valid email') ? 'email' : 'required';
+                        errorMessages.push(errorMessageMap[field][errorType]);
+                    } else {
+                        errorMessages.push(errorMessageMap[field]);
+                    }
+                } else {
+                    // For any other errors, use the original message
+                    errorMessages.push(errors[field][0]);
+                }
+            });
+
+            errorMessage = errorMessages.join('\n');
         } else if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+            // Check if the error message is about email
+            if (error.response.data.message.includes('email')) {
+                errorMessage = 'กรุณากรอกอีเมล';
+            } else {
+                errorMessage = error.response.data.message;
+            }
         }
         
         alert(errorMessage);
@@ -476,7 +518,29 @@ async function updateMember(event) {
         
         let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
         if (error.response?.data?.errors) {
-            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+            const errors = error.response.data.errors;
+            const errorMessages = [];
+            
+            // Map field names to Thai messages
+            const errorMessageMap = {
+                'first_name': 'กรุณากรอกชื่อ',
+                'last_name': 'กรุณากรอกนามสกุล',
+                'position': 'กรุณากรอกตำแหน่ง',
+                'department_id': 'กรุณาเลือกหน่วยงาน',
+                'role': 'กรุณาเลือกบทบาท'
+            };
+
+            // Convert each error to Thai message
+            Object.keys(errors).forEach(field => {
+                if (errorMessageMap[field]) {
+                    errorMessages.push(errorMessageMap[field]);
+                } else {
+                    // For any other errors, use the original message
+                    errorMessages.push(errors[field][0]);
+                }
+            });
+
+            errorMessage = errorMessages.join('\n');
         } else if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
         }
