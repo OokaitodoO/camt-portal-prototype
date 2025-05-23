@@ -15,8 +15,8 @@ Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // CMU OAuth Routes
-Route::get('/auth/cmu', [CMUOAuthController::class, 'redirect'])->name('auth.cmu');
-Route::get('/auth/cmu/callback', [CMUOAuthController::class, 'callback'])->name('auth.cmu.callback');
+Route::get('/oauth/cmu', [CMUOAuthController::class, 'redirect'])->name('oauth.cmu');
+Route::get('/oauth/callback/cmu', [CMUOAuthController::class, 'callback'])->name('oauth.callback.cmu');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
