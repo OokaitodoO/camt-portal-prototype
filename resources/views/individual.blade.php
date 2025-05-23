@@ -82,6 +82,9 @@
             <div class="title slide-in">
                 <h1 class="page-title sarabun-36">ข้อมูลบุคลากร > {{ $member->first_name }} {{ $member->last_name }}</h1>
             </div>
+            <div class="search-bar">
+                <input type="text" placeholder="ค้นหา" class="sarabun-16">
+            </div>
         </div>
     </header>
 

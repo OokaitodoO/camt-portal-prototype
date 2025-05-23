@@ -280,3 +280,70 @@ function initializeMemberSearch() {
 // window.selectSearchedMember = selectSearchedMember;
 // window.removeSearchedMember = removeSearchedMember;
 window.initializeMemberSearch = initializeMemberSearch;
+
+// Add search functionality for individual tasks
+function searchIndividualTasks(event) {
+    const searchTerm = event.target.value.toLowerCase().trim();
+    const taskCards = document.querySelectorAll('.card-wrapper');
+    let totalVisibleTasks = 0;
+
+    taskCards.forEach(card => {
+        const taskTitle = card.querySelector('.card-name h3')?.textContent.toLowerCase() || '';
+        
+        // Updated selector to match the correct HTML structure
+        let assignedBy = '';
+        const cardDetails = card.querySelectorAll('.card-details');
+        cardDetails.forEach(detail => {
+            const label = detail.querySelector('.card-date-title')?.textContent || '';
+            if (label.includes('มอบหมายโดย')) {
+                assignedBy = detail.querySelector('p:last-child')?.textContent.toLowerCase() || '';
+            }
+        });
+        
+        if (searchTerm === '' || 
+            taskTitle.includes(searchTerm) || 
+            assignedBy.includes(searchTerm)) {
+            card.style.opacity = '1';
+            card.style.display = '';
+            totalVisibleTasks++;
+        } else {
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.style.display = 'none';
+            }, 300);
+        }
+        card.style.transition = 'opacity 0.3s ease-in-out';
+    });
+
+    // Show/hide no results message
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (totalVisibleTasks === 0 && searchTerm !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบภาระงานที่ค้นหา';
+            document.querySelector('.content-task').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+// Add event listener when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchIndividualTasks(e);
+            }, 300);
+        });
+    }
+});
+
+// Make the function globally available
+window.searchIndividualTasks = searchIndividualTasks;
