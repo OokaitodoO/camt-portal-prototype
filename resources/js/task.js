@@ -48,6 +48,7 @@ async function filterTasksByDepartment(departmentId) {
 
         // Update task count
         updateTaskCount();
+        location.reload();
 
     } catch (error) {
         console.error('Error filtering tasks:', error);

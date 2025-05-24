@@ -731,111 +731,60 @@ function updateMemberCard(memberId, memberData) {
 }
 
 // Search functionality
-function searchMembers(searchTerm) {
-    const searchTermLower = searchTerm.toLowerCase().trim();
-    const departmentSections = document.querySelectorAll('.department-section');
-    const contentContainer = document.querySelector('.content');
-    let hasAnyVisibleMembers = false;
-    let departmentsWithVisibleMembers = new Set();
+function searchMembers(event) {
+    const searchTerm = event.target.value.toLowerCase().trim();
+    const departmentWrappers = document.querySelectorAll('.department-wrapper');
+    let totalVisibleMembers = 0;
 
-    // Initially hide all side nav items except "ทั้งหมด"
-    document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
-        const text = item.querySelector('.btn-side-nav-text');
-        if (text && !text.textContent.includes('ทั้งหมด')) {
-            item.style.display = 'none';
-        }
-    });
+    departmentWrappers.forEach(wrapper => {
+        let hasVisibleMembers = false;
+        const departmentId = wrapper.dataset.departmentId;
 
-    departmentSections.forEach(section => {
-        const departmentTitle = section.querySelector('.page-title.slide-in');
-        const headstaffCards = section.querySelectorAll('.cards-headstaff .card-wrapper-headstaff, .cards-headstaff .card-wrapper');
-        const regularCards = section.querySelectorAll('.cards-member .card-wrapper');
-        const dividerWhite = section.querySelector('.divider-white');
-        let hasVisibleHeadstaff = false;
-        let hasVisibleRegular = false;
+        // Search in all cards (both headstaff and regular)
+        const allCards = wrapper.querySelectorAll('.card-wrapper-headstaff, .card-wrapper');
+        
+        allCards.forEach(card => {
+            const name = card.querySelector('.card-name')?.textContent.toLowerCase() || '';
+            const position = card.querySelector('.card-description p:first-child')?.textContent.toLowerCase() || '';
+            const department = card.querySelector('.card-description p:last-child')?.textContent.toLowerCase() || '';
 
-        // Search headstaff cards
-        headstaffCards.forEach(card => {
-            const name = card.querySelector('.card-name')?.textContent || '';
-            const departmentId = card.getAttribute('data-department-id');
-            if (searchTermLower === '' || name.toLowerCase().includes(searchTermLower)) {
+            if (searchTerm === '' || 
+                name.includes(searchTerm) || 
+                position.includes(searchTerm) || 
+                department.includes(searchTerm)) {
                 card.style.display = '';
-                hasVisibleHeadstaff = true;
-                if (departmentId) departmentsWithVisibleMembers.add(departmentId);
+                hasVisibleMembers = true;
+                totalVisibleMembers++;
             } else {
                 card.style.display = 'none';
             }
         });
 
-        // Search regular staff cards
-        regularCards.forEach(card => {
-            const name = card.querySelector('.card-name')?.textContent || '';
-            const departmentId = card.getAttribute('data-department-id');
-            if (searchTermLower === '' || name.toLowerCase().includes(searchTermLower)) {
-                card.style.display = '';
-                hasVisibleRegular = true;
-                if (departmentId) departmentsWithVisibleMembers.add(departmentId);
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        const hasVisibleMembers = hasVisibleHeadstaff || hasVisibleRegular;
-        hasAnyVisibleMembers = hasAnyVisibleMembers || hasVisibleMembers;
-
-        // Handle department title visibility
-        if (departmentTitle) {
-            if (!hasVisibleMembers && searchTermLower !== '') {
-                departmentTitle.style.opacity = '0';
-                setTimeout(() => {
-                    departmentTitle.style.display = 'none';
-                }, 300);
-            } else {
-                departmentTitle.style.display = '';
-                departmentTitle.style.opacity = '1';
-            }
-            departmentTitle.style.transition = 'opacity 0.3s ease-in-out';
+        // Show/hide entire department wrapper
+        if (!hasVisibleMembers && searchTerm !== '') {
+            wrapper.style.display = 'none';
+        } else {
+            wrapper.style.display = '';
         }
 
         // Handle divider visibility
-        if (dividerWhite) {
-            if (!hasVisibleHeadstaff || !hasVisibleRegular || !hasVisibleMembers) {
-                dividerWhite.style.opacity = '0';
-                setTimeout(() => {
-                    dividerWhite.style.display = 'none';
-                }, 300);
-            } else {
-                dividerWhite.style.display = '';
-                dividerWhite.style.opacity = '1';
-            }
-            dividerWhite.style.transition = 'opacity 0.3s ease-in-out';
+        const divider = wrapper.querySelector('.divider-white');
+        if (divider) {
+            const visibleHeadstaff = wrapper.querySelector('.card-wrapper-headstaff[style="display: none;"]') === null;
+            const visibleRegular = wrapper.querySelector('.card-wrapper[style="display: none;"]') === null;
+            divider.style.display = (visibleHeadstaff && visibleRegular) ? '' : 'none';
         }
     });
 
-    // Show side nav items only for departments with visible members
-    if (searchTermLower !== '') {
-        document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
-            const departmentId = item.querySelector('.btn-side-nav-text')?.getAttribute('data-department-id');
-            if (departmentId && departmentsWithVisibleMembers.has(departmentId)) {
-                item.style.display = '';
-            }
-        });
-    } else {
-        // Show all departments in side nav when search is empty
-        document.querySelectorAll('.side-nav .btn-side-nav').forEach(item => {
-            item.style.display = '';
-        });
-    }
-
     // Show/hide no results message
     let noResultsMsg = document.getElementById('noResultsMessage');
-    if (!hasAnyVisibleMembers && searchTermLower !== '') {
+    if (totalVisibleMembers === 0 && searchTerm !== '') {
         if (!noResultsMsg) {
             noResultsMsg = document.createElement('div');
             noResultsMsg.id = 'noResultsMessage';
             noResultsMsg.className = 'no-results sarabun-24';
             noResultsMsg.textContent = 'ไม่พบบุคลากรที่ค้นหา';
-            contentContainer.appendChild(noResultsMsg);
+            document.querySelector('.content').appendChild(noResultsMsg);
         }
         noResultsMsg.style.display = 'block';
     } else if (noResultsMsg) {

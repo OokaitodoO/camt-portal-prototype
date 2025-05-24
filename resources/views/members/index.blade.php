@@ -110,16 +110,15 @@
 
             <!-- Department sections -->
             <div id="departmentSections">
-                <!-- All members section (grouped by department) -->
-                <div class="department-section" data-department="all">
-                    @foreach($departments as $department)
-                        @php
-                            $departmentMembers = $members->where('department_id', $department->id);
-                            $headstaffMembers = $departmentMembers->where('role', 'headstaff');
-                            $regularMembers = $departmentMembers->where('role', '!=', 'headstaff');
-                        @endphp
-                        
-                        @if($departmentMembers->count() > 0)
+                @foreach($departments as $department)
+                    @php
+                        $departmentMembers = $members->where('department_id', $department->id);
+                        $headstaffMembers = $departmentMembers->where('role', 'headstaff');
+                        $regularMembers = $departmentMembers->where('role', '!=', 'headstaff');
+                    @endphp
+                    
+                    @if($departmentMembers->count() > 0)
+                        <div class="department-wrapper" data-department-id="{{ $department->id }}">
                             <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
                             
                             <!-- Head Staff Section -->
@@ -199,10 +198,9 @@
                                     </div>
                                 @endforeach
                             </div>
-                        @endif
-                    @endforeach
-                </div>                
-
+                        </div>
+                    @endif
+                @endforeach
             </div>
         </div>
     </section>
