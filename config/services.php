@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'cmu' => [
+        'client_id' => env('CMU_CLIENT_ID'),
+        'client_secret' => env('CMU_CLIENT_SECRET'),
+        'redirect' => env('CMU_REDIRECT_URI'),
+        'authorize_url' => 'https://oauth.cmu.ac.th/v1/Authorize.aspx',
+        'token_url' => 'https://oauth.cmu.ac.th/v1/Token.aspx',
+        'userinfo_url' => 'https://oauth.cmu.ac.th/v1/UserInfo.aspx',
+    ],
+
 ];

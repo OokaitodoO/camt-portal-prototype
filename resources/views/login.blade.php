@@ -18,6 +18,20 @@
                 <p>Please sign in to continue</p>
             </div>
             
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <a href="{{ route('auth.cmu') }}" class="cmu-login-button">
+                <i class="fas fa-university"></i> Sign in with CMU Account
+            </a>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+            
             <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
                 <div class="form-group">
@@ -56,4 +70,4 @@
         </div>
     </div>
 </body>
-</html>
+</html> 

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\Auth\CMUOAuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TaskController;
@@ -13,13 +14,9 @@ Route::get('/', [LoginController::class, 'index'])->name('home');
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/oauth/redirect', [LoginController::class, 'redirectToProvider'])->name('oauth.redirect');
-Route::get('/oauth/callback', [LoginController::class, 'handleProviderCallback'])->name('oauth.callback');
-
-// OAuth routes - accessible to all authenticated users
-Route::middleware(['auth'])->group(function () {    
-    Route::post('/oauth/revoke', [LoginController::class, 'revokeAccess'])->name('oauth.revoke');
-});
+// CMU OAuth Routes
+Route::get('/oauth/cmu', [CMUOAuthController::class, 'redirect'])->name('oauth.cmu');
+Route::get('/oauth/callback/cmu', [CMUOAuthController::class, 'callback'])->name('oauth.callback.cmu');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
