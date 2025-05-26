@@ -34,10 +34,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click listener to popup overlay for closing
     const popupOverlays = document.querySelectorAll('.popup-overlay');
     popupOverlays.forEach(overlay => {
-        overlay.addEventListener('click', function(event) {
+        let mouseDownOnPopup = false;
+
+        // Track if mouse down started inside popup
+        overlay.querySelector('.popup-content').addEventListener('mousedown', () => {
+            mouseDownOnPopup = true;
+        });
+
+        // Reset flag when mouse is released
+        document.addEventListener('mouseup', () => {
+            mouseDownOnPopup = false;
+        });
+
+        // Only close if click started and ended on overlay
+        overlay.addEventListener('mousedown', function(event) {
             if (event.target === this) {
+                mouseDownOnPopup = false;
+            }
+        });
+
+        overlay.addEventListener('mouseup', function(event) {
+            if (event.target === this && !mouseDownOnPopup) {
                 closeEditPopup();
-                closeDeletePopup();
+                closeDeleteConfirmation();
+                closeCreatePopup();
             }
         });
     });
@@ -241,6 +261,7 @@ function closeEditPopup() {
     const overlay = document.getElementById('overlay');
     if (popup) popup.classList.remove('active');
     if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('lock-scroll');
     
     // Reset form if it exists
     const form = document.getElementById('editDepartmentForm');
@@ -365,12 +386,14 @@ async function openDeleteConfirmationPopup(departmentId) {
         // Show popup
         popup.classList.add('active');
         document.getElementById('overlay').classList.add('active');
+        document.body.classList.add('lock-scroll');
 
         // Close the edit popup if it's open
         const editPopup = document.getElementById('popupEdit');
         if (editPopup) {
             editPopup.classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
+            document.body.classList.remove('lock-scroll');
         }
 
     } catch (error) {
@@ -424,7 +447,7 @@ async function openEditPopup(element) {
         // Show popup
         popup.classList.add('active');
         document.getElementById('overlay').classList.add('active');
-
+        document.body.classList.add('lock-scroll');
     } catch (error) {
         console.error('Error in openEditPopup:', error);
         alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');
@@ -463,6 +486,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Add this function for searching departments
+function searchDepartments(searchTerm) {
+    const contentContainer = document.querySelector('.content-container');
+    const departmentCards = document.querySelectorAll('.card-wrapper');
+    const searchTermLower = searchTerm.toLowerCase().trim();
+    let hasVisibleCards = false;
+
+    departmentCards.forEach(card => {
+        const departmentName = card.querySelector('.department-name').textContent.toLowerCase();
+        
+        if (departmentName.includes(searchTermLower)) {
+            card.classList.remove('hidden');
+            card.style.display = ''; // Show the card
+            card.style.animation = 'fadeIn 0.5s ease-in-out';
+            hasVisibleCards = true;
+        } else {
+            card.classList.add('hidden');
+            card.style.display = 'none'; // Hide the card
+        }
+    });
+
+    // Show no results message if needed
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (!hasVisibleCards) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบหน่วยงานที่ค้นหา';
+            contentContainer.appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+// Add event listener for search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            searchDepartments(e.target.value);
+        });
+
+        // Add clear search functionality
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchDepartments('');
+            }
+        });
+    }
+});
+
+// Make the function available globally
+window.searchDepartments = searchDepartments;
 
 
 

@@ -51,7 +51,23 @@
                 <ul class="nav-action">
                     <li><a href="{{route('departments.index')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
-                    <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
+                    @if(Auth::user()->isStaff())
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav{{ Request::routeIs('tasks.*') ? '-active' : '' }} btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li class="task-dropdown">
+                        <div class="btn-nav{{ Request::routeIs('tasks.*', 'individual.*') ? '-active' : '' }} btn-text sarabun-20">
+                            ภาระงาน <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="task-dropdown-menu">
+                            <a href="{{ route('tasks.index') }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-tasks"></i> ภาระงานทั้งหมด
+                            </a>
+                            <a href="{{ route('members.show', Auth::user()->id) }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-user-clock"></i> ภาระงานรายบุคคล
+                            </a>
+                        </div>
+                    </li>
+                    @endif
                 </ul>
             </div>
             @if(auth()->user()->isAdmin())
@@ -92,7 +108,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">เพิ่มหน่วยงาน</h1>
+                            <h1 class="popup-header-title sarabun-36">เพิ่มหน่วยงาน</h1>
                         </div>
                     </div>
                     <div class="popup-image">
@@ -134,7 +150,7 @@
                             <
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">แก้ไขหน่วยงาน</h1>
+                            <h1 class="popup-header-title sarabun-36">แก้ไขหน่วยงาน</h1>
                         </div>
                         <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(document.getElementById('editDepartmentId').value)">
                             <i class="fas fa-trash"></i>

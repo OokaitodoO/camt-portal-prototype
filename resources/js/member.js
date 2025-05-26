@@ -23,6 +23,13 @@ async function openEditPopup(element) {
         const previewImage = document.getElementById('editPreviewImage');
         previewImage.src = member.profile_picture || 'https://placehold.co/128';
 
+        // Format phone number when populating edit form
+        const phoneInput = form.querySelector('input[name="phone"]');
+        if (phoneInput && member.phone) {
+            phoneInput.value = member.phone;
+            formatPhoneNumber(phoneInput);
+        }
+
         // Show popup
         document.getElementById('popupEdit').classList.add('active');
         document.getElementById('overlay').classList.add('active');        
@@ -36,6 +43,7 @@ async function openEditPopup(element) {
 
 // Popup functions
 function openCreatePopup() {
+    document.getElementById('createMemberForm').reset();
     document.getElementById('createPopup').classList.add('active');
     document.getElementById('overlay').classList.add('active');
     document.body.classList.add('lock-scroll');
@@ -140,7 +148,7 @@ async function filterByDepartment(departmentId) {
         const userDepartmentId = document.querySelector('meta[name="user-department-id"]')?.content;
 
         // If staff or headstaff, only allow viewing their own department
-        if ((userRole === 'staff' || userRole === 'headstaff') && 
+        if ((userRole === 'staff') && 
             departmentId !== 'all' && 
             departmentId != userDepartmentId) {
             console.warn('Access restricted: Can only view own department');
@@ -248,6 +256,31 @@ function handleProfilePictureChange(inputId, previewId) {
 document.addEventListener('DOMContentLoaded', function() {
     handleProfilePictureChange('memberProfilePicture', 'previewImage');
     handleProfilePictureChange('editMemberProfilePicture', 'editPreviewImage');
+
+    // Setup phone number inputs
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        input.classList.add('phone-input');
+        input.setAttribute('placeholder', 'XXX-XXX-XXXX');
+        input.setAttribute('maxlength', '12'); // Account for hyphens
+        input.setAttribute('pattern', '[0-9]{3}-[0-9]{3}-[0-9]{4}');
+        
+        input.addEventListener('input', function(e) {
+            formatPhoneNumber(this);
+        });
+
+        input.addEventListener('keypress', function(e) {
+            // Allow only numbers
+            if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Format existing number if any
+        if (input.value) {
+            formatPhoneNumber(input);
+        }
+    });
 });
 
 // Utility function to log with persistence
@@ -309,6 +342,12 @@ async function createMember(event) {
         const formData = new FormData(form);
         debugLog('Form data created');
 
+        // Clean phone number before sending
+        const phoneNumber = formData.get('phone');
+        if (phoneNumber) {
+            formData.set('phone', phoneNumber.replace(/-/g, ''));
+        }
+
         // Log form data
         const formDataObj = {};
         for (let [key, value] of formData.entries()) {
@@ -346,10 +385,52 @@ async function createMember(event) {
         });
         
         let errorMessage = 'เกิดข้อผิดพลาดในการสร้างบุคลากร';
-        if (error.response?.data?.errors) {
-            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+        if (error.response?.status === 500) {
+            // Handle 500 error specifically for email validation
+            if (error.response?.data?.message?.includes('email')) {
+                errorMessage = 'กรุณากรอกอีเมล';
+            }
+        } else if (error.response?.data?.errors) {
+            const errors = error.response.data.errors;
+            const errorMessages = [];
+            
+            // Map field names to Thai messages
+            const errorMessageMap = {
+                'first_name': 'กรุณากรอกชื่อ',
+                'last_name': 'กรุณากรอกนามสกุล',
+                'position': 'กรุณากรอกตำแหน่ง',
+                'department_id': 'กรุณาเลือกหน่วยงาน',
+                'role': 'กรุณาเลือกบทบาท',
+                'email': {
+                    'required': 'กรุณากรอกอีเมล',
+                    'email': 'กรุณากรอกอีเมลให้ถูกต้อง'
+                }
+            };
+
+            // Convert each error to Thai message
+            Object.keys(errors).forEach(field => {
+                if (errorMessageMap[field]) {
+                    if (typeof errorMessageMap[field] === 'object') {
+                        // Handle email specific messages
+                        const errorType = errors[field][0].includes('valid email') ? 'email' : 'required';
+                        errorMessages.push(errorMessageMap[field][errorType]);
+                    } else {
+                        errorMessages.push(errorMessageMap[field]);
+                    }
+                } else {
+                    // For any other errors, use the original message
+                    errorMessages.push(errors[field][0]);
+                }
+            });
+
+            errorMessage = errorMessages.join('\n');
         } else if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+            // Check if the error message is about email
+            if (error.response.data.message.includes('email')) {
+                errorMessage = 'กรุณากรอกอีเมล';
+            } else {
+                errorMessage = error.response.data.message;
+            }
         }
         
         alert(errorMessage);
@@ -437,7 +518,29 @@ async function updateMember(event) {
         
         let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
         if (error.response?.data?.errors) {
-            errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+            const errors = error.response.data.errors;
+            const errorMessages = [];
+            
+            // Map field names to Thai messages
+            const errorMessageMap = {
+                'first_name': 'กรุณากรอกชื่อ',
+                'last_name': 'กรุณากรอกนามสกุล',
+                'position': 'กรุณากรอกตำแหน่ง',
+                'department_id': 'กรุณาเลือกหน่วยงาน',
+                'role': 'กรุณาเลือกบทบาท'
+            };
+
+            // Convert each error to Thai message
+            Object.keys(errors).forEach(field => {
+                if (errorMessageMap[field]) {
+                    errorMessages.push(errorMessageMap[field]);
+                } else {
+                    // For any other errors, use the original message
+                    errorMessages.push(errors[field][0]);
+                }
+            });
+
+            errorMessage = errorMessages.join('\n');
         } else if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
         }
@@ -628,25 +731,84 @@ function updateMemberCard(memberId, memberData) {
 }
 
 // Search functionality
-function searchMembers() {
-    const searchInput = document.querySelector('.serach-bar input[type="text"]');
-    const searchTerm = searchInput.value.toLowerCase();
-    const cards = document.querySelectorAll('.member-card:not(.create-card)');
-    
-    cards.forEach(card => {
-        const memberName = card.querySelector('h3').textContent.toLowerCase();
-        const position = card.querySelector('p').textContent.toLowerCase();
-        const department = card.querySelectorAll('p')[1].textContent.toLowerCase();
+function searchMembers(event) {
+    const searchTerm = event.target.value.toLowerCase().trim();
+    const departmentWrappers = document.querySelectorAll('.department-wrapper');
+    let totalVisibleMembers = 0;
+
+    departmentWrappers.forEach(wrapper => {
+        let hasVisibleMembers = false;
+        const departmentId = wrapper.dataset.departmentId;
+
+        // Search in all cards (both headstaff and regular)
+        const allCards = wrapper.querySelectorAll('.card-wrapper-headstaff, .card-wrapper');
         
-        if (memberName.includes(searchTerm) || 
-            position.includes(searchTerm) || 
-            department.includes(searchTerm)) {
-            card.style.display = 'block';
+        allCards.forEach(card => {
+            const name = card.querySelector('.card-name')?.textContent.toLowerCase() || '';
+            const position = card.querySelector('.card-description p:first-child')?.textContent.toLowerCase() || '';
+            const department = card.querySelector('.card-description p:last-child')?.textContent.toLowerCase() || '';
+
+            if (searchTerm === '' || 
+                name.includes(searchTerm) || 
+                position.includes(searchTerm) || 
+                department.includes(searchTerm)) {
+                card.style.display = '';
+                hasVisibleMembers = true;
+                totalVisibleMembers++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide entire department wrapper
+        if (!hasVisibleMembers && searchTerm !== '') {
+            wrapper.style.display = 'none';
         } else {
-            card.style.display = 'none';
+            wrapper.style.display = '';
+        }
+
+        // Handle divider visibility
+        const divider = wrapper.querySelector('.divider-white');
+        if (divider) {
+            const visibleHeadstaff = wrapper.querySelector('.card-wrapper-headstaff[style="display: none;"]') === null;
+            const visibleRegular = wrapper.querySelector('.card-wrapper[style="display: none;"]') === null;
+            divider.style.display = (visibleHeadstaff && visibleRegular) ? '' : 'none';
         }
     });
+
+    // Show/hide no results message
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (totalVisibleMembers === 0 && searchTerm !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบบุคลากรที่ค้นหา';
+            document.querySelector('.content').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
 }
+
+// Add event listener for search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        let debounceTimer;
+        
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchMembers(e.target.value);
+            }, 300);
+        });
+    }
+});
+
+// Make the function available globally
+window.searchMembers = searchMembers;
 
 // Add this function for handling image preview
 function handleImagePreview(inputElement, previewImageId) {
@@ -716,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Search input event listener
-    const searchInput = document.querySelector('.serach-bar input[type="text"]');
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
     if (searchInput) {
         searchInput.addEventListener('input', searchMembers);
     }
@@ -735,3 +897,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear only localStorage logs, keep sessionStorage
     localStorage.removeItem('debugLogs');
 });
+
+// Add this function to format phone numbers
+function formatPhoneNumber(input) {
+    // Remove all non-numeric characters
+    let number = input.value.replace(/\D/g, '');
+    
+    // Ensure max length of 10 digits
+    number = number.substring(0, 10);
+    
+    // Format number as XXX-XXX-XXXX
+    if (number.length > 0) {
+        if (number.length <= 3) {
+            number = number;
+        } else if (number.length <= 6) {
+            number = number.slice(0, 3) + "-" + number.slice(3);
+        } else {
+            number = number.slice(0, 3) + "-" + number.slice(3, 6) + "-" + number.slice(6);
+        }
+    }
+    
+    input.value = number;
+}

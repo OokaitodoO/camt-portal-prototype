@@ -72,15 +72,19 @@ class Task extends Model
 
     public static function getVisibleTasks($user)
     {
-        if ($user->isAdmin() || $user->isManager()) {
-            return self::with(['assignedTo', 'assignedBy', 'department'])->get();
+        if ($user->isAdmin() || $user->isManager() || $user->isHeadstaff()) {
+            // Allow headstaff to see all tasks like manager
+            return self::with(['assignedTo', 'assignedBy', 'department'])
+                ->orderBy('deadline')
+                ->get();
         }
         
-        // For headstaff and staff, only show tasks from their department
+        // For regular staff, only show tasks from their department
         return self::with(['assignedTo', 'assignedBy', 'department'])
             ->whereHas('assignedTo', function($query) use ($user) {
                 $query->where('department_id', $user->department_id);
             })
+            ->orderBy('deadline')
             ->get();
     }
 }

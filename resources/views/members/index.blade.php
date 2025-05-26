@@ -50,7 +50,23 @@
                 <ul class="nav-action">
                     <li><a href="{{ route('departments.index') }}" class="btn-nav btn-text sarabun-20">หน่วยงาน</a></li>
                     <li><a href="{{ route('members.index') }}" class="btn-nav-active btn-text sarabun-20">บุคลากร</a></li>
-                    <li><a href="{{ route('tasks.index') }}" class="btn-nav btn-text sarabun-20">ภาระงาน</a></li>
+                    @if(Auth::user()->isStaff())
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav{{ Request::routeIs('tasks.*') ? '-active' : '' }} btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li class="task-dropdown">
+                        <div class="btn-nav{{ Request::routeIs('tasks.*', 'individual.*') ? '-active' : '' }} btn-text sarabun-20">
+                            ภาระงาน <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="task-dropdown-menu">
+                            <a href="{{ route('tasks.index') }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-tasks"></i> ภาระงานทั้งหมด
+                            </a>
+                            <a href="{{ route('members.show', Auth::user()->id) }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-user-clock"></i> ภาระงานรายบุคคล
+                            </a>
+                        </div>
+                    </li>
+                    @endif
                 </ul>
             </div>
             @if(auth()->user()->isAdmin() || auth()->user()->isHeadstaff())
@@ -94,16 +110,15 @@
 
             <!-- Department sections -->
             <div id="departmentSections">
-                <!-- All members section (grouped by department) -->
-                <div class="department-section" data-department="all">
-                    @foreach($departments as $department)
-                        @php
-                            $departmentMembers = $members->where('department_id', $department->id);
-                            $headstaffMembers = $departmentMembers->where('role', 'headstaff');
-                            $regularMembers = $departmentMembers->where('role', '!=', 'headstaff');
-                        @endphp
-                        
-                        @if($departmentMembers->count() > 0)
+                @foreach($departments as $department)
+                    @php
+                        $departmentMembers = $members->where('department_id', $department->id);
+                        $headstaffMembers = $departmentMembers->where('role', 'headstaff');
+                        $regularMembers = $departmentMembers->where('role', '!=', 'headstaff');
+                    @endphp
+                    
+                    @if($departmentMembers->count() > 0)
+                        <div class="department-wrapper" data-department-id="{{ $department->id }}">
                             <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
                             
                             <!-- Head Staff Section -->
@@ -147,8 +162,7 @@
                                 @endif
                             @endif
 
-                            <!-- Regular Staff Section -->
-                            <!-- <h2 class="sarabun-24">บุคลากร</h2> -->
+                            <!-- Regular Staff Section -->                            
                             <div class="cards-member">
                                 @foreach($regularMembers as $member)
                                     <div class="card-wrapper fade-in" data-department-id="{{ $member->department_id }}">
@@ -184,102 +198,8 @@
                                     </div>
                                 @endforeach
                             </div>
-                        @endif
-                    @endforeach
-                </div>
-
-                <!-- Individual department sections -->
-                @foreach($departments as $department)
-                    <div class="department-section" data-department="{{ $department->id }}" style="display: none;">
-                        <h1 class="page-title slide-in sarabun-36">{{ $department->name }}</h1>
-                        
-                        <!-- Head Staff Section -->
-                        @php
-                            $headstaffMembers = $members->where('department_id', $department->id)
-                                                  ->where('role', 'headstaff');
-                            $regularMembers = $members->where('department_id', $department->id)
-                                                  ->where('role', '!=', 'headstaff');
-                        @endphp
-                        @if($headstaffMembers->count() > 0)
-                            <h2 class="sarabun-24">หัวหน้างาน</h2>
-                            <div class="cards-member">
-                                @foreach($headstaffMembers as $member)
-                                    <div class="card-wrapper fade-in">
-                                        <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
-                                            @if(auth()->user()->isAdmin())
-                                                <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
-                                                    data-member-id="{{ $member->id }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </div>
-                                            @endif
-                                            @if(auth()->user()->canView($member))
-                                                <a href="{{ route('members.show', $member->id) }}">
-                                            @endif
-                                                <div class="card-logo">
-                                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                         class="card-logo-img" alt="logo">
-                                                </div>
-                                                <hr class="divider">
-                                                <div class="card-container-info">
-                                                    <div class="card-name sarabun-20">
-                                                        {{ $member->first_name }} {{ $member->last_name }}
-                                                    </div>
-                                                    <div class="card-description sarabun-16">
-                                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                    </div>
-                                                </div>
-                                            @if(auth()->user()->canView($member))
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($regularMembers->count() > 0)
-                                <div class="divider-white"></div>
-                            @endif
-                        @endif
-
-                        <!-- Regular Staff Section -->
-                        <h2 class="sarabun-24">บุคลากร</h2>
-                        <div class="cards-member">
-                            @foreach($members->where('department_id', $department->id)->where('role', '!=', 'headstaff') as $member)
-                                <div class="card-wrapper fade-in">
-                                    <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
-                                        @if(auth()->user()->isAdmin() || 
-                                            (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
-                                            <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 
-                                                data-member-id="{{ $member->id }}">
-                                                <i class="fas fa-edit"></i>
-                                            </div>
-                                        @endif
-                                        
-                                        @if(auth()->user()->canView($member))
-                                            <a href="{{ route('members.show', $member->id) }}">
-                                        @endif
-                                            <div class="card-logo">
-                                                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                     class="card-logo-img" alt="logo">
-                                            </div>
-                                            <hr class="divider">
-                                            <div class="card-container-info">
-                                                <div class="card-name sarabun-20">
-                                                    {{ $member->first_name }} {{ $member->last_name }}
-                                                </div>
-                                                <div class="card-description sarabun-16">
-                                                    <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                    <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                </div>
-                                            </div>
-                                        @if(auth()->user()->canView($member))
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
                         </div>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         </div>
@@ -296,7 +216,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">เพิ่มบุคลากร</h1>
+                            <h1 class="popup-header-title sarabun-36">เพิ่มบุคลากร</h1>
                         </div>
                     </div>
                     <div class="popup-image">
@@ -354,11 +274,15 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16">
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16" required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                                <input type="tel" 
+                                       name="phone" 
+                                       class="input-text phone-input sarabun-16" 
+                                       placeholder="XXX-XXX-XXXX"
+                                       maxlength="12">
                             </div>
                         </div>
                         <div class="popup-btn-wrapper">
@@ -387,7 +311,7 @@
                             <   
                         </div>
                         <div class="popup-name">
-                            <h1 class="page-title sarabun-36">แก้ไขบุคลากร</h1>
+                            <h1 class="popup-header-title sarabun-36">แก้ไขบุคลากร</h1>
                         </div>
                         <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(this.closest('form').querySelector('#editMemberId').value)">    
                             <i class="fas fa-trash"></i>
@@ -453,11 +377,15 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text">
+                                <input type="email" name="email" placeholder="อีเมล..." class="input-text" required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
-                                <input type="tel" name="phone" placeholder="เบอร์โทรศัพท์..." class="input-text sarabun-16">
+                                <input type="tel" 
+                                       name="phone" 
+                                       class="input-text phone-input sarabun-16" 
+                                       placeholder="XXX-XXX-XXXX"
+                                       maxlength="12">
                             </div>
                         </div>
                         <div class="popup-btn-wrapper">
@@ -480,7 +408,7 @@
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
-                        <h1 class="page-title sarabun-36">ต้องการลบบุคลากรนี้หรือไม่?</h1>
+                        <h1 class="popup-header-title sarabun-36">ต้องการลบบุคลากรนี้หรือไม่?</h1>
                     </div>
                 </div>
                 <div class = "card-logo">
@@ -538,7 +466,7 @@
             <div class="popup-content">
                 <div class="popup-header">
                     <div class="popup-name">
-                        <h1 class="page-title sarabun-36">ยืนยันการลบบุคลากรและภาระงาน</h1>
+                        <h1 class="popup-header-title sarabun-36">ยืนยันการลบบุคลากรและภาระงาน</h1>
                     </div>
                 </div>
                 <div class="member-info">

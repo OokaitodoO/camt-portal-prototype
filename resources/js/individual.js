@@ -280,3 +280,231 @@ function initializeMemberSearch() {
 // window.selectSearchedMember = selectSearchedMember;
 // window.removeSearchedMember = removeSearchedMember;
 window.initializeMemberSearch = initializeMemberSearch;
+
+// Add search functionality for individual tasks
+function searchIndividualTasks(event) {
+    const searchTerm = event.target.value.toLowerCase().trim();
+    const taskCards = document.querySelectorAll('.card-wrapper');
+    let totalVisibleTasks = 0;
+
+    taskCards.forEach(card => {
+        const taskTitle = card.querySelector('.card-name h3')?.textContent.toLowerCase() || '';
+        
+        // Updated selector to match the correct HTML structure
+        let assignedBy = '';
+        const cardDetails = card.querySelectorAll('.card-details');
+        cardDetails.forEach(detail => {
+            const label = detail.querySelector('.card-date-title')?.textContent || '';
+            if (label.includes('มอบหมายโดย')) {
+                assignedBy = detail.querySelector('p:last-child')?.textContent.toLowerCase() || '';
+            }
+        });
+        
+        if (searchTerm === '' || 
+            taskTitle.includes(searchTerm) || 
+            assignedBy.includes(searchTerm)) {
+            card.style.opacity = '1';
+            card.style.display = '';
+            totalVisibleTasks++;
+        } else {
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.style.display = 'none';
+            }, 300);
+        }
+        card.style.transition = 'opacity 0.3s ease-in-out';
+    });
+
+    // Show/hide no results message
+    let noResultsMsg = document.getElementById('noResultsMessage');
+    if (totalVisibleTasks === 0 && searchTerm !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMessage';
+            noResultsMsg.className = 'no-results sarabun-24';
+            noResultsMsg.textContent = 'ไม่พบภาระงานที่ค้นหา';
+            document.querySelector('.content-task').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+// Add event listener when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchIndividualTasks(e);
+            }, 300);
+        });
+    }
+});
+
+// Make the function globally available
+window.searchIndividualTasks = searchIndividualTasks;
+
+// Profile picture upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    const profilePreview = document.getElementById('profilePreviewImage');
+    const profileInput = document.getElementById('profilePictureInput');
+
+    if (profilePreview && profileInput) {
+        // Add click event to the preview image in popup
+        profilePreview.addEventListener('click', function() {
+            profileInput.click();
+        });
+
+        // Handle file selection
+        profileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('ขนาดไฟล์ต้องไม่เกิน 2MB');
+                return;
+            }
+
+            // Preview image immediately
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+
+function openProfileUploadPopup(event) {
+    if (event) event.preventDefault();
+    
+    // Get current profile picture
+    const currentProfilePic = document.getElementById('individualProfilePreview').src;
+    
+    // Set the preview image in popup
+    const profilePreview = document.getElementById('profilePreviewImage');
+    if (profilePreview) {
+        profilePreview.src = currentProfilePic;
+        profilePreview.setAttribute('data-original-src', currentProfilePic);
+    }
+
+    // Show popup
+    document.getElementById('profileUploadPopup').classList.add('active');
+    document.getElementById('overlay').classList.add('active');
+    document.body.classList.add('lock-scroll');
+}
+
+function closeProfileUploadPopup() {
+    // Reset the preview image to original
+    const profilePreview = document.getElementById('profilePreviewImage');
+    if (profilePreview) {
+        const originalSrc = profilePreview.getAttribute('data-original-src');
+        if (originalSrc) {
+            profilePreview.src = originalSrc;
+        }
+    }
+
+    // Reset file input
+    const profileInput = document.getElementById('profilePictureInput');
+    if (profileInput) {
+        profileInput.value = '';
+    }
+
+    // Hide popup
+    document.getElementById('profileUploadPopup').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+    document.body.classList.remove('lock-scroll');
+}
+
+async function confirmProfileUpload() {
+    const profileInput = document.getElementById('profilePictureInput');
+    const file = profileInput.files[0];
+    
+    if (!file) {
+        alert('กรุณาเลือกรูปภาพ');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    formData.append('_method', 'PUT');
+    formData.append('disk', 'public');
+    formData.append('directory', 'members');
+
+    try {
+        const memberId = profileInput.getAttribute('data-member-id');
+        const response = await axios({
+            method: 'post',
+            url: `/members/${memberId}/update-profile-picture`,
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.data.success) {
+            const imagePath = response.data.path;
+            
+            // Update both preview images with the new path
+            const mainProfilePic = document.getElementById('individualProfilePreview');
+            const popupPreview = document.getElementById('profilePreviewImage');
+            
+            // Clean the path to ensure it's in the correct format
+            const cleanPath = imagePath.replace(/^public\//, '')
+                                     .replace(/^storage\//, '')
+                                     .replace(/^members\//, 'members/');
+            const fullImageUrl = `/storage/${cleanPath}`;
+            
+            if (mainProfilePic) {
+                mainProfilePic.src = fullImageUrl;
+            }
+            if (popupPreview) {
+                popupPreview.src = fullImageUrl;
+                popupPreview.setAttribute('data-original-src', fullImageUrl);
+            }
+            
+            closeProfileUploadPopup();
+            window.location.reload();
+        } else {
+            throw new Error(response.data.message || 'Failed to upload image');
+        }
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        
+        // Reset preview to original
+        const profilePreview = document.getElementById('profilePreviewImage');
+        if (profilePreview) {
+            const originalSrc = profilePreview.getAttribute('data-original-src');
+            if (originalSrc) {
+                profilePreview.src = originalSrc;
+            }
+        }
+
+        if (error.response?.status === 422) {
+            const errors = error.response.data.errors;
+            const errorMessage = errors ? Object.values(errors).flat().join('\n') : 'Invalid data submitted';
+            alert('ข้อผิดพลาดในการตรวจสอบ: ' + errorMessage);
+        } else {
+            alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+        }
+    }
+}
+
+// Make functions available globally
+window.openProfileUploadPopup = openProfileUploadPopup;
+window.closeProfileUploadPopup = closeProfileUploadPopup;
+window.confirmProfileUpload = confirmProfileUpload;

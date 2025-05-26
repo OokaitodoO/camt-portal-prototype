@@ -59,10 +59,18 @@
 .btn-side-nav-text {
     font-weight: 400;
     font-size: 18px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .page-title {
     font-weight: 400;
     font-size: 36px;
     line-height: 100%;
+    width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
 }

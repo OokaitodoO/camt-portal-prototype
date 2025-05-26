@@ -6,7 +6,7 @@ document.addEventListener('click', function(event) {
     // console.log('Element ID:', event.target.id);
 
     // Check if click is on overlay
-    if (event.target.id === 'popupCreate' || event.target.id === 'popupEdit' || event.target.id === 'deleteConfirmationPopup') {
+    if (event.target.id === 'overlay') {
         console.log('Overlay clicked - closing all popups');
         closeAllPopups();
         document.body.classList.remove('lock-scroll');
@@ -21,6 +21,12 @@ function closeAllPopups() {
         createPopup.classList.remove('active');
     }
 
+    // Close create member popup
+    const createMemberPopup = document.getElementById('createPopup');
+    if (createMemberPopup) {
+        createMemberPopup.classList.remove('active');
+    }
+
     // Close edit popup
     const editPopup = document.getElementById('popupEdit');
     if (editPopup) {
@@ -32,6 +38,14 @@ function closeAllPopups() {
     if (deletePopup) {
         deletePopup.classList.remove('active');
     }
+
+    // Close profile upload popup
+    const profileUploadPopup = document.getElementById('profileUploadPopup');
+    if (profileUploadPopup) {
+        profileUploadPopup.classList.remove('active');
+    }
+
+    //close 
 
     // Hide overlay
     document.getElementById('overlay').classList.remove('active');
