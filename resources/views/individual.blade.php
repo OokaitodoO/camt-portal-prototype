@@ -93,8 +93,20 @@
         <!-- side nav -->
         <div class="side-nav-container slide-right">
             <div class="side-nav-logo">
-                <img src="{{ $member->profile_picture ? asset('storage/' . str_replace('storage/', '', $member->profile_picture)) : 'https://placehold.co/128' }}" 
-                     class="card-logo-img" alt="logo">
+                @if(Auth::user()->role !== 'manager')
+                    <label for="profilePictureInput" class="profile-upload-label" onclick="openProfileUploadPopup(event)">
+                        <img src="{{ $member->profile_picture ? asset('storage/' . str_replace('public/storage/', '', str_replace('storage/', '', $member->profile_picture))) : 'https://placehold.co/128' }}" 
+                             class="card-logo-img" 
+                             id="individualProfilePreview"
+                             alt="logo"
+                             style="cursor: pointer;">                     
+                    </label>
+                @else
+                    <img src="{{ $member->profile_picture ? asset('storage/' . str_replace('public/storage/', '', str_replace('storage/', '', $member->profile_picture))) : 'https://placehold.co/128' }}" 
+                         class="card-logo-img" 
+                         id="individualProfilePreview"
+                         alt="logo">
+                @endif
             </div>
             <div class="side-nav-info-item">
                 <div class="divider"></div>
@@ -138,7 +150,7 @@
                 </div>
                 <div class="side-nav-info-item">
                     <h2 class="sarabun-18">เบอร์โทร: </h2>
-                    <p class="sarabun-18">
+                    <p class="sarabun-16">
                         @php
                             $phone = $member->phone;
                             if ($phone) {
@@ -285,11 +297,7 @@
                         </div>
                         <div class="popup-image">
                             <label for="taskLogo" class="logo-upload-label">
-                                <img src="https://placehold.co/128" alt="" class="card-logo-img" id="taskLogoPreview">
-                                <div class="upload-overlay">
-                                    <i class="fas fa-camera"></i>
-                                    <span>อัพโหลดรูปภาพ</span>
-                                </div>
+                                <img src="https://placehold.co/128" alt="" class="card-logo-img" id="taskLogoPreview">                                
                             </label>
                             <input type="file" name="logo" id="taskLogo" accept="image/*" style="display: none;">
                         </div>
@@ -304,7 +312,7 @@
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
-                                <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
+                                <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16" required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
@@ -474,6 +482,41 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Add Profile Picture Upload Popup -->
+        <div class="popup-container" id="profileUploadPopup">
+            <div class="profile-upload-container">
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeProfileUploadPopup()">
+                            <   
+                        </div>
+                        <div class="popup-name">
+                            <h1 class="popup-header-title sarabun-36">แก้ไขรูปโปรไฟล์</h1>
+                        </div>
+                    </div>
+                    <div class="profile-upload-content">
+                        <div class="profile-upload-preview">
+                            <img id="profilePreviewImage" 
+                                src="{{ $member->profile_picture ? asset('storage/' . str_replace('public/storage/', '', str_replace('storage/', '', $member->profile_picture))) : 'https://placehold.co/128' }}" 
+                                alt="Profile Preview"
+                                class="card-logo-img"
+                                style="cursor: pointer;">                            
+                            <input type="file" 
+                                id="profilePictureInput" 
+                                accept="image/*" 
+                                style="display: none;"
+                                data-member-id="{{ $member->id }}">
+                        </div>
+                    </div>                
+                    <div class="profile-upload-actions">
+                        <button class="btn btn-cancel sarabun-20" onclick="closeProfileUploadPopup()">ยกเลิก</button>
+                        <button class="btn btn-confirm sarabun-20" onclick="confirmProfileUpload()">ยืนยัน</button>
+                    </div>
+                </div>
+                </div>            
             </div>
         </div>
 

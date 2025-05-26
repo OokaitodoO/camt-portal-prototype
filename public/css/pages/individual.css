@@ -344,4 +344,45 @@
     overflow: visible !important;
 }
 
+.profile-upload-label {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.upload-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.upload-overlay i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.upload-overlay span {
+    text-align: center;
+}
+
+.card-logo-img {
+    width: 128px;
+    height: 128px;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: filter 0.3s ease;
+}
+
+.profile-upload-label:hover{
+    filter: blur(1px);
+    transition: filter 0.3s ease;
+}
+
 

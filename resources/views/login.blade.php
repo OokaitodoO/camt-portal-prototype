@@ -24,7 +24,7 @@
                 </div>
             @endif
 
-            <a href="{{ route('auth.cmu') }}" class="cmu-login-button">
+            <a href="{{ route('oauth.cmu') }}" class="cmu-login-button">
                 <i class="fas fa-university"></i> Sign in with CMU Account
             </a>
 

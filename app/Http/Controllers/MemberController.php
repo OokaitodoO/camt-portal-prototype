@@ -7,6 +7,7 @@ use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MemberController extends Controller
 {
@@ -388,5 +389,49 @@ class MemberController extends Controller
         }
 
         return view('members.index', compact('members', 'departments', 'departmentId'));
+    }
+
+    public function updateProfilePicture(Request $request, Member $member)
+    {
+        try {
+            $request->validate([
+                'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture if it exists
+                if ($member->profile_picture) {
+                    Storage::disk('public')->delete($member->profile_picture);
+                }
+
+                // Store new profile picture directly in public disk
+                $path = $request->file('profile_picture')->store('members', 'public');
+                $member->profile_picture = $path;  // Store just the path without 'storage/' prefix
+                $member->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile picture updated successfully',
+                    'path' => $path
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating profile picture: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

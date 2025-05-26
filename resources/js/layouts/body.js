@@ -39,6 +39,12 @@ function closeAllPopups() {
         deletePopup.classList.remove('active');
     }
 
+    // Close profile upload popup
+    const profileUploadPopup = document.getElementById('profileUploadPopup');
+    if (profileUploadPopup) {
+        profileUploadPopup.classList.remove('active');
+    }
+
     //close 
 
     // Hide overlay

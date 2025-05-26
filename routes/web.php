@@ -66,6 +66,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::delete('/{member}/with-tasks', [MemberController::class, 'destroyWithTasks'])
             ->name('members.destroyWithTasks');
+
+        // Change POST to PUT for the profile picture update route
+        Route::put('/{member}/update-profile-picture', [MemberController::class, 'updateProfilePicture'])
+            ->name('members.updateProfilePicture');
     });
 
     // Task routes - accessible to all authenticated users
