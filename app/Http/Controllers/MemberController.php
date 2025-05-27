@@ -33,13 +33,19 @@ class MemberController extends Controller
                 'role' => 'required|string|in:admin,manager,headstaff,staff',
                 'email' => 'nullable|email|max:255|unique:members,email',
                 'phone' => 'nullable|string|max:20',
-                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cmu_account' => 'nullable|string|max:255'
             ]);
 
             \Log::info('Validation passed, creating member');
 
-            // Generate a default password (you might want to change this logic)
+            // Generate a default password
             $defaultPassword = bcrypt('password123');
+
+            // Check if email is a CMU account
+            if ($validated['email'] && str_ends_with(strtolower($validated['email']), '@cmu.ac.th')) {
+                $validated['cmu_account'] = $validated['email'];
+            }
 
             // Create member using mass assignment
             $member = Member::create([
@@ -51,7 +57,8 @@ class MemberController extends Controller
                 'role' => $validated['role'],
                 'email' => $validated['email'] ?? null,
                 'phone' => $validated['phone'] ?? null,
-                'password' => $defaultPassword, // Add default password
+                'password' => $defaultPassword,
+                'cmu_account' => $validated['cmu_account'] ?? null
             ]);
 
             // Handle profile picture separately
@@ -111,8 +118,14 @@ class MemberController extends Controller
                 'role' => 'required|string|in:admin,manager,headstaff,staff',
                 'email' => 'nullable|email|max:255',
                 'phone' => 'nullable|string|max:20',
-                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cmu_account' => 'nullable|string|max:255'
             ]);
+
+            // Check if email is a CMU account
+            if ($validated['email'] && str_ends_with(strtolower($validated['email']), '@cmu.ac.th')) {
+                $validated['cmu_account'] = $validated['email'];
+            }
 
             // Handle profile picture upload
             if ($request->hasFile('profile_picture')) {
@@ -137,7 +150,8 @@ class MemberController extends Controller
 
             \Log::info('Member updated successfully:', [
                 'id' => $member->id,
-                'profile_picture' => $member->profile_picture
+                'profile_picture' => $member->profile_picture,
+                'cmu_account' => $member->cmu_account
             ]);
 
             // Load the department relation for the response
