@@ -24,9 +24,12 @@
                 </div>
             @endif
 
-            <a href="{{ route('oauth.cmu') }}" class="cmu-login-button">
+            <!-- <a href="{{ route('cmu.login') }}" class="cmu-login-button">
                 <i class="fas fa-university"></i> Sign in with CMU Account
-            </a>
+            </a> -->
+            <a href="{{ route('cmu.login') }}" class="cmu-login-button">
+            <i class="fas fa-university"></i> Sign in with CMU Account
+                                </a>
 
             <div class="divider">
                 <span>or</span>

@@ -121,6 +121,14 @@ async function openDeleteConfirmationPopup(memberId) {
             taskPopup.querySelector('#memberImage').src = member.profile_picture || 'https://placehold.co/128';
             taskPopup.querySelector('#memberName').textContent = `${member.first_name} ${member.last_name}`;
             
+
+            // Close edit popup
+            const editPopup = document.getElementById('popupEdit');
+            if (editPopup) {
+                editPopup.classList.remove('active');
+                document.getElementById('overlay').classList.remove('active');                
+            }
+
             // Show task confirmation popup
             taskPopup.classList.add('active');
             document.getElementById('overlay').classList.add('active');

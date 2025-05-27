@@ -45,7 +45,11 @@ function closeAllPopups() {
         profileUploadPopup.classList.remove('active');
     }
 
-    //close 
+    //close task confirmation popup
+    const taskConfirmationPopup = document.getElementById('taskConfirmationPopup');
+    if (taskConfirmationPopup) {
+        taskConfirmationPopup.classList.remove('active');
+    }
 
     // Hide overlay
     document.getElementById('overlay').classList.remove('active');

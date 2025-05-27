@@ -613,8 +613,7 @@ async function openDeleteConfirmationPopup() {
 function closeDeleteConfirmation() {
     document.getElementById('deleteConfirmationPopup').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
-    document.body.classList.remove('lock-scroll');
-    document.getElementById('popupEdit').classList.add('active');
+    document.body.classList.remove('lock-scroll');    
 }
 
 async function deleteTask() {

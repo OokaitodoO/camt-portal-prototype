@@ -26,6 +26,8 @@ class User extends Authenticatable
         'status',
         'department_name',
         'profileImage',
+        'cmu_account',
+        'organization_code',
     ];
 
     /**

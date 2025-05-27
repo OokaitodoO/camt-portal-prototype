@@ -383,11 +383,6 @@ async function openDeleteConfirmationPopup(departmentId) {
             logoImg.src = 'https://placehold.co/128';
         }
 
-        // Show popup
-        popup.classList.add('active');
-        document.getElementById('overlay').classList.add('active');
-        document.body.classList.add('lock-scroll');
-
         // Close the edit popup if it's open
         const editPopup = document.getElementById('popupEdit');
         if (editPopup) {
@@ -395,6 +390,11 @@ async function openDeleteConfirmationPopup(departmentId) {
             document.getElementById('overlay').classList.remove('active');
             document.body.classList.remove('lock-scroll');
         }
+
+         // Show popup
+         popup.classList.add('active');
+         document.getElementById('overlay').classList.add('active');
+         document.body.classList.add('lock-scroll');
 
     } catch (error) {
         console.error('Error opening delete confirmation:', error);

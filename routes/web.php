@@ -8,6 +8,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TaskController;
 use App\Models\Member;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Auth\CMUController;
 
 // Public routes
 Route::get('/', [LoginController::class, 'index'])->name('home');
@@ -16,7 +17,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // CMU OAuth Routes
 Route::get('/oauth/cmu', [CMUOAuthController::class, 'redirect'])->name('oauth.cmu');
-Route::get('/oauth/callback/cmu', [CMUOAuthController::class, 'callback'])->name('oauth.callback.cmu');
+Route::get('/auth/cmu', [CMUController::class, 'redirect'])->name('cmu.login');
+Route::get('/oauth/callback/cmu', [CMUController::class, 'callback'])->name('cmu.callback');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {

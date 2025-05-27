@@ -93,7 +93,7 @@
         <!-- side nav -->
         <div class="side-nav-container slide-right">
             <div class="side-nav-logo">
-                @if(Auth::user()->role !== 'manager')
+                @if(Auth::user()->isAdmin() || (Auth::user()->isHeadstaff() && $member->department_id === Auth::user()->department_id) || $member->id === Auth::user()->id)
                     <label for="profilePictureInput" class="profile-upload-label" onclick="openProfileUploadPopup(event)">
                         <img src="{{ $member->profile_picture ? asset('storage/' . str_replace('public/storage/', '', str_replace('storage/', '', $member->profile_picture))) : 'https://placehold.co/128' }}" 
                              class="card-logo-img" 
@@ -211,7 +211,7 @@
                                         <i class="fas fa-star {{ $task->is_favorite ? 'favorite-active' : '' }}"></i>
                                     </div>
                                     @endif
-                                    @if(Auth::user()->isNotManager())
+                                    @if(!Auth::user()->isManager() && (Auth::user()->isAdmin() || (Auth::user()->isHeadstaff() && $member->department_id === Auth::user()->department_id)))
                                     <div class="card-edit" onclick="openEditPopup(this); event.stopPropagation();" 
                                          data-task-id="{{ $task->id }}">
                                         <i class="fas fa-edit"></i>

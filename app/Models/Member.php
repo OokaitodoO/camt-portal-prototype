@@ -11,16 +11,22 @@ class Member extends Authenticatable
 {
     use HasApiTokens, Notifiable;
 
+    protected $table = 'members';
+
     protected $fillable = [
+        'name',
         'email',
         'password',
+        'role',
+        'department_id',
+        'cmu_account',
+        'organization_code',
+        'status',
         'first_name',
         'last_name',
         'position',
-        'department_id',
         'sub_department',
         'phone',
-        'role',
         'profile_picture'
     ];
 
