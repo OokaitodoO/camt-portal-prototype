@@ -259,7 +259,7 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">หน่วยงานย่อย</h2>
-                                <input type="text" name="sub_department" placeholder="หน่วยงาน..." class="input-text sarabun-16">
+                                <input type="text" name="sub_department" placeholder="หน่วยงาน (ไม่บังคับ)" class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">บทบาท</h2>
@@ -275,14 +275,21 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text sarabun-16" required>
+                                <div class="email-input-container">
+                                    <input type="text" 
+                                           name="email" 
+                                           placeholder="username" 
+                                           class="input-text email-prefix sarabun-16" 
+                                           required>
+                                    <span class="email-suffix sarabun-16">@cmu.ac.th</span>
+                                </div>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
                                 <input type="tel" 
                                        name="phone" 
                                        class="input-text phone-input sarabun-16" 
-                                       placeholder="XXX-XXX-XXXX"
+                                       placeholder="XXX-XXX-XXXX (ไม่บังคับ)"
                                        maxlength="12">
                             </div>
                         </div>
@@ -362,7 +369,7 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">หน่วยงานย่อย</h2>
-                                <input type="text" name="sub_department" placeholder="หน่วยงาน..." class="input-text">
+                                <input type="text" name="sub_department" placeholder="หน่วยงาน (ไม่บังคับ)" class="input-text">
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">บทบาท</h2>
@@ -378,14 +385,21 @@
                         <div class="popup-member-name">
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">อีเมล</h2>
-                                <input type="email" name="email" placeholder="อีเมล..." class="input-text" required>
+                                <div class="email-input-container">
+                                    <input type="text" 
+                                           name="email" 
+                                           placeholder="username" 
+                                           class="input-text email-prefix sarabun-16" 
+                                           required>
+                                    <span class="email-suffix sarabun-16">@cmu.ac.th</span>
+                                </div>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">เบอร์โทรศัพท์</h2>
                                 <input type="tel" 
                                        name="phone" 
                                        class="input-text phone-input sarabun-16" 
-                                       placeholder="XXX-XXX-XXXX"
+                                       placeholder="XXX-XXX-XXXX (ไม่บังคับ)"
                                        maxlength="12">
                             </div>
                         </div>

@@ -16,7 +16,7 @@ async function openEditPopup(element) {
         form.querySelector('select[name="department_id"]').value = member.department_id;
         form.querySelector('input[name="sub_department"]').value = member.sub_department || '';
         form.querySelector('select[name="role"]').value = member.role;
-        form.querySelector('input[name="email"]').value = member.email || '';
+        form.querySelector('input[name="email"]').value = member.email ? member.email.replace('@cmu.ac.th', '') : '';
         form.querySelector('input[name="phone"]').value = member.phone || '';
         
         // Update profile picture preview
@@ -28,6 +28,13 @@ async function openEditPopup(element) {
         if (phoneInput && member.phone) {
             phoneInput.value = member.phone;
             formatPhoneNumber(phoneInput);
+        }
+
+        // Update email field and trigger CMU email handling
+        const emailInput = form.querySelector('input[name="email"]');
+        if (emailInput) {
+            emailInput.value = member.email ? member.email.replace('@cmu.ac.th', '') : '';
+            handleCMUEmail(emailInput);
         }
 
         // Show popup
@@ -350,6 +357,10 @@ async function createMember(event) {
         const formData = new FormData(form);
         debugLog('Form data created');
 
+        // Get the email prefix and append @cmu.ac.th
+        const emailPrefix = formData.get('email');
+        formData.set('email', emailPrefix + '@cmu.ac.th');
+
         // Clean phone number before sending
         const phoneNumber = formData.get('phone');
         if (phoneNumber) {
@@ -479,6 +490,11 @@ async function updateMember(event) {
         debugLog('Member ID:', memberId);
 
         const formData = new FormData(form);
+        
+        // Get the email prefix and append @cmu.ac.th
+        const emailPrefix = formData.get('email');
+        formData.set('email', emailPrefix + '@cmu.ac.th');
+
         const token = document.querySelector('meta[name="csrf-token"]')?.content;
         debugLog('CSRF token found:', token ? 'yes' : 'no');
 
@@ -898,6 +914,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Debug: Log if script is properly loaded
     console.log('Member.js initialized');
+
+    // Add email input handlers for create form
+    const createEmailInput = document.querySelector('#createMemberForm input[name="email"]');
+    if (createEmailInput) {
+        createEmailInput.addEventListener('blur', function() {
+            handleCMUEmail(this);
+        });
+    }
+
+    // Add email input handlers for edit form
+    const editEmailInput = document.querySelector('#editMemberForm input[name="email"]');
+    if (editEmailInput) {
+        editEmailInput.addEventListener('blur', function() {
+            handleCMUEmail(this);
+        });
+    }
 });
 
 // Clear logs on page load
@@ -926,4 +958,14 @@ function formatPhoneNumber(input) {
     }
     
     input.value = number;
+}
+
+// Add this function to handle CMU email auto-fill
+function handleCMUEmail(input) {
+    // Remove @cmu.ac.th if it was manually entered
+    let value = input.value.trim();
+    if (value.includes('@')) {
+        value = value.split('@')[0];
+    }
+    input.value = value;
 }

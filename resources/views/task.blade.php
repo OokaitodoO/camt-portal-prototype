@@ -217,7 +217,7 @@
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">รายละเอียด</h2>
-                                <input type="text" name="description" placeholder="รายละเอียด..." class="input-text sarabun-16">
+                                <input type="text" name="description" placeholder="รายละเอียด (ไม่บังคับ)" class="input-text sarabun-16">
                             </div>
                             <!-- <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">หน่วยงาน</h2>
@@ -233,7 +233,11 @@
                             </div> -->
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
-                                <input type="text" name="link" placeholder="ลิ้งก์..." class="input-text sarabun-16">
+                                <input type="text" 
+                                       name="link" 
+                                       placeholder="ลิ้งก์..." 
+                                       class="input-text sarabun-16" 
+                                       required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">มอบหมายภาระงานให้</h2>
@@ -255,7 +259,7 @@
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" name="deadline" required>
+                                    <input type="date" name="deadline" placeholder="วันครบกำหนด (ไม่บังคับ)" required>
                                 </div>
                             </div>
                         </div>
@@ -314,11 +318,16 @@
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">รายละเอียด</h2>
-                                <input type="text" name="description" id="editTaskDescription" placeholder="รายละเอียด..." class="input-text sarabun-16">
+                                <input type="text" name="description" id="editTaskDescription" placeholder="รายละเอียด (ไม่บังคับ)" class="input-text sarabun-16">
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ลิ้งก์</h2>
-                                <input type="text" name="link" id="editTaskLink" placeholder="ลิ้งก์..." class="input-text sarabun-16">
+                                <input type="text" 
+                                       name="link" 
+                                       id="editTaskLink" 
+                                       placeholder="ลิ้งก์..." 
+                                       class="input-text sarabun-16" 
+                                       required>
                             </div>
                             <div class="popup-input-wrapper">
                                 <h2 class="sarabun-16">ผู้รับผิดชอบ</h2>

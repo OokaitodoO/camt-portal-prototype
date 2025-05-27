@@ -84,12 +84,12 @@ class TaskController extends Controller
             // Log the incoming request data
             Log::info('Task creation request data:', $request->all());
 
-            // Update validation rules
+            // Update validation rules - make link required
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'link' => 'nullable|string|max:255',
-                'deadline' => 'nullable|date_format:Y-m-d|after_or_equal:today',  // Updated validation
+                'link' => 'required|string|max:255',
+                'deadline' => 'nullable|date_format:Y-m-d|after_or_equal:today',
                 'assigned_to' => 'required|string',
                 'logo' => 'nullable|image|max:2048'
             ]);
@@ -118,7 +118,7 @@ class TaskController extends Controller
                 $task = Task::create([
                     'title' => $validated['title'],
                     'description' => $validated['description'] ?? null,
-                    'link' => $validated['link'] ?? null,
+                    'link' => $validated['link'],
                     'deadline' => $validated['deadline'],
                     'assigned_to' => $memberId,
                     'assigned_by' => auth()->id(),
@@ -290,8 +290,8 @@ class TaskController extends Controller
             $validatedData = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'link' => 'nullable|string',
-                'deadline' => 'nullable|date_format:Y-m-d',  // Updated validation
+                'link' => 'required|string',
+                'deadline' => 'nullable|date_format:Y-m-d',
                 'sub_tasks' => 'nullable|json',
                 'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
@@ -310,7 +310,7 @@ class TaskController extends Controller
             // Update basic task information
             $task->title = $validatedData['title'];
             $task->description = $validatedData['description'] ?? null;
-            $task->link = $validatedData['link'] ?? null;
+            $task->link = $validatedData['link'];
             $task->deadline = $validatedData['deadline'] ?? null;
 
             // Save the task

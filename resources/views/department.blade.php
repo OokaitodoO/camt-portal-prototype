@@ -123,7 +123,7 @@
                     </div>
                     <div class="popup-input-container sarabun-24">
                         <h2>ชื่อหน่วยงาน</h2>
-                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
+                        <input type="text" name="name" placeholder="ชื่อหน่วยงาน..." class="input-text-name sarabun-16" required>
                     </div>
                     <div class="popup-btn-wrapper">
                         <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">

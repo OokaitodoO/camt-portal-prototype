@@ -467,3 +467,45 @@
     height: 0;
 }
 
+/* Email input container styles */
+.email-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #BFBFBF;
+    /* border-radius: 5px; */
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.email-input-container:focus-within {
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+}
+
+.email-prefix {
+    flex: 1;
+    border: none !important;
+    padding: 8px 12px;
+    width: calc(100% - 85px);
+    outline: none;
+}
+
+.email-suffix {
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    color: #666;
+    user-select: none;
+    border-left: 2px solid #ECE3DB;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+/* Ensure consistent height with other inputs */
+.email-input-container, 
+.email-prefix, 
+.email-suffix {
+    height: 40px;
+}
+
