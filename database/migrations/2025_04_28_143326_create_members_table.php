@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('profile_picture')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->string('cmu_account')->nullable();
+            $table->string('organization_code')->nullable();
+            $table->string('status')->nullable();
         });
     }
 

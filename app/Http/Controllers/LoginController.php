@@ -34,9 +34,21 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        // Local logout
         Auth::logout();
+        
+        // Clear session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+
+        // CMU OAuth logout URL
+        $cmuLogoutUrl = 'https://login.microsoftonline.com/cf81f1df-de59-4c29-91da-a2dfd04aa751/oauth2/v2.0/logout';
+        
+        // Add post-logout redirect URL to your login page
+        $postLogoutRedirect = route('home'); // assuming 'home' route shows login.blade.php
+        $logoutUrl = $cmuLogoutUrl . '?post_logout_redirect_uri=' . urlencode($postLogoutRedirect);
+
+        // Redirect to CMU logout
+        return redirect($logoutUrl);
     }
 }
