@@ -199,6 +199,10 @@
     color: #666;
 }
 
+.card-name {
+    padding: 10px 0;
+}
+
 /* Animation for cards */
 @keyframes fadeIn {
     from {

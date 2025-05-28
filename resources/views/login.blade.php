@@ -27,13 +27,15 @@
             <!-- <a href="{{ route('cmu.login') }}" class="cmu-login-button">
                 <i class="fas fa-university"></i> Sign in with CMU Account
             </a> -->
-            <a href="{{ route('cmu.login') }}" class="cmu-login-button">
-            <i class="fas fa-university"></i> Sign in with CMU Account
-                                </a>
-
-            <div class="divider">
-                <span>or</span>
+            <div class="login-button-container">
+                <a href="{{ route('cmu.login') }}" class="cmu-login-button">
+                    <i class="fas fa-university"></i> Sign in with CMU Account
+                </a>
             </div>
+
+            <!-- <div class="divider">
+                <span>or</span>
+            </div> -->
             
             <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
@@ -61,7 +63,7 @@
                 </button>
             </form>
             
-            <div class="login-footer">
+            <!-- <div class="login-footer">
                 <a href="#" class="forgot-password">Forgot Password?</a>
                 <p>Don't have an account? <a href="#">Contact Administrator</a></p>
                 @if(session('error'))
@@ -69,7 +71,7 @@
                         {{ session('error') }}
                     </div>
                 @endif
-            </div>
+            </div> -->
         </div>
     </div>
 </body>
