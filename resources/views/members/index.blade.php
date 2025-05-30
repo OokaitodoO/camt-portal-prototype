@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เพิ่มบุคลากร</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ Auth::user()->role }}">
     <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
@@ -92,7 +93,7 @@
             <div class="side-nav">
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
                 <div class="btn-side-nav" onclick="filterByDepartment('all'); updateURL('{{ route('members.index') }}')">
-                    <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="all">
+                    <img src="{{ asset('images/LogoCamt.png') }}" class="nav-logo-img" alt="all" onerror="this.src='https://placehold.co/25'">
                     <div class="btn-side-nav-text sarabun-18">ทั้งหมด</div>
                 </div>
                 @foreach($departments as $department)

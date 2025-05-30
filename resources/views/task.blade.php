@@ -7,6 +7,7 @@
     <meta name="user-role" content="{{ Auth::user()->role }}">
     <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
     <title>ภาระงาน</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/task.css') }}">
@@ -94,7 +95,7 @@
                 <h3 class="sarabun-20">หน่วยงานทั้งหมด</h3>   
                 @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isHeadstaff())            
                     <div class="btn-side-nav" onclick="filterTasksByDepartment('all')">
-                        <img src="{{ $department->icon_path ?? 'https://placehold.co/25' }}" class="nav-logo-img" alt="all">
+                        <img src="{{ asset('images/LogoCamt.png') }}" class="nav-logo-img" alt="all" onerror="this.src='https://placehold.co/25'">
                         <div class="btn-side-nav-text sarabun-18">
                             ทั้งหมด
                         </div>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CAMT Portal</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/login.css') }}">
     <!-- Add Font Awesome -->
@@ -37,7 +38,7 @@
                 <span>or</span>
             </div> -->
             
-            <form method="POST" action="{{ route('login') }}" class="login-form">
+            <!-- <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
                 <div class="form-group">
                     <label for="email">
@@ -61,7 +62,7 @@
                 <button type="submit" class="login-button">
                     <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
-            </form>
+            </form> -->
             
             <!-- <div class="login-footer">
                 <a href="#" class="forgot-password">Forgot Password?</a>

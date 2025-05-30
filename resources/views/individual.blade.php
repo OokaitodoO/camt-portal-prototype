@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>ข้อมูลบุคลากร</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pages/individual.css') }}">

@@ -93,14 +93,13 @@ async function openDeleteConfirmationPopup(memberId) {
         }
 
         const member = data.member;
-        const tasks = data.tasks;
 
-        // Store member ID in both popups
-        document.getElementById('deleteConfirmationPopup').setAttribute('data-member-id', memberId);
-        document.getElementById('taskConfirmationPopup').setAttribute('data-member-id', memberId);
+        // Store member ID and data in the popup for later use
+        const popup = document.getElementById('deleteConfirmationPopup');
+        popup.setAttribute('data-member-id', memberId);
+        popup.setAttribute('data-member-data', JSON.stringify(data));
 
         // Update the confirmation popup with member details
-        const popup = document.getElementById('deleteConfirmationPopup');
         popup.querySelector('.card-logo-img').src = member.profile_picture || 'https://placehold.co/128';
         popup.querySelector('.card-name h2').textContent = `${member.first_name} ${member.last_name}`;
         
@@ -121,29 +120,16 @@ async function openDeleteConfirmationPopup(memberId) {
             }
         });
 
-        // Show appropriate popup based on tasks
-        if (tasks && tasks.length > 0) {
-            // Update task confirmation popup
-            const taskPopup = document.getElementById('taskConfirmationPopup');
-            taskPopup.querySelector('#memberImage').src = member.profile_picture || 'https://placehold.co/128';
-            taskPopup.querySelector('#memberName').textContent = `${member.first_name} ${member.last_name}`;
-            
-
-            // Close edit popup
-            const editPopup = document.getElementById('popupEdit');
-            if (editPopup) {
-                editPopup.classList.remove('active');
-                document.getElementById('overlay').classList.remove('active');                
-            }
-
-            // Show task confirmation popup
-            taskPopup.classList.add('active');
-            document.getElementById('overlay').classList.add('active');
-        } else {
-            // Show regular delete confirmation popup
-            popup.classList.add('active');
-            document.getElementById('overlay').classList.add('active');
+        // Close edit popup if it's open
+        const editPopup = document.getElementById('popupEdit');
+        if (editPopup) {
+            editPopup.classList.remove('active');
         }
+
+        // Always show the delete confirmation popup first
+        popup.classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+        document.body.classList.add('lock-scroll');
 
     } catch (error) {
         console.error('Error opening delete confirmation:', error);
@@ -599,13 +585,21 @@ function showTaskConfirmationPopup(data) {
 
     // Update tasks list
     const tasksList = document.getElementById('tasksList');
-    tasksList.innerHTML = tasks.map(task => `
-        <div class="task-item">
-            <h3 class="sarabun-20">${task.title}</h3>
-            <p class="sarabun-16">${task.description || ''}</p>
-            <p class="sarabun-16">สถานะ: ${task.status}</p>
-        </div>
-    `).join('');
+    tasksList.innerHTML = tasks.map(task => {
+        // Debug: Log each task to see its properties
+        console.log('Processing task:', task);
+        
+        // Handle different possible property names for title
+        const taskTitle = task.title || task.name || task.task_title || task.task_name || 'ไม่มีชื่อภาระงาน';
+        const taskDescription = task.description || task.desc || task.task_description || '';
+        
+        return `
+            <div class="task-item sarabun-16">
+                <strong>${taskTitle}</strong>
+                ${taskDescription ? `<br><span class="task-description">${taskDescription}</span>` : ''}
+            </div>
+        `;
+    }).join('');
 
     // Store member ID for deletion
     popup.setAttribute('data-member-id', member.id);
@@ -638,16 +632,63 @@ function showDeleteConfirmationPopup(member) {
     document.getElementById('overlay').classList.add('active');
 }
 
-// Function to delete member and their tasks
+// Function to delete member - now checks for tasks first
 async function deleteMember() {
     try {
         const popup = document.getElementById('deleteConfirmationPopup');
         const memberId = popup.getAttribute('data-member-id');
+        const memberDataStr = popup.getAttribute('data-member-data');
         
         if (!memberId) {
             throw new Error('No member ID found');
         }
 
+        // Parse stored member data
+        const memberData = JSON.parse(memberDataStr);
+        const tasks = memberData.tasks;
+
+        // If member has tasks, show task confirmation popup
+        if (tasks && tasks.length > 0) {
+            // Close delete confirmation popup
+            popup.classList.remove('active');
+            
+            // Show task confirmation popup
+            const taskPopup = document.getElementById('taskConfirmationPopup');
+            taskPopup.setAttribute('data-member-id', memberId);
+            
+            // Update task confirmation popup with member info
+            taskPopup.querySelector('#memberImage').src = memberData.member.profile_picture || 'https://placehold.co/128';
+            taskPopup.querySelector('#memberName').textContent = `${memberData.member.first_name} ${memberData.member.last_name}`;
+            
+            // Debug: Log the tasks data to see its structure
+            console.log('Tasks data:', tasks);
+            console.log('First task:', tasks[0]);
+            
+            // Update tasks list
+            // const tasksList = taskPopup.querySelector('#tasksList');
+            // if (tasksList) {
+            //     tasksList.innerHTML = tasks.map(task => {
+            //         // Debug: Log each task to see its properties
+            //         console.log('Processing task:', task);
+                    
+            //         // Handle different possible property names for title
+            //         const taskTitle = task.title || task.name || task.task_title || task.task_name || 'ไม่มีชื่อภาระงาน';
+            //         const taskDescription = task.description || task.desc || task.task_description || '';
+                    
+            //         return `
+            //             <div class="task-item sarabun-16">
+            //                 <strong>${taskTitle}</strong>
+            //                 ${taskDescription ? `<br><span class="task-description">${taskDescription}</span>` : ''}
+            //             </div>
+            //         `;
+            //     }).join('');
+            // }
+            
+            taskPopup.classList.add('active');
+            return; // Don't proceed with deletion yet
+        }
+
+        // If no tasks, proceed with direct deletion
         const response = await axios.delete(`/members/${memberId}`, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -681,6 +722,10 @@ async function deleteMemberWithTasks() {
         });
 
         if (response.data.success) {
+            // Close popup before reload
+            popup.classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+            document.body.classList.remove('lock-scroll');
             window.location.reload();
         } else {
             throw new Error(response.data.message || 'Failed to delete member and tasks');
@@ -696,6 +741,7 @@ function closeTaskConfirmationPopup() {
     if (popup) {
         popup.classList.remove('active');
         document.getElementById('overlay').classList.remove('active');
+        document.body.classList.remove('lock-scroll');
     }
 }
 

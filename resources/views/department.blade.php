@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน่วยงาน</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ Auth::user()->role }}">
     <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
