@@ -10,7 +10,7 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $departments = [
-            'การเงินและบัญชี',        
+            'ผู้ดูแลระบบ',        
         ];
 
         foreach ($departments as $name) {
