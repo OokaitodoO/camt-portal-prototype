@@ -38,7 +38,7 @@
                 <span>or</span>
             </div> -->
             
-            <!-- <form method="POST" action="{{ route('login') }}" class="login-form">
+            <!-- <form method="POST" action="{{ route('login.post') }}" class="login-form">
                 @csrf
                 <div class="form-group">
                     <label for="email">

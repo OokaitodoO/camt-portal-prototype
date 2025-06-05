@@ -54,7 +54,7 @@ services:
       MYSQL_ROOT_PASSWORD: camt_portal_root
       UPLOAD_LIMIT: 300M      
     ports:
-      - "8081:80"
+      - "21081:8080"
 
 volumes:
   # MySQL database data
