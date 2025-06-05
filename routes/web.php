@@ -16,6 +16,22 @@ Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// Health check route for debugging
+Route::get('/health', function() {
+    return response()->json([
+        'status' => 'ok',
+        'app_env' => app()->environment(),
+        'app_debug' => config('app.debug'),
+        'app_key_set' => !empty(config('app.key')),
+        'database' => [
+            'connection' => config('database.default'),
+            'connected' => true
+        ],
+        'storage_writable' => is_writable(storage_path()),
+        'timestamp' => now()->toISOString()
+    ]);
+})->name('health');
+
 // CMU OAuth Routes
 Route::get('/oauth/cmu', [CMUOAuthController::class, 'redirect'])->name('oauth.cmu');
 Route::get('/auth/cmu', [CMUController::class, 'redirect'])->name('cmu.login');

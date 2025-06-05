@@ -57,6 +57,46 @@ Key environment variables for production:
 
 ### Troubleshooting
 
+**500 Internal Server Error:**
+If you encounter a 500 error after deployment, here are debugging steps:
+
+1. **Check application logs:**
+   ```bash
+   # View container logs
+   docker logs [container-name]
+   
+   # View Laravel logs inside container
+   docker exec [container-name] tail -f /var/www/html/storage/logs/laravel.log
+   ```
+
+2. **Enable debug mode temporarily:**
+   Add to your environment variables:
+   ```env
+   APP_DEBUG=true
+   LOG_LEVEL=debug
+   ```
+
+3. **Check required environment variables:**
+   ```env
+   APP_KEY=base64:your_key_here
+   DB_CONNECTION=sqlite  # or your database config
+   ```
+
+4. **Common fixes:**
+   ```bash
+   # Generate app key if missing
+   php artisan key:generate
+   
+   # Clear all caches
+   php artisan cache:clear
+   php artisan config:clear
+   php artisan route:clear
+   php artisan view:clear
+   
+   # Run database migrations
+   php artisan migrate
+   ```
+
 **Scripts not loading (CORS errors from localhost:5173):**
 If you see CORS errors trying to load scripts from `localhost:5173` in production, this means Laravel is trying to use the Vite development server instead of built assets. This is caused by the `public/hot` file existing. The Dockerfile automatically removes this file, but if deploying manually:
 

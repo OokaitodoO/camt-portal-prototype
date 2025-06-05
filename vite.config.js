@@ -16,29 +16,29 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    build: {
-        // Ensure proper build output
-        outDir: 'public/build',
-        emptyOutDir: true,
-        manifest: true,
-        rollupOptions: {
-            output: {
-                manualChunks: undefined,
-            },
-        },
-    },
-    server: {
-        hmr: {
-            host: 'localhost',
-        },
-        host: '0.0.0.0',
-        watch: {
-            usePolling: true,
-        },
-    },
-    resolve: {
-        alias: {
-            '@': '/resources/js'
-        }
-    }
+    // build: {
+    //     // Ensure proper build output
+    //     outDir: 'public/build',
+    //     emptyOutDir: true,
+    //     manifest: true,
+    //     rollupOptions: {
+    //         output: {
+    //             manualChunks: undefined,
+    //         },
+    //     },
+    // },
+    // server: {
+    //     hmr: {
+    //         host: 'localhost',
+    //     },
+    //     host: '0.0.0.0',
+    //     watch: {
+    //         usePolling: true,
+    //     },
+    // },
+    // resolve: {
+    //     alias: {
+    //         '@': '/resources/js'
+    //     }
+    // }
 });
