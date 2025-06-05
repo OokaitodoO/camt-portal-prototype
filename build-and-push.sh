@@ -142,6 +142,17 @@ if [[ ! "$PUSH_CONFIRM" =~ ^[Nn]$ ]]; then
     if docker push "$FULL_IMAGE_NAME"; then
         print_success "Image pushed successfully to Docker Hub"
         print_info "Image available at: https://hub.docker.com/r/$DOCKER_USERNAME/$REPO_NAME"
+        
+        # Trigger deployment webhook
+        print_info "Triggering deployment webhook..."
+        WEBHOOK_URL="https://dev.camt.cmu.ac.th/api/stacks/webhooks/7e231d6e-b64a-490b-b208-aa85b8203073"
+        
+        if curl -X POST "$WEBHOOK_URL" -H "Content-Type: application/json" -d "{\"image\":\"$FULL_IMAGE_NAME\",\"tag\":\"$IMAGE_TAG\"}" --silent --show-error --fail; then
+            print_success "Deployment webhook triggered successfully"
+        else
+            print_warning "Failed to trigger deployment webhook, but image was pushed successfully"
+            print_info "You can manually trigger deployment at: $WEBHOOK_URL"
+        fi
     else
         print_error "Failed to push image to Docker Hub"
         exit 1

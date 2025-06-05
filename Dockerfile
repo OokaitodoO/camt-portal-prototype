@@ -47,10 +47,43 @@ RUN echo "user = www-data" >> /usr/local/etc/php-fpm.d/docker-php-serversideup-p
 # Production Image
 ############################################
 FROM base AS deploy
+
+# Switch to root to install Node.js
+USER root
+
+# Install Node.js and npm
+RUN apk add --no-cache nodejs npm
+
+# Copy package files first for better Docker layer caching
+COPY package*.json /var/www/html/
+
+# Set working directory and install npm dependencies
+WORKDIR /var/www/html
+RUN npm install
+
+# Copy the rest of the application
 COPY --chown=www-data:www-data . /var/www/html
+
+# Run npm build
+RUN npm run build
+
+# Remove the hot file that makes Laravel use dev server instead of built assets
+RUN rm -f /var/www/html/public/hot
+
+# Set production environment
+ENV APP_ENV=production
+ENV NODE_ENV=production
+
+# Optimize Laravel for production
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+RUN php artisan view:cache || true
 
 # Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
 RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
     chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
+
+# Set proper ownership for all files
+RUN chown -R www-data:www-data /var/www/html
 
 USER www-data

@@ -6,3 +6,10 @@ Dockerfile
 docker-*.yml
 .gitlab-ci.yml
 .spin*
+
+# Development files
+node_modules
+public/hot
+storage/logs/*
+.env.local
+.env.development
