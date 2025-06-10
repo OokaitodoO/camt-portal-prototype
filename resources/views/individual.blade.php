@@ -212,7 +212,7 @@
                                         <i class="fas fa-star {{ $task->is_favorite ? 'favorite-active' : '' }}"></i>
                                     </div>
                                     @endif
-                                    @if(!Auth::user()->isManager() && (Auth::user()->isAdmin() || (Auth::user()->isHeadstaff() && $member->department_id === Auth::user()->department_id)))
+                                    @if(!Auth::user()->isManager() && (Auth::user()->isAdmin() || (Auth::user()->isHeadstaff() && $member->department_id === Auth::user()->department_id) || $member->id === Auth::user()->id))
                                     <div class="card-edit" onclick="openEditPopup(this); event.stopPropagation();" 
                                          data-task-id="{{ $task->id }}">
                                         <i class="fas fa-edit"></i>
