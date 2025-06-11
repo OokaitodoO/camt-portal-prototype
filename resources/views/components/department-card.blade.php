@@ -1,4 +1,6 @@
-<div class="card-wrapper fade-in">
+<div class="card-wrapper fade-in" 
+     data-department-id="{{ $department->id }}"
+     data-department-order="{{ $loop->index }}">
     <div class="card-container" onclick="window.location.href='{{ route('members.filter', $department->id) }}'">
         @if(auth()->user()->isAdmin())
         <div class="card-edit" onclick="event.stopPropagation(); openEditPopup(this)" 

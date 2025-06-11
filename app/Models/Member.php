@@ -94,11 +94,11 @@ class Member extends Authenticatable
     public function getVisibleDepartments()
     {
         if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
-            return Department::all();
+            return Department::ordered()->get();
         }
         
         // For staff, only show their own department
-        return Department::where('id', $this->department_id)->get();
+        return Department::where('id', $this->department_id)->ordered()->get();
     }
 
     public function getVisibleMembers()
@@ -117,11 +117,11 @@ class Member extends Authenticatable
     public function getVisibleDepartmentsForSideNav()
     {
         if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
-            return Department::all();
+            return Department::ordered()->get();
         }
         
         // For staff, only show their own department
-        return Department::where('id', $this->department_id)->get();
+        return Department::where('id', $this->department_id)->ordered()->get();
     }
 
     // Add this method to check if a user can view a specific member

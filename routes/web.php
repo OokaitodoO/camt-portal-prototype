@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('departments')->group(function () {
         Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
         Route::post('/create', [DepartmentController::class, 'store'])->name('departments.store');
+        Route::post('/reorder', [DepartmentController::class, 'reorder'])->name('departments.reorder');
         Route::get('/{department}/data', [DepartmentController::class, 'getData'])->name('departments.getData');
         Route::post('/{department}/update', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');

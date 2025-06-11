@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class DepartmentController extends Controller
 {
@@ -201,6 +202,54 @@ class DepartmentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching department data'
+            ], 500);
+        }
+    }
+
+    public function reorder(Request $request)
+    {
+        try {
+            // Check if user is admin
+            if (!auth()->user()->isAdmin()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            // Check if order column exists
+            if (!Schema::hasColumn('departments', 'order')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order column not found in database. Please run migrations first.'
+                ], 400);
+            }
+
+            // Validate the request
+            $validated = $request->validate([
+                'departments' => 'required|array',
+                'departments.*.id' => 'required|integer|exists:departments,id',
+                'departments.*.order' => 'required|integer|min:0'
+            ]);
+
+            Log::info('Reordering departments', ['data' => $validated['departments']]);
+
+            // Update the order for each department
+            foreach ($validated['departments'] as $departmentData) {
+                Department::where('id', $departmentData['id'])
+                    ->update(['order' => $departmentData['order']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Department order updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error reordering departments: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update department order'
             ], 500);
         }
     }
