@@ -239,16 +239,9 @@
                                 </div>
                                 <div class="card-container-info-item">
                                     <div class="card-details-description">
+                                        <p class="card-date-title sarabun-16">รายละเอียด</p>
                                         <p class="sarabun-16">{{ $task->description }}</p>
-                                    </div>
-                                    <div class="card-details">
-                                        <p class="card-date-title sarabun-16">วันครบกำหนด</p>
-                                        <p class="sarabun-16">{{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : 'ไม่มีวันครบกำหนด' }}</p>
-                                    </div>
-                                    <div class="card-details">
-                                        <p class="card-date-title sarabun-16">มอบหมายโดย</p>
-                                        <p class="sarabun-16">{{ $task->assignedBy ? $task->assignedBy->first_name . ' ' . $task->assignedBy->last_name : 'ไม่ระบุ' }}</p>
-                                    </div>
+                                    </div>                                
                                     @if($task->subTasks && $task->subTasks->count() > 0)
                                     <div class="card-details">
                                         <div class="subtasks-dropdown">
