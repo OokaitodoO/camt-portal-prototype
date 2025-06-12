@@ -88,7 +88,7 @@ class TaskController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'link' => 'required|string|max:255',
+                'link' => 'required|string',
                 'deadline' => 'nullable|date_format:Y-m-d|after_or_equal:today',
                 'assigned_to' => 'required|string',
                 'logo' => 'nullable|image|max:2048'

@@ -130,6 +130,7 @@
                                              data-department-id="{{ $member->department_id }}"
                                              draggable="true"
                                              data-member-id="{{ $member->id }}"
+                                             data-member-url="{{ route('members.show', $member->id) }}"
                                              data-order="{{ $member->order }}">
                                             <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
                                                 @if(auth()->user()->isAdmin() || 
@@ -139,26 +140,20 @@
                                                         <i class="fas fa-edit"></i>
                                                     </div>
                                                 @endif
-                                                @if(auth()->user()->canView($member))
-                                                    <a href="{{ route('members.show', $member->id) }}">
-                                                @endif
-                                                    <div class="card-logo">
-                                                        <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                             class="card-logo-img" alt="logo">
+                                                <div class="card-logo">
+                                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                                                         class="card-logo-img" alt="logo">
+                                                </div>
+                                                <hr class="divider">
+                                                <div class="card-container-info">
+                                                    <div class="card-name sarabun-20">
+                                                        {{ $member->first_name }} {{ $member->last_name }}
                                                     </div>
-                                                    <hr class="divider">
-                                                    <div class="card-container-info">
-                                                        <div class="card-name sarabun-20">
-                                                            {{ $member->first_name }} {{ $member->last_name }}
-                                                        </div>
-                                                        <div class="card-description sarabun-16">
-                                                            <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                            <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                        </div>
+                                                    <div class="card-description sarabun-16">
+                                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
+                                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
                                                     </div>
-                                                @if(auth()->user()->canView($member))
-                                                    </a>
-                                                @endif
+                                                </div>
                                             </div>
                                         </div>
                                     @endforeach
@@ -175,6 +170,7 @@
                                          data-department-id="{{ $member->department_id }}"
                                          draggable="true"
                                          data-member-id="{{ $member->id }}"
+                                         data-member-url="{{ route('members.show', $member->id) }}"
                                          data-order="{{ $member->order }}">
                                         <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
                                             @if(auth()->user()->isAdmin() || 
@@ -184,26 +180,20 @@
                                                     <i class="fas fa-edit"></i>
                                                 </div>
                                             @endif
-                                            @if(auth()->user()->canView($member))
-                                                <a href="{{ route('members.show', $member->id) }}">
-                                            @endif
-                                                <div class="card-logo">
-                                                    <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
-                                                         class="card-logo-img" alt="logo">
+                                            <div class="card-logo">
+                                                <img src="{{ $member->profile_picture ? Storage::url($member->profile_picture) : 'https://placehold.co/128' }}" 
+                                                     class="card-logo-img" alt="logo">
+                                            </div>
+                                            <hr class="divider">
+                                            <div class="card-container-info">
+                                                <div class="card-name sarabun-20">
+                                                    {{ $member->first_name }} {{ $member->last_name }}
                                                 </div>
-                                                <hr class="divider">
-                                                <div class="card-container-info">
-                                                    <div class="card-name sarabun-20">
-                                                        {{ $member->first_name }} {{ $member->last_name }}
-                                                    </div>
-                                                    <div class="card-description sarabun-16">
-                                                        <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
-                                                        <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
-                                                    </div>
+                                                <div class="card-description sarabun-16">
+                                                    <p><b>ตำแหน่งงาน</b> {{ $member->position }}</p>
+                                                    <p><b>หน่วยงาน</b> {{ $member->department->name }}</p>
                                                 </div>
-                                            @if(auth()->user()->canView($member))
-                                                </a>
-                                            @endif
+                                            </div>
                                         </div>
                                     </div>
                                 @endforeach

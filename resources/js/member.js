@@ -1045,13 +1045,16 @@ function initializeMemberDragAndDrop() {
         
         console.log(`Setting up drag for member card ${index}:`, newCard.dataset.memberId);
         
-        // Add drag event listeners
+        // Add drag event listeners to the card
         newCard.addEventListener('dragstart', handleMemberDragStart);
         newCard.addEventListener('dragover', handleMemberDragOver);
         newCard.addEventListener('dragenter', handleMemberDragEnter);
         newCard.addEventListener('dragleave', handleMemberDragLeave);
         newCard.addEventListener('drop', handleMemberDrop);
         newCard.addEventListener('dragend', handleMemberDragEnd);
+        
+        // Add click navigation functionality
+        addMemberClickNavigation(newCard);
         
         // Test event listener
         newCard.addEventListener('mousedown', function(e) {
@@ -1067,7 +1070,7 @@ let draggedMemberCard = null;
 function handleMemberDragStart(e) {
     draggedMemberCard = this;
     
-    // Apply same styles as department
+    // Apply drag styles
     this.classList.add('dragging');
     this.style.opacity = '0.5';
     this.style.transform = 'rotate(5deg)';
@@ -1077,8 +1080,8 @@ function handleMemberDragStart(e) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', this.outerHTML);
     
-    // Prevent default click behavior during drag - disable all clickable elements
-    const clickableElements = this.querySelectorAll('a, button, .card-edit, .card-container');
+    // Disable clickable elements during drag
+    const clickableElements = this.querySelectorAll('button, .card-edit, .card-container');
     clickableElements.forEach(element => {
         element.style.pointerEvents = 'none';
     });
@@ -1137,7 +1140,7 @@ function handleMemberDrop(e) {
 function handleMemberDragEnd(e) {
     console.log('Member drag end');
     
-    // Clean up all visual feedback - same as department
+    // Clean up all visual feedback
     document.querySelectorAll('.card-wrapper[draggable="true"], .card-wrapper-headstaff[draggable="true"]').forEach(card => {
         card.classList.remove('dragging', 'drag-over');
         card.style.opacity = '';
@@ -1146,8 +1149,8 @@ function handleMemberDragEnd(e) {
         card.style.cursor = 'grab';
         card.style.background = '';
         
-        // Re-enable click events on all clickable elements
-        const clickableElements = card.querySelectorAll('a, button, .card-edit, .card-container');
+        // Re-enable click events on clickable elements
+        const clickableElements = card.querySelectorAll('button, .card-edit, .card-container');
         clickableElements.forEach(element => {
             element.style.pointerEvents = '';
         });
@@ -1403,3 +1406,62 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Member page DOM loaded, initializing drag and drop');
     initializeMemberDragAndDrop();
 });
+
+// Function to handle click navigation for member cards
+function addMemberClickNavigation(card) {
+    const memberUrl = card.dataset.memberUrl;
+    const cardContainer = card.querySelector('.card-container');
+    
+    if (!memberUrl || !cardContainer) return;
+    
+    // Check if user can view this member (not disabled)
+    if (cardContainer.classList.contains('disabled-card')) return;
+    
+    let isDragging = false;
+    let dragStartTime = 0;
+    
+    // Track when potential drag starts
+    card.addEventListener('mousedown', function(e) {
+        // Don't interfere with edit button clicks
+        if (e.target.closest('.card-edit')) return;
+        
+        isDragging = false;
+        dragStartTime = Date.now();
+    });
+    
+    // Track if user is dragging
+    card.addEventListener('dragstart', function(e) {
+        isDragging = true;
+    });
+    
+    // Handle click navigation
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on edit button
+        if (e.target.closest('.card-edit')) return;
+        
+        // Don't navigate if we were dragging
+        if (isDragging) return;
+        
+        // Don't navigate if this was a long press (potential drag attempt)
+        const timeDiff = Date.now() - dragStartTime;
+        if (timeDiff > 200) return;
+        
+        // Navigate to member page
+        window.location.href = memberUrl;
+    });
+    
+    // Add hover effect for clickable cards
+    cardContainer.style.cursor = 'pointer';
+    cardContainer.addEventListener('mouseenter', function() {
+        if (!isDragging) {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s ease';
+        }
+    });
+    
+    cardContainer.addEventListener('mouseleave', function() {
+        if (!isDragging) {
+            this.style.transform = '';
+        }
+    });
+}
