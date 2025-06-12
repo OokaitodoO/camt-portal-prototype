@@ -399,6 +399,7 @@ class MemberController extends Controller
         } else {
             $members = Member::with('department')
                 ->where('department_id', $departmentId)
+                ->ordered()
                 ->get();
         }
 
@@ -445,6 +446,32 @@ class MemberController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating profile picture: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function reorder(Request $request)
+    {
+        try {
+            $orders = $request->input('orders', []);
+            
+            foreach ($orders as $order) {
+                Member::where('id', $order['id'])->update(['order' => $order['order']]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Member order updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error reordering members:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update member order'
             ], 500);
         }
     }

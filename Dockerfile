@@ -74,6 +74,10 @@ RUN rm -f /var/www/html/public/hot
 ENV APP_ENV=production
 ENV NODE_ENV=production
 
+# Clear existing caches
+RUN php artisan cache:clear || true
+RUN php artisan optimize:clear || true
+
 # Optimize Laravel for production
 RUN php artisan config:cache || true
 RUN php artisan route:cache || true

@@ -1015,3 +1015,391 @@ function handleCMUEmail(input) {
     }
     input.value = value;
 }
+
+// Drag and Drop functionality for member cards
+function initializeMemberDragAndDrop() {
+    console.log('Initializing member drag and drop...');
+    
+    // Check if user is admin or headstaff (has permission to reorder)
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    console.log('User role:', userRole);
+    
+    if (!userRole || (userRole !== 'admin' && userRole !== 'headstaff')) {
+        console.log('User does not have permission to reorder members');
+        return; // Don't initialize drag and drop for non-admin/non-headstaff users
+    }
+
+    addMemberDragAndDropStyles();
+    
+    const memberCards = document.querySelectorAll('.card-wrapper, .card-wrapper-headstaff');
+    console.log('Found member cards:', memberCards.length);
+    
+    memberCards.forEach((card, index) => {
+        // Remove any existing listeners first
+        const newCard = card.cloneNode(true);
+        card.parentNode.replaceChild(newCard, card);
+        
+        // Set draggable attribute and cursor
+        newCard.setAttribute('draggable', 'true');
+        newCard.style.cursor = 'grab';
+        
+        console.log(`Setting up drag for member card ${index}:`, newCard.dataset.memberId);
+        
+        // Add drag event listeners
+        newCard.addEventListener('dragstart', handleMemberDragStart);
+        newCard.addEventListener('dragover', handleMemberDragOver);
+        newCard.addEventListener('dragenter', handleMemberDragEnter);
+        newCard.addEventListener('dragleave', handleMemberDragLeave);
+        newCard.addEventListener('drop', handleMemberDrop);
+        newCard.addEventListener('dragend', handleMemberDragEnd);
+        
+        // Test event listener
+        newCard.addEventListener('mousedown', function(e) {
+            console.log('Mouse down on member card:', this.dataset.memberId);
+        });
+    });
+    
+    console.log('Member drag and drop initialization complete');
+}
+
+let draggedMemberCard = null;
+
+function handleMemberDragStart(e) {
+    draggedMemberCard = this;
+    
+    // Apply same styles as department
+    this.classList.add('dragging');
+    this.style.opacity = '0.5';
+    this.style.transform = 'rotate(5deg)';
+    this.style.zIndex = '1000';
+    this.style.cursor = 'grabbing';
+    
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.outerHTML);
+    
+    // Prevent default click behavior during drag - disable all clickable elements
+    const clickableElements = this.querySelectorAll('a, button, .card-edit, .card-container');
+    clickableElements.forEach(element => {
+        element.style.pointerEvents = 'none';
+    });
+    
+    console.log('Started dragging member:', this.dataset.memberId);
+}
+
+function handleMemberDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleMemberDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (this !== draggedMemberCard && draggedMemberCard) {
+        console.log('Drag enter on member:', this.dataset.memberId);
+        this.classList.add('drag-over');
+        
+        // Simple highlight for swap, same as department
+        this.style.background = 'rgba(0,123,255,0.1)';
+    }
+}
+
+function handleMemberDragLeave(e) {
+    // Only remove classes if we're actually leaving the element
+    if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+        this.style.background = '';
+    }
+}
+
+function handleMemberDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Drop event on member:', this.dataset.memberId);
+    
+    if (this !== draggedMemberCard && draggedMemberCard) {
+        // Simple swap logic same as department
+        swapMemberCards(draggedMemberCard, this);
+    }
+    
+    // Clean up
+    document.querySelectorAll('.card-wrapper[draggable="true"], .card-wrapper-headstaff[draggable="true"]').forEach(card => {
+        card.classList.remove('drag-over');
+        card.style.background = '';
+    });
+    
+    return false;
+}
+
+function handleMemberDragEnd(e) {
+    console.log('Member drag end');
+    
+    // Clean up all visual feedback - same as department
+    document.querySelectorAll('.card-wrapper[draggable="true"], .card-wrapper-headstaff[draggable="true"]').forEach(card => {
+        card.classList.remove('dragging', 'drag-over');
+        card.style.opacity = '';
+        card.style.transform = '';
+        card.style.zIndex = '';
+        card.style.cursor = 'grab';
+        card.style.background = '';
+        
+        // Re-enable click events on all clickable elements
+        const clickableElements = card.querySelectorAll('a, button, .card-edit, .card-container');
+        clickableElements.forEach(element => {
+            element.style.pointerEvents = '';
+        });
+    });
+    
+    draggedMemberCard = null;
+}
+
+function swapMemberCards(card1, card2) {
+    console.log('Swapping member cards:', {
+        card1Id: card1.dataset.memberId,
+        card2Id: card2.dataset.memberId
+    });
+    
+    // Get the parent container - handle both headstaff and regular cards
+    let container = card1.closest('.cards-member, .cards-headstaff');
+    if (!container) {
+        // Fallback to parent element if specific container not found
+        container = card1.parentElement;
+    }
+    
+    // Create a temporary placeholder
+    const placeholder = document.createElement('div');
+    placeholder.style.display = 'none';
+    
+    // Insert placeholder right before card1
+    container.insertBefore(placeholder, card1);
+    
+    // Move card1 to where card2 is (before card2)
+    container.insertBefore(card1, card2);
+    
+    // Move card2 to where card1 was (where placeholder is)
+    container.insertBefore(card2, placeholder);
+    
+    // Remove the placeholder
+    placeholder.remove();
+    
+    console.log('Member swap completed successfully');
+    
+    // Update order attributes and save to backend
+    updateMemberCardOrders();
+    saveMemberCardOrder();
+    
+    showMemberNotification('ลำดับบุคลากรได้รับการบันทึกแล้ว', 'success');
+}
+
+function updateMemberCardOrders() {
+    const cards = document.querySelectorAll('.card-wrapper[data-member-id], .card-wrapper-headstaff[data-member-id]');
+    cards.forEach((card, index) => {
+        card.dataset.order = index;
+    });
+}
+
+async function saveMemberCardOrder() {
+    try {
+        const cards = document.querySelectorAll('.card-wrapper[data-member-id], .card-wrapper-headstaff[data-member-id]');
+        const orderData = Array.from(cards).map((card, index) => ({
+            id: parseInt(card.dataset.memberId),
+            order: index
+        }));
+        
+        console.log('Saving new member order:', orderData);
+        
+        const response = await fetch('/members/reorder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ orders: orderData })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to save member order');
+        }
+        
+        console.log('Member order saved successfully');
+        
+    } catch (error) {
+        console.error('Error saving member order:', error);
+        
+        let errorMessage = 'เกิดข้อผิดพลาดในการบันทึกลำดับบุคลากร';
+        
+        if (error.message.includes('order')) {
+            errorMessage = 'ต้องเพิ่มคอลัมน์ order ในฐานข้อมูลก่อน - กรุณาเรียกใช้ migration';
+            showMemberNotification(errorMessage, 'warning');
+            console.warn('❌ DATABASE SETUP REQUIRED ❌');
+            console.warn('Please run: php artisan migrate');
+            return;
+        } else if (error.message.includes('Route')) {
+            console.warn('Reorder endpoint not available - this is expected during development');
+            showMemberNotification('การเรียงลำดับได้ถูกบันทึกชั่วคราว (รอการอัพเดทฐานข้อมูล)', 'info');
+            return;
+        }
+        
+        showMemberNotification(errorMessage, 'error');
+        
+        // Only reload page for other types of errors
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+function addMemberDragAndDropStyles() {
+    const existingStyle = document.getElementById('member-drag-drop-styles');
+    if (existingStyle) return;
+    
+    const style = document.createElement('style');
+    style.id = 'member-drag-drop-styles';
+    style.textContent = `
+        .card-wrapper[draggable="true"],
+        .card-wrapper-headstaff[draggable="true"] {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            cursor: grab !important;
+        }
+        
+        .card-wrapper[draggable="true"]:active,
+        .card-wrapper-headstaff[draggable="true"]:active {
+            cursor: grabbing !important;
+        }
+        
+        .card-wrapper.dragging,
+        .card-wrapper-headstaff.dragging {
+            transform: rotate(5deg) scale(1.05) !important;
+            z-index: 1000 !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+            opacity: 0.8 !important;
+            cursor: grabbing !important;
+        }
+        
+        .card-wrapper.drag-over,
+        .card-wrapper-headstaff.drag-over {
+            transform: scale(1.02) !important;
+            box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3) !important;
+            background: rgba(244, 142, 46, 0.1) !important;
+            border-radius: 30px !important;
+        }
+        
+        /* Ensure drag doesn't interfere with card content */
+        .card-wrapper.dragging .card-container,
+        .card-wrapper-headstaff.dragging .card-container,
+        .card-wrapper.dragging a,
+        .card-wrapper-headstaff.dragging a,
+        .card-wrapper.dragging button,
+        .card-wrapper-headstaff.dragging button,
+        .card-wrapper.dragging .card-edit,
+        .card-wrapper-headstaff.dragging .card-edit {
+            pointer-events: none !important;
+        }
+        
+        /* Add visual feedback for admin/headstaff users */
+        .card-wrapper[draggable="true"]::before,
+        .card-wrapper-headstaff[draggable="true"]::before {            
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ccc;
+            font-size: 16px;
+            line-height: 8px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .card-wrapper[draggable="true"]:hover::before,
+        .card-wrapper-headstaff[draggable="true"]:hover::before {
+            opacity: 1;
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('Member drag and drop styles added');
+}
+
+function showMemberNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.member-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `member-notification ${type}`;
+    notification.textContent = message;
+    
+    // Style the notification - matching department implementation
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+        font-family: 'Sarabun', sans-serif;
+        ${type === 'success' ? 'background: #28a745;' : 
+          type === 'warning' ? 'background: #ffc107; color: #212529;' : 
+          type === 'info' ? 'background: #17a2b8;' : 'background: #dc3545;'}
+    `;
+    
+    // Add animation keyframes if not exists
+    if (!document.getElementById('memberNotificationStyles')) {
+        const notificationStyle = document.createElement('style');
+        notificationStyle.id = 'memberNotificationStyles';
+        notificationStyle.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(notificationStyle);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds - same as department
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Initialize drag and drop when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Member page DOM loaded, initializing drag and drop');
+    initializeMemberDragAndDrop();
+});

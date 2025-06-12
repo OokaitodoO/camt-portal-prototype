@@ -27,13 +27,25 @@ class Member extends Authenticatable
         'position',
         'sub_department',
         'phone',
-        'profile_picture'
+        'profile_picture',
+        'order'
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($member) {
+            if (is_null($member->order)) {
+                $member->order = static::max('order') + 1;
+            }
+        });
+    }
 
     public function department()
     {
@@ -104,12 +116,13 @@ class Member extends Authenticatable
     public function getVisibleMembers()
     {
         if ($this->isAdmin() || $this->isManager() || $this->isHeadstaff()) {
-            return Member::with('department')->get();
+            return Member::with('department')->ordered()->get();
         }
         
         // For staff, only show members from their department
         return Member::with('department')
             ->where('department_id', $this->department_id)
+            ->ordered()
             ->get();
     }
 
@@ -143,5 +156,11 @@ class Member extends Authenticatable
         }
         
         return false;
+    }
+
+    // Query scope for ordered members
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order');
     }
 } 

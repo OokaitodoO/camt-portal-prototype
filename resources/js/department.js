@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add a small delay to ensure DOM is fully ready
     setTimeout(() => {
         initializeDragAndDrop();
-        debugDragAndDrop();
+        // debugDragAndDrop();
     }, 100);
     
     // Add click listener to create button as backup
@@ -573,7 +573,7 @@ function initializeDragAndDrop() {
     cardWrappers.forEach((card, index) => {
         // Only make cards draggable for admin users
         const userRole = document.querySelector('meta[name="user-role"]').content;
-        console.log('User role:', userRole);
+        // console.log('User role:', userRole);
         
         if (userRole === 'admin') {
             // Remove any existing listeners first
@@ -584,7 +584,7 @@ function initializeDragAndDrop() {
             newCard.setAttribute('draggable', 'true');
             newCard.style.cursor = 'grab';
             
-            console.log(`Setting up drag for card ${index}:`, newCard);
+            // console.log(`Setting up drag for card ${index}:`, newCard);
             
             // Add drag event listeners
             newCard.addEventListener('dragstart', handleDragStart);
@@ -848,8 +848,9 @@ function addDragAndDropStyles() {
         
         .card-wrapper.drag-over {
             transform: scale(1.02) !important;
-            box-shadow: 0 4px 12px rgba(0,123,255,0.3) !important;
-            background: rgba(0,123,255,0.1) !important;
+            box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3) !important;
+            background: rgba(244, 142, 46, 0.1) !important;
+            border-radius: 30px !important;
         }
         
         .content-container {

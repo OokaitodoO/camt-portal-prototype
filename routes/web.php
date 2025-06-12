@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('members')->group(function () {
         Route::get('/', [MemberController::class, 'index'])->name('members.index');
         Route::post('/', [MemberController::class, 'store'])->name('members.store');
+        Route::post('/reorder', [MemberController::class, 'reorder'])->name('members.reorder');
         Route::post('/{member}/update', [MemberController::class, 'update'])->name('members.update');
         Route::delete('/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
         Route::get('/{member}/data', [MemberController::class, 'getMemberData'])->name('members.getData');

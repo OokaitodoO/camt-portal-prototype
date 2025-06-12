@@ -126,7 +126,11 @@
                             @if($headstaffMembers->count() > 0)
                                 <div class="cards-headstaff">
                                     @foreach($headstaffMembers as $member)
-                                        <div class="card-wrapper-headstaff fade-in" data-department-id="{{ $member->department_id }}">
+                                        <div class="card-wrapper-headstaff fade-in" 
+                                             data-department-id="{{ $member->department_id }}"
+                                             draggable="true"
+                                             data-member-id="{{ $member->id }}"
+                                             data-order="{{ $member->order }}">
                                             <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
                                                 @if(auth()->user()->isAdmin() || 
                                                     (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))
@@ -167,7 +171,11 @@
                             <!-- Regular Staff Section -->                            
                             <div class="cards-member">
                                 @foreach($regularMembers as $member)
-                                    <div class="card-wrapper fade-in" data-department-id="{{ $member->department_id }}">
+                                    <div class="card-wrapper fade-in" 
+                                         data-department-id="{{ $member->department_id }}"
+                                         draggable="true"
+                                         data-member-id="{{ $member->id }}"
+                                         data-order="{{ $member->order }}">
                                         <div class="card-container {{ !auth()->user()->canView($member) ? 'disabled-card' : '' }}">
                                             @if(auth()->user()->isAdmin() || 
                                                 (auth()->user()->isHeadstaff() && $member->department_id === auth()->user()->department_id))

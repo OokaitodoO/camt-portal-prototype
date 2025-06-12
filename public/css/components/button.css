@@ -74,7 +74,7 @@
     display: flex;
     align-items: center;
     justify-content: left;
-    width: 328px;
+    max-width: 328px;
     background-color: white;
     border-radius: 2px;
     padding: 5px 10px;

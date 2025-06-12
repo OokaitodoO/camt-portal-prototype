@@ -39,12 +39,12 @@
 }
 
 .cards-member {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));    
-    gap: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 132.33px;
     padding: 30px;
     width: 100%;
-    /* max-width: 1200px; */
     margin: 0 auto;
 }
 
@@ -218,20 +218,10 @@
     }
 }
 
-/* Responsive grid - matching department.css */
+/* Responsive adjustments - Updated for flex layout */
 @media (max-width: 1200px) {
     .content-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .content-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .member-card {
-        aspect-ratio: auto;
+        grid-template: 'leftNav content' / 300px;
     }
 }
 
@@ -306,27 +296,22 @@
 .card-wrapper-headstaff {
     flex: 0 1 300px; /* This ensures cards are ~300px wide but can shrink if needed */
     min-width: 250px; /* Minimum width before wrapping */
-    max-width: 350px; /* Maximum width */
+    max-width: 350px; /* Maximum width */    
     /* animation: fadeInUp 0.5s ease-out; */
 }
 
 /* Ensure maximum of 3 cards per row */
 @media (min-width: 1200px) {
-    .card-wrapper-headstaff {
+    .card-wrapper-headstaff,
+    .card-wrapper {
         flex-basis: calc(33.333% - 30px);
-    }
-}
-
-/* Two cards per row on medium screens */
-@media (max-width: 1199px) and (min-width: 768px) {
-    .card-wrapper-headstaff {
-        flex-basis: calc(50% - 30px);
     }
 }
 
 /* One card per row on mobile */
 @media (max-width: 767px) {
-    .card-wrapper-headstaff {
+    .card-wrapper-headstaff,
+    .card-wrapper {
         flex-basis: 100%;
     }
 }
@@ -364,6 +349,12 @@
 
 /* Card wrapper styles */
 .card-wrapper {
+    flex: 0 1 300px; /* This ensures cards are ~300px wide but can shrink if needed */
+    min-width: 250px; /* Minimum width before wrapping */
+    min-width: 350px; /* Maximum width */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -399,30 +390,11 @@
     }
 }
 
-/* Ensure cards don't stretch too wide */
+/* Card container styles */
 .card-container {
     max-width: 360px;
     margin: 0 auto;
     width: 100%;
-}
-
-/* Responsive adjustments */
-@media (min-width: 1200px) {
-    .cards-member {
-        grid-template-columns: repeat(3, 1fr); /* Force 3 columns on larger screens */
-    }
-}
-
-@media (max-width: 1199px) {
-    .cards-member {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .cards-member {
-        grid-template-columns: 1fr;
-    }
 }
 
 #departmentSections {
@@ -507,5 +479,77 @@
 .email-prefix, 
 .email-suffix {
     height: 40px;
+}
+
+/* Drag and Drop Styles */
+.card-wrapper[draggable="true"]:hover,
+.card-wrapper-headstaff[draggable="true"]:hover {
+    cursor: grab;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3);
+    transition: all 0.2s ease;
+}
+
+.card-wrapper[draggable="true"]:active,
+.card-wrapper-headstaff[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.member-card-dragging {
+    opacity: 0.5 !important;
+    transform: rotate(5deg) scale(0.95) !important;
+    transition: all 0.2s ease !important;
+    z-index: 1000;
+}
+
+.member-card-drag-over {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+    transform: scale(1.02) !important;
+    transition: all 0.2s ease !important;
+    border: 2px dashed #F48E2E !important;
+}
+
+/* Notification styles */
+.member-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    max-width: 400px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.member-notification-success {
+    background-color: #4caf50;
+}
+
+.member-notification-error {
+    background-color: #f44336;
+}
+
+.member-notification-warning {
+    background-color: #ff9800;
+    color: black;
+}
+
+.member-notification-info {
+    background-color: #2196f3;
 }
 
