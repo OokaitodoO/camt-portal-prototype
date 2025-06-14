@@ -14,6 +14,8 @@
     <meta name="member-id" content="{{ $member->id }}">
     <meta name="member-name" content="{{ $member->first_name }} {{ $member->last_name }}">
     <meta name="department-id" content="{{ $member->department_id }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-id" content="{{ Auth::user()->id }}">
 </head>
 <body class="body-bg">
     <!-- Header -->
@@ -196,13 +198,17 @@
                     // Get tasks assigned to this member and sort by favorite status
                     $assignedTasks = \App\Models\Task::with(['department', 'assignedBy', 'subTasks'])
                         ->where('assigned_to', $member->id)
-                        ->get()
-                        ->sortByDesc('is_favorite');
+                        ->orderBy('order', 'asc')
+                        ->orderByDesc('is_favorite')
+                        ->get();
                 @endphp
 
                 @if($assignedTasks && $assignedTasks->count() > 0)
-                    @foreach($assignedTasks as $task)
-                    <div class="card-wrapper fade-in">
+                    @foreach($assignedTasks as $index => $task)
+                    <div class="card-wrapper fade-in" 
+                         data-task-id="{{ $task->id }}"
+                         data-task-order="{{ $task->order ?? $index }}"
+                         draggable="false">
                         <div class="card-container"  onclick="openTaskLink(event, '{{ $task->link }}')">
                             <div class="card-header">
                                 <div class="card-top">

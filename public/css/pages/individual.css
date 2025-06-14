@@ -14,6 +14,8 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     align-items: start;
+    min-height: 400px;
+    position: relative;
 }
 
 .side-nav-container{
@@ -74,6 +76,7 @@
 
 .card-wrapper {
     height: fit-content;
+    transition: all 0.3s ease;
 }
 
 .card-container {
@@ -383,6 +386,84 @@
 .profile-upload-label:hover{
     filter: blur(1px);
     transition: filter 0.3s ease;
+}
+
+/* Task Card Drag and Drop Styles */
+.card-wrapper[draggable="true"] {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    cursor: grab !important;
+}
+
+.card-wrapper[draggable="true"]:active {
+    cursor: grabbing !important;
+}
+
+.card-wrapper.dragging {
+    transform: rotate(5deg) scale(1.05) !important;
+    z-index: 1000 !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+    opacity: 0.8 !important;
+    cursor: grabbing !important;
+}
+
+.card-wrapper.drag-over {
+    transform: scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3) !important;
+    background: rgba(244, 142, 46, 0.1) !important;
+    border-radius: 30px !important;
+}
+
+/* Ensure drag doesn't interfere with card content */
+.card-wrapper.dragging .card-container,
+.card-wrapper.dragging button,
+.card-wrapper.dragging .card-favorite,
+.card-wrapper.dragging .card-edit,
+.card-wrapper.dragging .subtasks-dropdown-btn {
+    pointer-events: none !important;
+}
+
+/* Add visual feedback for users who can reorder */
+.card-wrapper[draggable="true"]::after {
+    content: "⠿⠿⠿";
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ccc;
+    font-size: 12px;
+    line-height: 8px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-family: monospace;
+}
+
+.card-wrapper[draggable="true"]:hover::after {
+    opacity: 1;
+}
+
+/* Grid layout adjustments for drag and drop */
+.content-task {
+    min-height: 400px;
+    position: relative;
+}
+
+/* Smooth transitions for grid reordering */
+.card-wrapper {
+    transition: all 0.3s ease;
+}
+
+/* Enhanced hover effects for draggable cards */
+.card-wrapper[draggable="true"]:hover .card-container {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Focus styles for accessibility */
+.card-wrapper[draggable="true"]:focus {
+    outline: 2px solid #F48E2E;
+    outline-offset: 2px;
 }
 
 

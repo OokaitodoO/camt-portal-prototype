@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
         Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
+        Route::post('/reorder', [TaskController::class, 'reorder'])->name('tasks.reorder');
         Route::get('/filter/{departmentId}', [TaskController::class, 'filterByDepartment'])->name('tasks.filter');
         Route::get('/department/{departmentId}/members', function($departmentId) {
             $members = Member::where('department_id', $departmentId)->get();

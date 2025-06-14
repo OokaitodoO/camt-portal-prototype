@@ -467,4 +467,36 @@ class TaskController extends Controller
             ], 500);
         }
     }
+
+    public function reorder(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'orders' => 'required|array',
+                'orders.*.id' => 'required|integer|exists:tasks,id',
+                'orders.*.order' => 'required|integer|min:0'
+            ]);
+
+            Log::info('Reordering tasks', ['data' => $validated['orders']]);
+
+            // Update the order for each task
+            foreach ($validated['orders'] as $taskData) {
+                Task::where('id', $taskData['id'])
+                    ->update(['order' => $taskData['order']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task order updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error reordering tasks: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update task order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

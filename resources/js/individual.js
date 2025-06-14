@@ -508,3 +508,464 @@ async function confirmProfileUpload() {
 window.openProfileUploadPopup = openProfileUploadPopup;
 window.closeProfileUploadPopup = closeProfileUploadPopup;
 window.confirmProfileUpload = confirmProfileUpload;
+
+// Task Drag and Drop functionality
+let draggedTaskCard = null;
+
+function initializeTaskDragAndDrop() {
+    console.log('Initializing task drag and drop...');
+    
+    // Check if user has permission to reorder tasks
+    const userRole = document.querySelector('meta[name="user-role"]')?.content;
+    const currentMemberId = document.querySelector('meta[name="member-id"]')?.content;
+    const currentUserId = document.querySelector('meta[name="user-id"]')?.content;
+    
+    console.log('User role:', userRole, 'Current member:', currentMemberId, 'Current user:', currentUserId);
+    
+    // Allow reordering if user is admin, headstaff with same department, or viewing their own profile
+    const canReorder = userRole === 'admin' || 
+                      (userRole === 'headstaff' && currentMemberId === currentUserId) ||
+                      currentMemberId === currentUserId;
+    
+    if (!canReorder) {
+        console.log('User does not have permission to reorder tasks');
+        return;
+    }
+
+    addTaskDragAndDropStyles();
+    
+    const taskCards = document.querySelectorAll('.card-wrapper');
+    console.log('Found task cards:', taskCards.length);
+    
+    if (taskCards.length === 0) {
+        console.log('No task cards found to make draggable');
+        return;
+    }
+    
+    taskCards.forEach((card, index) => {
+        // Skip if this card is already draggable
+        if (card.getAttribute('draggable') === 'true') {
+            console.log(`Card ${index} is already draggable, skipping`);
+            return;
+        }
+        
+        // Remove any existing listeners first
+        const newCard = card.cloneNode(true);
+        card.parentNode.replaceChild(newCard, card);
+        
+        // Set draggable attribute and cursor
+        newCard.setAttribute('draggable', 'true');
+        newCard.style.cursor = 'grab';
+        
+        console.log(`Setting up drag for task card ${index}`);
+        
+        // Add drag event listeners
+        newCard.addEventListener('dragstart', handleTaskDragStart);
+        newCard.addEventListener('dragover', handleTaskDragOver);
+        newCard.addEventListener('dragenter', handleTaskDragEnter);
+        newCard.addEventListener('dragleave', handleTaskDragLeave);
+        newCard.addEventListener('drop', handleTaskDrop);
+        newCard.addEventListener('dragend', handleTaskDragEnd);
+        
+        // Preserve existing click functionality
+        addTaskClickPreservation(newCard);
+        
+        // Test event listener
+        newCard.addEventListener('mousedown', function(e) {
+            console.log('Mouse down on task card:', this.dataset.taskId);
+        });
+    });
+    
+    console.log('Task drag and drop initialization complete');
+}
+
+function handleTaskDragStart(e) {
+    draggedTaskCard = this;
+    
+    // Get task ID from the card
+    const taskId = this.querySelector('.card-edit')?.getAttribute('data-task-id') || 
+                   this.querySelector('.card-favorite')?.onclick?.toString().match(/toggleFavorite\(event, (\d+)/)?.[1];
+    
+    console.log('Started dragging task card:', taskId);
+    
+    // Apply drag styles
+    this.classList.add('dragging');
+    this.style.opacity = '0.5';
+    this.style.transform = 'rotate(5deg)';
+    this.style.zIndex = '1000';
+    this.style.cursor = 'grabbing';
+    
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.outerHTML);
+    
+    // Disable clickable elements during drag
+    const clickableElements = this.querySelectorAll('button, .card-favorite, .card-edit, .card-container, .subtasks-dropdown-btn');
+    clickableElements.forEach(element => {
+        element.style.pointerEvents = 'none';
+    });
+    
+    e.stopPropagation();
+}
+
+function handleTaskDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleTaskDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (this !== draggedTaskCard && draggedTaskCard) {
+        console.log('Drag enter on task card');
+        this.classList.add('drag-over');
+        
+        // Simple highlight for swap
+        this.style.background = 'rgba(0,123,255,0.1)';
+        this.style.borderRadius = '30px';
+    }
+}
+
+function handleTaskDragLeave(e) {
+    // Only remove classes if we're actually leaving the element
+    if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+        this.style.background = '';
+        this.style.borderRadius = '';
+    }
+}
+
+function handleTaskDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Drop event on task card');
+    
+    if (this !== draggedTaskCard && draggedTaskCard) {
+        // Simple swap logic
+        swapTaskCards(draggedTaskCard, this);
+    }
+    
+    // Clean up
+    document.querySelectorAll('.card-wrapper[draggable="true"]').forEach(card => {
+        card.classList.remove('drag-over');
+        card.style.background = '';
+        card.style.borderRadius = '';
+    });
+    
+    return false;
+}
+
+function handleTaskDragEnd(e) {
+    console.log('Task drag end');
+    
+    // Clean up all visual feedback
+    document.querySelectorAll('.card-wrapper[draggable="true"]').forEach(card => {
+        card.classList.remove('dragging', 'drag-over');
+        card.style.opacity = '';
+        card.style.transform = '';
+        card.style.zIndex = '';
+        card.style.cursor = 'grab';
+        card.style.background = '';
+        card.style.borderRadius = '';
+        
+        // Re-enable click events on clickable elements
+        const clickableElements = card.querySelectorAll('button, .card-favorite, .card-edit, .card-container, .subtasks-dropdown-btn');
+        clickableElements.forEach(element => {
+            element.style.pointerEvents = '';
+        });
+    });
+    
+    draggedTaskCard = null;
+}
+
+function swapTaskCards(card1, card2) {
+    console.log('Swapping task cards');
+    
+    // Get the parent container
+    const container = document.querySelector('.content-task');
+    
+    // Create a temporary placeholder
+    const placeholder = document.createElement('div');
+    placeholder.style.display = 'none';
+    
+    // Insert placeholder right before card1
+    container.insertBefore(placeholder, card1);
+    
+    // Move card1 to where card2 is (before card2)
+    container.insertBefore(card1, card2);
+    
+    // Move card2 to where card1 was (where placeholder is)
+    container.insertBefore(card2, placeholder);
+    
+    // Remove the placeholder
+    placeholder.remove();
+    
+    console.log('Task swap completed successfully');
+    
+    // Update order attributes and save to backend
+    updateTaskCardOrders();
+    saveTaskCardOrder();
+    
+    showTaskNotification('ลำดับภาระงานได้รับการบันทึกแล้ว', 'success');
+}
+
+function updateTaskCardOrders() {
+    const cards = document.querySelectorAll('.card-wrapper[draggable="true"]');
+    cards.forEach((card, index) => {
+        card.dataset.order = index;
+    });
+}
+
+async function saveTaskCardOrder() {
+    try {
+        const cards = document.querySelectorAll('.card-wrapper[draggable="true"]');
+        const orderData = [];
+        
+        cards.forEach((card, index) => {
+            // Extract task ID from various possible sources
+            const taskId = card.querySelector('.card-edit')?.getAttribute('data-task-id') || 
+                          card.querySelector('.card-favorite')?.onclick?.toString().match(/toggleFavorite\(event, (\d+)/)?.[1];
+            
+            if (taskId) {
+                orderData.push({
+                    id: parseInt(taskId),
+                    order: index
+                });
+            }
+        });
+        
+        console.log('Saving new task order:', orderData);
+        
+        if (orderData.length === 0) {
+            console.warn('No task IDs found for reordering');
+            return;
+        }
+        
+        const response = await fetch('/tasks/reorder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ orders: orderData })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to save task order');
+        }
+        
+        console.log('Task order saved successfully');
+        
+    } catch (error) {
+        console.error('Error saving task order:', error);
+        
+        let errorMessage = 'เกิดข้อผิดพลาดในการบันทึกลำดับภาระงาน';
+        
+        if (error.message.includes('order') || error.message.includes('column')) {
+            errorMessage = 'ต้องเพิ่มคอลัมน์ order ในฐานข้อมูลก่อน - กรุณาเรียกใช้ migration';
+            showTaskNotification(errorMessage, 'warning');
+            console.warn('❌ DATABASE SETUP REQUIRED ❌');
+            console.warn('Please run: php artisan migrate');
+            return;
+        } else if (error.message.includes('Route') || error.message.includes('404')) {
+            console.warn('Reorder endpoint not available - this is expected during development');
+            showTaskNotification('การเรียงลำดับได้ถูกบันทึกชั่วคราว (รอการอัพเดท API)', 'info');
+            return;
+        }
+        
+        showTaskNotification(errorMessage, 'error');
+        
+        // Only reload page for other types of errors
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+function addTaskDragAndDropStyles() {
+    const existingStyle = document.getElementById('task-drag-drop-styles');
+    if (existingStyle) return;
+    
+    const style = document.createElement('style');
+    style.id = 'task-drag-drop-styles';
+    style.textContent = `
+        .card-wrapper[draggable="true"] {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            cursor: grab !important;
+        }
+        
+        .card-wrapper[draggable="true"]:active {
+            cursor: grabbing !important;
+        }
+        
+        .card-wrapper.dragging {
+            transform: rotate(5deg) scale(1.05) !important;
+            z-index: 1000 !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+            opacity: 0.8 !important;
+            cursor: grabbing !important;
+        }
+        
+        .card-wrapper.drag-over {
+            transform: scale(1.02) !important;
+            box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3) !important;
+            background: rgba(244, 142, 46, 0.1) !important;
+            border-radius: 30px !important;
+        }
+        
+        /* Ensure drag doesn't interfere with card content */
+        .card-wrapper.dragging .card-container,
+        .card-wrapper.dragging button,
+        .card-wrapper.dragging .card-favorite,
+        .card-wrapper.dragging .card-edit,
+        .card-wrapper.dragging .subtasks-dropdown-btn {
+            pointer-events: none !important;
+        }
+        
+        /* Add visual feedback for users who can reorder */
+        .card-wrapper[draggable="true"]::before {            
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            font-size: 16px;
+            line-height: 8px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .card-wrapper[draggable="true"]:hover::before {
+            opacity: 1;
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('Task drag and drop styles added');
+}
+
+function showTaskNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.task-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `task-notification ${type}`;
+    notification.textContent = message;
+    
+    // Style the notification - matching department and member implementations
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+        font-family: 'Sarabun', sans-serif;
+        ${type === 'success' ? 'background: #28a745;' : 
+          type === 'warning' ? 'background: #ffc107; color: #212529;' : 
+          type === 'info' ? 'background: #17a2b8;' : 'background: #dc3545;'}
+    `;
+    
+    // Add animation keyframes if not exists
+    if (!document.getElementById('taskNotificationStyles')) {
+        const notificationStyle = document.createElement('style');
+        notificationStyle.id = 'taskNotificationStyles';
+        notificationStyle.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(notificationStyle);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+function addTaskClickPreservation(card) {
+    let isDragging = false;
+    let dragStartTime = 0;
+    
+    // Track when potential drag starts
+    card.addEventListener('mousedown', function(e) {
+        // Don't interfere with button clicks
+        if (e.target.closest('.card-favorite, .card-edit, .subtasks-dropdown-btn')) return;
+        
+        isDragging = false;
+        dragStartTime = Date.now();
+    });
+    
+    // Track if user is dragging
+    card.addEventListener('dragstart', function(e) {
+        isDragging = true;
+    });
+    
+    // Preserve existing click functionality but prevent it during drag
+    const originalOnClick = card.onclick;
+    if (originalOnClick) {
+        card.onclick = function(e) {
+            // Don't execute original click if we were dragging
+            if (isDragging) return;
+            
+            // Don't execute if this was a long press (potential drag attempt)
+            const timeDiff = Date.now() - dragStartTime;
+            if (timeDiff > 200) return;
+            
+            // Execute original click
+            originalOnClick.call(this, e);
+        };
+    }
+}
+
+// Initialize task drag and drop when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Individual page DOM loaded, initializing task drag and drop');
+    // Add a small delay to ensure all elements are rendered
+    setTimeout(() => {
+        initializeTaskDragAndDrop();
+    }, 100);
+});
+
+// Make functions available globally
+window.initializeTaskDragAndDrop = initializeTaskDragAndDrop;
