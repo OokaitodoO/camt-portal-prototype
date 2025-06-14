@@ -23,8 +23,8 @@ class TaskController extends Controller
             return redirect()->route('members.show', $user->id);
         }
 
-        // Get all departments for admin, manager, and headstaff
-        $departments = Department::all();
+        // Get all departments ordered by the same logic as members page
+        $departments = Department::ordered()->get();
 
         // Get all tasks for admin, manager, and headstaff
         if ($user->isAdmin() || $user->isManager() || $user->isHeadstaff()) {
