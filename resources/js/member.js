@@ -407,8 +407,8 @@ async function createMember(event) {
                 'department_id': 'กรุณาเลือกหน่วยงาน',
                 'role': 'กรุณาเลือกบทบาท',
                 'email': {
-                    'required': 'กรุณากรอกอีเมล',
-                    'email': 'กรุณากรอกอีเมลให้ถูกต้อง'
+                    'required': 'อีเมลถูกใช้งานแล้ว',
+                    'email': 'กรุณากรอกอีเมล'
                 }
             };
 

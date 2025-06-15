@@ -83,9 +83,9 @@ RUN php artisan config:cache || true
 RUN php artisan route:cache || true
 RUN php artisan view:cache || true
 
-# Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
-RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
-    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
+# # Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
+# RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
+#     chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
 
 # Set proper ownership for all files
 RUN chown -R www-data:www-data /var/www/html
