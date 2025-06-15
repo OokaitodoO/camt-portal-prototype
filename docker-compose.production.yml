@@ -8,7 +8,13 @@ services:
       APP_ENV: production
       APP_KEY: base64:your-app-key-here
       APP_NAME: "CAMT Portal"
-      APP_URL: https://your-domain.com/
+      APP_URL: https://portal.camt.cmu.ac.th
+
+      # Force HTTPS in production
+      FORCE_HTTPS: true
+      
+      # Additional HTTPS configuration
+      APP_DEBUG: false
 
       DB_CONNECTION: mysql
       DB_HOST: camt-portal-mysql

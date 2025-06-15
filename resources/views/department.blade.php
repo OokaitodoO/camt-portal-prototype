@@ -37,7 +37,7 @@
                         {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
                     </div>
                     <div class="dropdown-divider"></div>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ secure_url('/logout') }}">
                         @csrf
                         <button type="submit" class="dropdown-item sarabun-16">
                             <i class="fas fa-sign-out-alt"></i> ออกจากระบบ

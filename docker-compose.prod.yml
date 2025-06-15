@@ -29,13 +29,27 @@ services:
         target: /etc/traefik/traefik.yml
 
   php:
-    image: ${SPIN_IMAGE_DOCKERFILE} # 👈 Change this if you're not using `spin deploy`
+    image: "camt-portal:latest"
     environment:
-      PHP_OPCACHE_ENABLE: "1"
-      AUTORUN_ENABLED: "true" # 👈 Remove this line if you don't want Laravel Automations
-      APP_ENV: "${SPIN_DEPLOYMENT_ENVIRONMENT}" # 👈 Remove this if you're not using `spin deploy`
-      HEALTHCHECK_PATH: "/up" # Use Laravel's built-in health route
-      SSL_MODE: full
+      APP_ENV: production
+      APP_KEY: base64:your-app-key-here
+      APP_NAME: "CAMT Portal"
+      APP_URL: https://your-domain.com/
+      
+      # Force HTTPS in production
+      FORCE_HTTPS: true
+
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: camt_portal
+      DB_USERNAME: camt_user
+      DB_PASSWORD: your-secure-password
+      
+      # Cache Configuration
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
     networks:
       - web-public
     volumes:
