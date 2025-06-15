@@ -6,6 +6,9 @@
 # https://serversideup.net/open-source/docker-php/
 FROM serversideup/php:8.4-fpm-nginx-alpine AS base
 
+# Copy the cache clearing entrypoint script
+COPY --chmod=755 ./entrypoint.d/ /etc/entrypoint.d/
+
 ## Uncomment if you need to install additional PHP extensions
 # USER root
 # RUN install-php-extensions bcmath gd
