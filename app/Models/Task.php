@@ -19,8 +19,7 @@ class Task extends Model
         'deadline',
         'logo_path',
         'status',
-        'is_favorite',
-        'order'
+        'is_favorite'
     ];
 
     protected $attributes = [
