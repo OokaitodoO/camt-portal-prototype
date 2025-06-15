@@ -91,8 +91,45 @@ async function updateTask() {
         const taskId = document.getElementById('editTaskId').value;
         const formData = new FormData(form);
 
-        // Handle the date input
+        // Collect validation errors
+        const errors = [];
+        let firstErrorField = null;
+
+        // Validate required fields
+        const titleInput = document.getElementById('editTaskTitle');
+        const linkInput = document.getElementById('editTaskLink');
+        const assignedToInput = document.getElementById('editTaskAssignedTo');
         const deadlineInput = document.getElementById('editTaskDeadline');
+        
+        // Check title
+        if (!titleInput.value || !titleInput.value.trim()) {
+            errors.push('กรุณากรอกชื่อภาระงาน');
+            if (!firstErrorField) firstErrorField = titleInput;
+        }
+
+        // Check link
+        if (!linkInput.value || !linkInput.value.trim()) {
+            errors.push('กรุณากรอกลิ้งก์');
+            if (!firstErrorField) firstErrorField = linkInput;
+        }
+
+        // Check assigned member (even though it's readonly, should have a value)
+        if (!assignedToInput.value || !assignedToInput.value.trim()) {
+            errors.push('กรุณาตรวจสอบผู้รับผิดชอบ');
+            if (!firstErrorField) firstErrorField = assignedToInput;
+        }
+
+        // If there are validation errors, show them and stop
+        if (errors.length > 0) {
+            const errorMessage = errors.join('\n');
+            alert(errorMessage);
+            if (firstErrorField) {
+                firstErrorField.focus();
+            }
+            return;
+        }
+
+        // Handle the date input
         if (deadlineInput && deadlineInput.value) {
             // Convert from dd/mm/yyyy to yyyy-mm-dd if needed
             const [day, month, year] = deadlineInput.value.split('/');

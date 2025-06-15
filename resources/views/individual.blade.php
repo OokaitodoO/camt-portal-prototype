@@ -335,7 +335,7 @@
                             <div class="popup-input-wrapper">
                                 <div class="date-picker">
                                     <h2 class="sarabun-16">วันครบกำหนด</h2>
-                                    <input type="date" name="deadline" class="input-text sarabun-16">
+                                    <input type="date" name="deadline" class="input-text sarabun-16" required>
                                 </div>
                             </div>
                         </div>
@@ -411,7 +411,8 @@
                                     <input type="date" 
                                            name="deadline" 
                                            id="editTaskDeadline" 
-                                           class="input-text sarabun-16">
+                                           class="input-text sarabun-16"
+                                           required>
                                 </div>
                             </div>
                         </div>

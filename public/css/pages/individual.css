@@ -424,8 +424,7 @@
 }
 
 /* Add visual feedback for users who can reorder */
-.card-wrapper[draggable="true"]::after {
-    content: "⠿⠿⠿";
+.card-wrapper[draggable="true"]::after {    
     position: absolute;
     top: 5px;
     left: 50%;

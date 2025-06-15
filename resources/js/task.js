@@ -267,18 +267,28 @@ async function createNewTask() {
         const form = document.getElementById('createTaskForm');
         const formData = new FormData(form);
 
-        // Handle deadline format conversion
+        // Collect validation errors
+        const errors = [];
+        let firstErrorField = null;
+
+        // Validate required fields
+        const titleInput = form.querySelector('input[name="title"]');
+        const linkInput = form.querySelector('input[name="link"]');  
         const deadlineInput = form.querySelector('input[name="deadline"]');
-        if (deadlineInput.value) {
-            // Convert from dd/mm/yyyy to yyyy-mm-dd
-            const [day, month, year] = deadlineInput.value.split('/');
-            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            formData.set('deadline', formattedDate);
-        } else {
-            formData.delete('deadline');
+        
+        // Check title
+        if (!titleInput.value || !titleInput.value.trim()) {
+            errors.push('กรุณากรอกชื่อภาระงาน');
+            if (!firstErrorField) firstErrorField = titleInput;
         }
 
-        // Get selected members
+        // Check link
+        if (!linkInput.value || !linkInput.value.trim()) {
+            errors.push('กรุณากรอกลิ้งก์');
+            if (!firstErrorField) firstErrorField = linkInput;
+        }
+
+        // Get selected members and validate
         const selectedMembers = document.querySelectorAll('#createSelectedMembers .selected-member-tag input[type="hidden"]');
         console.log('Selected members:', selectedMembers.length); // Debug log
         
@@ -289,8 +299,30 @@ async function createNewTask() {
         }).filter(id => id);
         
         if (memberIds.length === 0) {
-            alert('กรุณาเลือกผู้รับผิดชอบอย่างน้อย 1 คน');
+            errors.push('กรุณาเลือกผู้รับผิดชอบอย่างน้อย 1 คน');
+            if (!firstErrorField) {
+                firstErrorField = document.querySelector('#createTaskMemberSearch');
+            }
+        }        
+
+        // If there are validation errors, show them and stop
+        if (errors.length > 0) {
+            const errorMessage = errors.join('\n');
+            alert(errorMessage);
+            if (firstErrorField) {
+                firstErrorField.focus();
+            }
             return;
+        }
+
+        // Handle deadline format conversion
+        if (deadlineInput.value) {
+            // Convert from dd/mm/yyyy to yyyy-mm-dd
+            const [day, month, year] = deadlineInput.value.split('/');
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            formData.set('deadline', formattedDate);
+        } else {
+            formData.delete('deadline');
         }
 
         formData.set('assigned_to', memberIds.join(','));
@@ -643,8 +675,45 @@ async function updateTask() {
         const taskId = document.getElementById('editTaskId').value;
         const formData = new FormData(form);
 
-        // Handle the date input properly
+        // Collect validation errors
+        const errors = [];
+        let firstErrorField = null;
+
+        // Validate required fields
+        const titleInput = document.getElementById('editTaskTitle');
+        const linkInput = document.getElementById('editTaskLink');
+        const assignedToInput = document.getElementById('editTaskAssignedTo');
         const deadlineInput = document.getElementById('editTaskDeadline');
+        
+        // Check title
+        if (!titleInput.value || !titleInput.value.trim()) {
+            errors.push('กรุณากรอกชื่อภาระงาน');
+            if (!firstErrorField) firstErrorField = titleInput;
+        }
+
+        // Check link
+        if (!linkInput.value || !linkInput.value.trim()) {
+            errors.push('กรุณากรอกลิ้งก์');
+            if (!firstErrorField) firstErrorField = linkInput;
+        }
+
+        // Check assigned member (readonly but should have value)
+        if (!assignedToInput.value || !assignedToInput.value.trim()) {
+            errors.push('กรุณาตรวจสอบผู้รับผิดชอบ');
+            if (!firstErrorField) firstErrorField = assignedToInput;
+        }
+
+        // If there are validation errors, show them and stop
+        if (errors.length > 0) {
+            const errorMessage = errors.join('\n');
+            alert(errorMessage);
+            if (firstErrorField) {
+                firstErrorField.focus();
+            }
+            return;
+        }
+
+        // Handle the date input properly
         if (deadlineInput && deadlineInput.value) {
             // Convert from dd/mm/yyyy to yyyy-mm-dd
             const [day, month, year] = deadlineInput.value.split('/');
