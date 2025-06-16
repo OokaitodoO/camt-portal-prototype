@@ -203,9 +203,25 @@
 }
 
 .popup-message {
+    text-align: center;
     margin: 20px 0;
-    font-size: 16px;
+    padding: 0 20px;
+}
+
+.popup-message p {
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.popup-message strong {
     color: #333;
+}
+
+.warning-text {
+    background-color: rgba(220, 53, 69, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    border-left: 4px solid #dc3545;
 }
 
 .create-popup-department {
@@ -320,8 +336,6 @@
     position: relative;
     display: inline-block;
 }
-
-
 
 /* Profile popup container specific styles */
 .profile-upload-container {

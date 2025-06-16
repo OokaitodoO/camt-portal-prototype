@@ -54,8 +54,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/create', [DepartmentController::class, 'store'])->name('departments.store');
         Route::post('/reorder', [DepartmentController::class, 'reorder'])->name('departments.reorder');
         Route::get('/{department}/data', [DepartmentController::class, 'getData'])->name('departments.getData');
+        Route::get('/{department}/members-count', [DepartmentController::class, 'getMembersCount'])->name('departments.getMembersCount');
         Route::post('/{department}/update', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+        Route::delete('/{department}/with-members', [DepartmentController::class, 'destroyWithMembers'])->name('departments.destroyWithMembers');
         
         Route::get('/storage/{path}', function ($path) {
             $fullPath = storage_path('app/public/departments/' . $path);

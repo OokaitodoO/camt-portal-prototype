@@ -253,4 +253,80 @@ class DepartmentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get member and task count for a department
+     */
+    public function getMembersCount(Department $department)
+    {
+        try {
+            $memberCount = $department->members()->count();
+            
+            // Count tasks for all members in this department
+            $taskCount = 0;
+            foreach ($department->members as $member) {
+                $taskCount += $member->tasks()->count();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'memberCount' => $memberCount,
+                'taskCount' => $taskCount
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting members count for department: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get member count'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete department with all members and their tasks
+     */
+    public function destroyWithMembers(Department $department)
+    {
+        try {
+            // Check if user is admin
+            if (!auth()->user()->isAdmin()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            DB::transaction(function () use ($department) {
+                // Delete all tasks for members in this department
+                foreach ($department->members as $member) {
+                    $member->tasks()->delete();
+                }
+                
+                // Delete all members in this department
+                $department->members()->delete();
+                
+                // Delete the department's icon if it exists
+                if ($department->icon_path) {
+                    Storage::delete('public/' . $department->icon_path);
+                }
+                
+                // Delete the department
+                $department->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ลบหน่วยงานและข้อมูลที่เกี่ยวข้องสำเร็จ'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting department with members: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการลบหน่วยงาน',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

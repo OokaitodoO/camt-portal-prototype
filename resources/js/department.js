@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (event.target === this && !mouseDownOnPopup) {
                 closeEditPopup();
                 closeDeleteConfirmation();
+                closeMembersDeleteConfirmation();
                 closeCreatePopup();
             }
         });
@@ -348,6 +349,157 @@ async function deleteDepartment() {
     }
 }
 
+// Check for members before deleting department
+async function checkMembersBeforeDelete() {
+    try {
+        const deletePopup = document.getElementById('deleteConfirmationPopup');
+        const departmentId = deletePopup.getAttribute('data-department-id');
+        
+        if (!departmentId) {
+            throw new Error('Department ID not found');
+        }
+
+        console.log('Checking members for department:', departmentId);
+
+        // Check if department has members and tasks
+        const response = await axios.get(`/departments/${departmentId}/members-count`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.data.success) {
+            const { memberCount, taskCount } = response.data;
+            
+            if (memberCount > 0 || taskCount > 0) {
+                // Show members/tasks confirmation popup
+                showMembersDeleteConfirmation(departmentId, memberCount, taskCount);
+            } else {
+                // No members or tasks, proceed with normal deletion
+                deleteDepartment();
+            }
+        } else {
+            throw new Error('Failed to check department members');
+        }
+
+    } catch (error) {
+        console.error('Error checking department members:', error);
+        
+        // If the endpoint doesn't exist yet, proceed with normal deletion
+        if (error.response && error.response.status === 404) {
+            console.log('Members count endpoint not available, proceeding with normal deletion');
+            deleteDepartment();
+        } else {
+            alert('เกิดข้อผิดพลาดในการตรวจสอบข้อมูลหน่วยงาน');
+        }
+    }
+}
+
+// Show members delete confirmation popup
+async function showMembersDeleteConfirmation(departmentId, memberCount, taskCount) {
+    try {
+        // Get department data for the new popup
+        const response = await axios.get(`/departments/${departmentId}/data`);
+        if (!response.data.success) {
+            throw new Error('Failed to fetch department data');
+        }
+
+        const department = response.data.department;
+        const membersPopup = document.getElementById('deleteMembersConfirmationPopup');
+        
+        // Set department data in the new popup
+        membersPopup.setAttribute('data-department-id', departmentId);
+        membersPopup.querySelector('.card-name h3').textContent = department.name;
+        
+        // Set department logo
+        const logoImg = membersPopup.querySelector('.card-logo-img');
+        if (department.icon_path) {
+            logoImg.src = `/storage/${department.icon_path}`;
+        } else {
+            logoImg.src = 'https://placehold.co/128';
+        }
+
+        // Set member and task counts
+        document.getElementById('memberCount').textContent = memberCount;
+        document.getElementById('taskCount').textContent = taskCount;
+
+        // Close the first popup
+        closeDeleteConfirmation();
+
+        // Show the new popup
+        membersPopup.classList.add('active');
+        document.getElementById('overlay').classList.add('active');
+        document.body.classList.add('lock-scroll');
+
+    } catch (error) {
+        console.error('Error showing members delete confirmation:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน');
+    }
+}
+
+// Close members delete confirmation popup
+function closeMembersDeleteConfirmation() {
+    const popup = document.getElementById('deleteMembersConfirmationPopup');
+    const overlay = document.getElementById('overlay');
+    
+    if (popup) popup.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('lock-scroll');
+}
+
+// Delete department with all members and tasks
+async function deleteDepartmentWithMembers() {
+    try {
+        const membersPopup = document.getElementById('deleteMembersConfirmationPopup');
+        const departmentId = membersPopup.getAttribute('data-department-id');
+        
+        if (!departmentId) {
+            throw new Error('Department ID not found');
+        }
+
+        console.log('Deleting department with members and tasks:', departmentId);
+
+        const response = await axios.delete(`/departments/${departmentId}/with-members`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+
+        console.log('Server response:', response.data);
+
+        if (response.data.success) {
+            closeMembersDeleteConfirmation();
+            // Redirect to departments page
+            window.location.href = '/departments';
+        } else {
+            throw new Error(response.data.message || 'Failed to delete department with members');
+        }
+
+    } catch (error) {
+        console.error('Error deleting department with members:', error);
+        
+        let errorMessage = 'เกิดข้อผิดพลาดในการลบหน่วยงาน';
+        
+        if (error.response) {
+            if (error.response.status === 403) {
+                errorMessage = 'คุณไม่มีสิทธิ์ในการลบหน่วยงาน';
+            } else if (error.response.status === 400) {
+                errorMessage = error.response.data.message;
+            } else if (error.response.data && error.response.data.message) {
+                errorMessage = error.response.data.message;
+            }
+            console.error('Server Error:', error.response.data);
+        } else if (error.request) {
+            console.error('No response received:', error.request);
+            errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
+        }
+        
+        alert(errorMessage);
+    }
+}
+
 // Add this function to handle department filtering
 async function filterByDepartment(departmentId) {
     try {
@@ -368,6 +520,10 @@ window.filterByDepartment = filterByDepartment;
 // Export functions for global use
 window.createDepartment = createDepartment;
 window.deleteDepartment = deleteDepartment;
+window.checkMembersBeforeDelete = checkMembersBeforeDelete;
+window.showMembersDeleteConfirmation = showMembersDeleteConfirmation;
+window.closeMembersDeleteConfirmation = closeMembersDeleteConfirmation;
+window.deleteDepartmentWithMembers = deleteDepartmentWithMembers;
 
 // Make drag and drop functions available globally
 window.initializeDragAndDrop = initializeDragAndDrop;

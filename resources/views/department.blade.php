@@ -204,8 +204,41 @@
                     <div class="btn btn-cancel sarabun-20" onclick="closeDeleteConfirmation()">
                         <p>ยกเลิก</p>
                     </div>
-                    <div class="btn btn-confirm sarabun-20" onclick="deleteDepartment()">
+                    <div class="btn btn-confirm sarabun-20" onclick="checkMembersBeforeDelete()">
                         <p>ยืนยัน</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Members and Tasks Confirmation Popup -->
+    <div id="deleteMembersConfirmationPopup" class="popup-container">
+        <div class="confirmation-popup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="popup-name">
+                        <h1 class="page-title sarabun-36">หน่วยงานนี้มีบุคลากรอยู่</h1>
+                    </div>
+                </div>
+                <div class="card-logo">
+                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                </div>  
+                <div class="divider"></div>
+                <div class="card-name sarabun-24">
+                    <h3><!-- Department name will be inserted here --></h3>
+                </div>
+                <div class="popup-message sarabun-20">
+                    <p>การลบหน่วยงานนี้จะทำให้บุคลากรและภาระงานทั้งหมดถูกลบด้วย</p>
+                    <p><strong>จำนวนบุคลากร: <span id="memberCount">0</span> คน</strong></p>
+                    <p><strong>จำนวนภาระงาน: <span id="taskCount">0</span> งาน</strong></p>
+                </div>
+                <div class="popup-btn-wrapper">
+                    <div class="btn btn-cancel sarabun-20" onclick="closeMembersDeleteConfirmation()">
+                        <p>ยกเลิก</p>
+                    </div>
+                    <div class="btn btn-confirm sarabun-20" onclick="deleteDepartmentWithMembers()">
+                        <p>ยืนยันการลบ</p>
                     </div>
                 </div>
             </div>
