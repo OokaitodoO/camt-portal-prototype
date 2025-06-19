@@ -781,7 +781,7 @@ window.toggleSubtasks = toggleSubtasks;
 async function toggleFavorite(event, taskId, element) {
     try {
         event.stopPropagation();
-        const isFavorite = element.getAttribute('data-favorite') === 'true';
+        const isFavorite = element.getAttribute('data-favorite') === '1';
         
         // Update the favorite status
         const response = await axios.post(`/tasks/${taskId}/toggle-favorite`, {
@@ -791,7 +791,7 @@ async function toggleFavorite(event, taskId, element) {
         if (response.data.success) {
             // Update the UI
             const starIcon = element.querySelector('i');
-            element.setAttribute('data-favorite', (!isFavorite).toString());
+            element.setAttribute('data-favorite', !isFavorite ? '1' : '0');
             
             if (!isFavorite) {
                 starIcon.classList.add('favorite-active');
@@ -799,8 +799,13 @@ async function toggleFavorite(event, taskId, element) {
                 starIcon.classList.remove('favorite-active');
             }
             
-            // Refresh the page to update the favorites sidebar
-            window.location.reload();
+            // Update the favorites sidebar if the function exists (for individual page)
+            if (typeof window.updateFavoriteTasksSidebar === 'function') {
+                window.updateFavoriteTasksSidebar();
+            } else {
+                // Fallback to reload if not on individual page
+                window.location.reload();
+            }
         }
     } catch (error) {
         console.error('Error toggling favorite:', error);

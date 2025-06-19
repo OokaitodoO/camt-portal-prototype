@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Member;
 
 class Department extends Model
 {
@@ -73,6 +72,6 @@ class Department extends Model
     // Update the relationship to use id
     public function members()
     {
-        return $this->hasMany(Member::class, 'department_id');
+        return $this->hasMany(User::class);
     }
 }

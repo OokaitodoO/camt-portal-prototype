@@ -744,6 +744,11 @@ function swapTaskCards(card1, card2) {
     
     // Update order attributes and save to backend
     updateTaskCardOrders();
+    
+    // Call immediately to test
+    console.log('=== IMMEDIATE UPDATE TEST ===');
+    updateFavoriteTasksSidebar();
+    
     saveTaskCardOrder();
     
     showTaskNotification('ลำดับภาระงานได้รับการบันทึกแล้ว', 'success');
@@ -801,8 +806,13 @@ async function saveTaskCardOrder() {
             throw new Error(data.message || 'Failed to save task order');
         }
         
-        console.log('Task order saved successfully');
+        console.log('Task order saved successfully');            
         
+        // Update the favorite tasks sidebar to reflect new order
+        // Add small delay to ensure DOM is fully updated after drag operation
+        setTimeout(() => {
+            updateFavoriteTasksSidebar();
+        }, 100);
     } catch (error) {
         console.error('Error saving task order:', error);
         
@@ -995,6 +1005,103 @@ function addTaskClickPreservation(card) {
     }
 }
 
+function updateFavoriteTasksSidebar() {
+    try {
+        console.log('Updating favorite tasks sidebar based on current card order...');
+        
+        // Get the sidebar favorite tasks container
+        const favoriteTasksContainer = document.querySelector('.favorite-tasks');
+        if (!favoriteTasksContainer) {
+            console.log('Favorite tasks container not found');
+            return;
+        }
+
+        // Get all task cards in their current DOM order
+        const taskCards = document.querySelectorAll('.card-wrapper');
+        console.log('Found task cards:', taskCards.length);
+        
+        const favoriteTasksData = [];
+
+        // Extract favorite tasks data from the main task cards in their current order
+        taskCards.forEach((card, index) => {
+            const favoriteButton = card.querySelector('.card-favorite');
+            
+            if (favoriteButton) {
+                const isFavorite = favoriteButton.getAttribute('data-favorite') === '1';
+                const taskTitle = card.querySelector('.card-name h3')?.textContent?.trim();
+                
+                console.log(`Task ${index + 1}: "${taskTitle}" - Favorite: ${isFavorite}`);
+                
+                // Check if this task is favorited
+                if (isFavorite) {
+                    // Extract task data
+                    const taskLogo = card.querySelector('.card-logo img')?.src;
+                    
+                    // Extract task link from the card container onclick
+                    let taskLink = '';
+                    const cardContainer = card.querySelector('.card-container');
+                    if (cardContainer && cardContainer.onclick) {
+                        const onclickStr = cardContainer.onclick.toString();
+                        const linkMatch = onclickStr.match(/openTaskLink\(event,\s*['"`]([^'"`]+)['"`]\)/);
+                        if (linkMatch) {
+                            taskLink = linkMatch[1];
+                        }
+                    }
+
+                    if (taskTitle) {
+                        favoriteTasksData.push({
+                            title: taskTitle,
+                            logo: taskLogo || 'https://placehold.co/25',
+                            link: taskLink,
+                            order: index // Use DOM position as order
+                        });
+                        console.log(`Added favorite task: "${taskTitle}" at position ${index}`);
+                    }
+                }
+            } else {
+                console.log(`Task ${index + 1}: No favorite button found`);
+            }
+        });
+
+        console.log('Total favorite tasks found:', favoriteTasksData.length);
+        console.log('Favorite tasks data:', favoriteTasksData);
+
+        // Clear and rebuild the favorite tasks container
+        favoriteTasksContainer.innerHTML = '';
+
+        // if (favoriteTasksData.length === 0) {
+        //     favoriteTasksContainer.innerHTML = '<p class="sarabun-16" style="color: #666; text-align: center; padding: 10px;">ไม่มีภาระงานที่ใช้บ่อย</p>';
+        //     console.log('No favorite tasks found, showing empty message');
+        //     return;
+        // }
+
+        // Add each favorite task to the sidebar (already in correct order)
+        favoriteTasksData.forEach(task => {
+            const favoriteTaskItem = document.createElement('div');
+            favoriteTaskItem.className = 'favorite-task-item';
+            
+            favoriteTaskItem.innerHTML = `
+                <img src="${task.logo}" 
+                     class="nav-logo-img" 
+                     alt="logo"
+                     onerror="this.src='https://placehold.co/25'">
+                <a href="javascript:void(0)" 
+                   onclick="openTaskLink(event, '${task.link}')" 
+                   class="favorite-task-link sarabun-16">
+                    ${task.title}
+                </a>
+            `;
+            
+            favoriteTasksContainer.appendChild(favoriteTaskItem);
+        });
+
+        console.log('Favorite tasks sidebar updated successfully with', favoriteTasksData.length, 'tasks');
+        
+    } catch (error) {
+        console.error('Error updating favorite tasks sidebar:', error);
+    }
+}
+
 // Initialize task drag and drop when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Individual page DOM loaded, initializing task drag and drop');
@@ -1006,3 +1113,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Make functions available globally
 window.initializeTaskDragAndDrop = initializeTaskDragAndDrop;
+window.updateFavoriteTasksSidebar = updateFavoriteTasksSidebar;
+window.testFavoriteSidebar = testFavoriteSidebar;
+
+// Test function for debugging - can be called from browser console
+function testFavoriteSidebar() {
+    console.log('=== MANUAL TEST OF FAVORITE SIDEBAR ===');
+    const cards = document.querySelectorAll('.card-wrapper');
+    console.log('Total cards found:', cards.length);
+    
+    cards.forEach((card, index) => {
+        const favoriteButton = card.querySelector('.card-favorite');
+        const title = card.querySelector('.card-name h3')?.textContent?.trim();
+        
+        if (favoriteButton) {
+            const isFavorite = favoriteButton.getAttribute('data-favorite');
+            console.log(`Card ${index + 1}: "${title}" - data-favorite="${isFavorite}"`);
+        } else {
+            console.log(`Card ${index + 1}: "${title}" - NO FAVORITE BUTTON`);
+        }
+    });
+    
+    updateFavoriteTasksSidebar();
+}
