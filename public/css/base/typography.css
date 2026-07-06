@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url("../components/animation.css");
+
+.sarabun-14 {
+    font-family: "Sarabun", sans-serif;
+    font-size: 14px;
+    font-style: normal;
+  }
+  
+.sarabun-16 {
+    font-family: "Sarabun", sans-serif;
+    font-size: 16px;
+    font-style: normal;
+}
+  
+.sarabun-18 {
+    font-family: "Sarabun", sans-serif;
+    font-size: 18px;
+    font-style: normal;
+}
+  
+.sarabun-20 {
+    font-family: "Sarabun", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+}
+  
+.sarabun-24 {
+    font-family: "Sarabun", sans-serif;
+    font-size: 24px;
+    font-style: normal;
+}
+.sarabun-36 {
+    font-family: "Sarabun", sans-serif;
+    font-weight: 500;
+    font-size: 36px;
+    font-style: normal;
+}
+  
+.sarabun-semibold {
+    font-weight: 600;
+}
+  
+.sarabun-bold {
+    font-weight: 700;
+}
+  
+.sarabun-extrabold {
+    font-weight: 800;
+}
+  
+
+.btn-text {
+    font-size: 20px;
+    height: 40px;
+    width: 200px;
+}
+
+.btn-side-nav-text {
+    font-weight: 400;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.page-title {
+    font-weight: 400;
+    font-size: 36px;
+    line-height: 100%;
+    width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+}

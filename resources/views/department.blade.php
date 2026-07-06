@@ -4,142 +4,253 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน่วยงาน</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Logotab-CAMT.png') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-role" content="{{ Auth::user()->role }}">
+    <meta name="user-department-id" content="{{ Auth::user()->department_id }}">
 
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/department.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/department.css') }}">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-<body>
+<body class="body-bg">
     <!-- Header -->
     <header>
         <div class="role-container">
-            <ul>
-                <li><a href="" class="btn-orange">ตำแหน่ง</a></li>
-            </ul>
+            <div class="user-dropdown">
+                <div class="btn-status btn-text sarabun-20" onclick="toggleUserDropdown()">
+                    {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="userDropdown">
+                    <div class="dropdown-item sarabun-16">
+                        @php
+                            $roleLabels = [
+                                'admin' => 'ผู้ดูแลระบบ',
+                                'manager' => 'ผู้บริหาร',
+                                'headstaff' => 'หัวหน้างาน',
+                                'staff' => 'บุคลากร'
+                            ];
+                        @endphp
+                        {{ $roleLabels[Auth::user()->role] ?? 'ไม่ระบุตำแหน่ง' }}
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ secure_url('/logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item sarabun-16">
+                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
         <nav class="nav-bar">
-            <span class="camt-logo">Logo Camt</span>
-            <ul class="nav-action">
-                <li><a href="{{route('departments.index')}}" class="btn">หน่วยงาน</a></li>
-                <li><a href="{{ route('members.index') }}" class="btn">เพิ่มบุคลากร</a></li>
-                <li><a href="{{ route('tasks.index') }}" class="btn">ภาระงาน</a></li>
-            </ul>
-        </nav>
-        <div class="serach-bar">
-            <div class="title">
-                <h1><i class="fas fa-building"></i> หน่วยงาน</h1>
+            <div class="nav-bar-action-container">
+                <img src="{{ asset('images/CamtLogo.png') }}" alt="Logo" onerror="this.src='https://placehold.co/200x60'">
+                <ul class="nav-action">
+                    <li><a href="{{route('departments.index')}}" class="btn-nav-active btn-text sarabun-20">หน่วยงาน</a></li>
+                    <li><a href="{{ route('members.index') }}" class="btn-nav btn-text sarabun-20">บุคลากร</a></li>
+                    @if(Auth::user()->isStaff())
+                    <li><a href="{{ route('tasks.index') }}" class="btn-nav{{ Request::routeIs('tasks.*') ? '-active' : '' }} btn-text sarabun-20">ภาระงาน</a></li>
+                    @else
+                    <li class="task-dropdown">
+                        <div class="btn-nav{{ Request::routeIs('tasks.*', 'individual.*') ? '-active' : '' }} btn-text sarabun-20">
+                            ภาระงาน <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="task-dropdown-menu">
+                            <a href="{{ route('tasks.index') }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-tasks"></i> ภาระงานทั้งหมด
+                            </a>
+                            <a href="{{ route('members.show', Auth::user()->id) }}" class="dropdown-item sarabun-16">
+                                <i class="fas fa-user-clock"></i> ภาระงานรายบุคคล
+                            </a>
+                        </div>
+                    </li>
+                    @endif
+                </ul>
             </div>
-            <div class="action-container">
-                <input type="text" placeholder="ค้นหาหน่วยงาน...">
-                <button type="button" class="btn-orange create-btn" onclick="openCreatePopup()">
+            @if(auth()->user()->isAdmin())
+                <div class="btn-create btn-text sarabun-20" id="popupButton" onclick="openCreatePopup()">
                     <i class="fas fa-plus"></i> เพิ่มหน่วยงาน
-                </button>
+                </div>
+            @endif
+        </nav>
+        <div class="search-tab">
+            <div class="title slide-in sarabun-36">
+                <h1 class="page-title">หน่วยงาน</h1>
+            </div>
+            <div class="search-bar ">
+                <input type="text" placeholder="ค้นหา" class="sarabun-16">
             </div>
         </div>
     </header>
 
-    <!-- Content -->
-    <section class="content-container">
-        <!-- Regular department cards -->
+    <!-- department card -->
+    <section class="content-container">        
         @php
-            $sortedDepartments = $departments->sortBy('name');
+            $visibleDepartments = Auth::user()->getVisibleDepartments();
         @endphp
         
-        @foreach($sortedDepartments as $department)
-        <div class="department-card">
-            <div class="card-edit">
-                <span>
-                    <a href="#" class="icon-action" onclick="openEditPopup(this)" data-department="{{ $department->name }}">
-                        <i class="fas fa-edit"></i> แก้ไข
-                    </a>
-                </span>
-            </div>
-            <div class="card-content">
-                <span><i class="fas fa-building fa-3x"></i></span>
-                <p class="department-name">{{ $department->name }}</p>
-            </div>
-        </div>
+        @foreach($visibleDepartments as $department)
+            @include('components.department-card', ['department' => $department])
         @endforeach
-
-        <!-- Create New Card (Always at the end) -->
-        <div class="department-card create-card" onclick="openCreatePopup()">
-            <div class="card-content">
-                <span><i class="fas fa-plus-circle fa-3x"></i></span>
-                <p>เพิ่มหน่วยงาน</p>
-            </div>
-        </div>
     </section>
 
-    <!-- Edit Popup -->
-    <div class="popup-overlay" id="editPopup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <h2>แก้ไขหน่วยงาน</h2>
-                <span class="popup-close" onclick="closeEditPopup()">&times;</span>
+    <!-- popup create new department-->
+    <div id="popupCreate" class="popup-container">
+        <div class="create-popup-department">
+            <div class="popup-content">
+                <form id="createDepartmentForm" enctype="multipart/form-data">
+                    @csrf
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeCreatePopup()">
+                            <   
+                        </div>
+                        <div class="popup-name">
+                            <h1 class="popup-header-title sarabun-36">เพิ่มหน่วยงาน</h1>
+                        </div>
+                    </div>
+                    <div class="popup-image">
+                        <label for="departmentLogo" class="logo-upload-label">
+                            <img src="https://placehold.co/128" alt="" class="card-logo-img" id="createLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="departmentLogo" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="popup-input-container sarabun-24">
+                        <h2>ชื่อหน่วยงาน</h2>
+                        <input type="text" name="name" placeholder="ชื่อหน่วยงาน..." class="input-text-name sarabun-16" required>
+                    </div>
+                    <div class="popup-btn-wrapper">
+                        <div class="btn btn-cancel close-popup sarabun-20" onclick="closeCreatePopup()">
+                            <p>ยกเลิก</p>
+                        </div>
+                        <button type="submit" class="btn btn-confirm sarabun-20">
+                            <p>ตกลง</p>
+                        </button>
+                    </div>
+                </form>
             </div>
-            <form class="popup-form" id="editForm" onsubmit="saveDepartmentName(event)">
-                <div class="image-upload-container">
-                    <img id="editPreviewImage" class="preview-image" src="" alt="Department Icon">
-                    <input type="file" id="editDepartmentIcon" accept="image/*" onchange="previewImage(this, 'editPreviewImage')" class="image-input">
-                    <label for="editDepartmentIcon" class="upload-label">
-                        <i class="fas fa-upload"></i> อัพโหลดไอคอน
-                    </label>
-                    <p class="image-requirements">ขนาดไฟล์สูงสุด: 2MB, ขนาดแนะนำ: 128x128px</p>
-                </div>
-                <input type="text" id="departmentName" placeholder="ชื่อหน่วยงาน">
-                <div class="button-group">
-                    <button type="submit" class="btn-save">บันทึก</button>
-                    <button type="button" class="btn-delete" onclick="openDeleteConfirmation()">
-                        <i class="fas fa-trash"></i> ลบหน่วยงาน
-                    </button>
-                </div>
-            </form>
+        </div>
+    </div>  
+
+    <!-- popup edit department -->
+    <div id="popupEdit" class="popup-container">
+        <div class="create-popup-department">
+            <div class="popup-content">
+                <form id="editDepartmentForm" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="editDepartmentId" name="id">
+                    <div class="popup-header">
+                        <div class="btn-close close-popup" onclick="closeEditPopup()">
+                            <
+                        </div>
+                        <div class="popup-name">
+                            <h1 class="popup-header-title sarabun-36">แก้ไขหน่วยงาน</h1>
+                        </div>
+                        <div class="popup-delete btn-pointer" onclick="openDeleteConfirmationPopup(document.getElementById('editDepartmentId').value)">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                    <div class="popup-image">
+                        <label for="editDepartmentLogo" class="logo-upload-label">
+                            <img src="" alt="" class="card-logo-img" id="editLogoPreview">
+                            <div class="upload-overlay">
+                                <i class="fas fa-camera"></i>
+                                <span>อัพโหลดรูปภาพ</span>
+                            </div>
+                        </label>
+                        <input type="file" name="icon" id="editDepartmentLogo" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="popup-input-container sarabun-24">
+                        <h2>ชื่อหน่วยงาน</h2>
+                        <input type="text" name="name" placeholder="เพิ่มหน่วยงาน..." class="input-text-name sarabun-16" required>
+                    </div>
+                    <div class="popup-btn-wrapper">
+                        <div class="btn btn-cancel close-popup sarabun-20" onclick="closeEditPopup()">
+                            <p>ยกเลิก</p>
+                        </div>
+                        <button type="submit" class="btn btn-confirm sarabun-20">
+                            <p>ตกลง</p>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Create Popup -->
-    <div class="popup-overlay" id="createPopup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <h2>เพิ่มหน่วยงานใหม่</h2>
-                <span class="popup-close" onclick="closeCreatePopup()">&times;</span>
-            </div>
-            <form class="popup-form" onsubmit="createDepartment(event)">
-                <div class="image-upload-container">
-                    <img id="createPreviewImage" class="preview-image" src="{{ asset('images/default-department.png') }}" alt="Department Icon">
-                    <input type="file" id="createDepartmentIcon" accept="image/*" onchange="previewImage(this, 'createPreviewImage')" class="image-input">
-                    <label for="createDepartmentIcon" class="upload-label">
-                        <i class="fas fa-upload"></i> อัพโหลดไอคอน
-                    </label>
-                    <p class="image-requirements">ขนาดไฟล์สูงสุด: 2MB, ขนาดแนะนำ: 128x128px</p>
+    <!-- Delete Confirmation Popup -->
+    <div id="deleteConfirmationPopup" class="popup-container">
+        <div class="confirmation-popup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="popup-name">
+                        <h1 class="page-title sarabun-36">ต้องการลบหน่วยงานนี้หรือไม่?</h1>
+                    </div>
                 </div>
-                <input type="text" id="newDepartmentName" placeholder="ชื่อหน่วยงาน">
-                <button type="submit" class="btn-save">สร้าง</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete confirmation popup -->
-    <div class="popup-overlay" id="deletePopup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <h2>ยืนยันการลบหน่วยงาน</h2>
-                <span class="popup-close" onclick="closeDeletePopup()">&times;</span>
-            </div>
-            <div class="popup-form">
-                <p>คุณต้องการลบหน่วยงาน "<span id="deleteDepartmentName"></span>" ใช่หรือไม่?</p>
-                <div class="button-group">
-                    <button type="button" class="btn-cancel" onclick="closeDeletePopup()">ยกเลิก</button>
-                    <button type="button" class="btn-delete" onclick="deleteDepartment()">ลบ</button>
+                <div class="card-logo">
+                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                </div>  
+                <div class="divider"></div>
+                <div class="card-name sarabun-24">
+                    <h3><!-- Department name will be inserted here --></h3>
+                </div>
+                <div class="popup-btn-wrapper">
+                    <div class="btn btn-cancel sarabun-20" onclick="closeDeleteConfirmation()">
+                        <p>ยกเลิก</p>
+                    </div>
+                    <div class="btn btn-confirm sarabun-20" onclick="checkMembersBeforeDelete()">
+                        <p>ยืนยัน</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add your compiled JS -->
-    @vite(['resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="{{ asset('js/department.js') }}"></script>
+    <!-- Delete Members and Tasks Confirmation Popup -->
+    <div id="deleteMembersConfirmationPopup" class="popup-container">
+        <div class="confirmation-popup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <div class="popup-name">
+                        <h1 class="page-title sarabun-36">หน่วยงานนี้มีบุคลากรอยู่</h1>
+                    </div>
+                </div>
+                <div class="card-logo">
+                    <img src="https://placehold.co/128" class="card-logo-img" alt="logo">
+                </div>  
+                <div class="divider"></div>
+                <div class="card-name sarabun-24">
+                    <h3><!-- Department name will be inserted here --></h3>
+                </div>
+                <div class="popup-message sarabun-20">
+                    <p>การลบหน่วยงานนี้จะทำให้บุคลากรและภาระงานทั้งหมดถูกลบด้วย</p>
+                    <p><strong>จำนวนบุคลากร: <span id="memberCount">0</span> คน</strong></p>
+                    <p><strong>จำนวนภาระงาน: <span id="taskCount">0</span> งาน</strong></p>
+                </div>
+                <div class="popup-btn-wrapper">
+                    <div class="btn btn-cancel sarabun-20" onclick="closeMembersDeleteConfirmation()">
+                        <p>ยกเลิก</p>
+                    </div>
+                    <div class="btn btn-confirm sarabun-20" onclick="deleteDepartmentWithMembers()">
+                        <p>ยืนยันการลบ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay"></div>
+
+    <!-- script -->
+    @vite('resources/js/app.js')
+    @vite('resources/js/department.js')
+
 </body>
+
 </html>

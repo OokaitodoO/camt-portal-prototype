@@ -6,50 +6,96 @@ use App\Models\Department;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MemberController extends Controller
 {
     public function create()
     {
-        $departments = Department::orderBy('name')->get();
-        return view('members.create', compact('departments'));
+        // $departments = Department::orderBy('name')->get();
+        // return view('members.create', compact('departments'));
+        return view('members.create');
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-        ]);
+        try {
+            // Log the incoming request data
+            \Log::info('Creating new member with data:', $request->all());
 
-        $member = new Member();
-        $member->first_name = $request->first_name;
-        $member->last_name = $request->last_name;
-        $member->position = $request->position;
-        $member->department_id = $request->department_id;
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'position' => 'required|string|max:255',
+                'department_id' => 'required|exists:departments,id',
+                'sub_department' => 'nullable|string|max:255',
+                'role' => 'required|string|in:admin,manager,headstaff,staff',
+                'email' => 'nullable|email|max:255|unique:members,email',
+                'phone' => 'nullable|string|max:20',
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cmu_account' => 'nullable|string|max:255'
+            ]);
 
-        if ($request->hasFile('profile_picture')) {
-            $path = $request->file('profile_picture')->store('members', 'public');
-            $member->profile_picture = $path;
+            \Log::info('Validation passed, creating member');
+
+            // Generate a default password
+            $defaultPassword = bcrypt('password123');
+
+            // Check if email is a CMU account
+            if ($validated['email'] && str_ends_with(strtolower($validated['email']), '@cmu.ac.th')) {
+                $validated['cmu_account'] = $validated['email'];
+            }
+
+            // Create member using mass assignment
+            $member = Member::create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'position' => $validated['position'],
+                'department_id' => $validated['department_id'],
+                'sub_department' => $validated['sub_department'] ?? null,
+                'role' => $validated['role'],
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'password' => $defaultPassword,
+                'cmu_account' => $validated['cmu_account'] ?? null
+            ]);
+
+            // Handle profile picture separately
+            if ($request->hasFile('profile_picture')) {
+                $path = $request->file('profile_picture')->store('members', 'public');
+                $member->profile_picture = $path;
+                $member->save();
+            }
+
+            \Log::info('Member created successfully:', ['member_id' => $member->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'เพิ่มบุคลากรสำเร็จ',
+                'member' => $member->load('department')
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error:', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'ข้อมูลไม่ถูกต้อง',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            \Log::error('Member creation error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการเพิ่มบุคลากร',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $member->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'เพิ่มบุคลากรสำเร็จ',
-            'member' => [
-                'id' => $member->id,
-                'first_name' => $member->first_name,
-                'last_name' => $member->last_name,
-                'position' => $member->position,
-                'department_name' => $member->department->name,
-                'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
-            ]
-        ]);
     }
 
     public function edit(Member $member)
@@ -60,43 +106,82 @@ class MemberController extends Controller
 
     public function update(Request $request, Member $member)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-        ]);
-
-        $member->first_name = $request->first_name;
-        $member->last_name = $request->last_name;
-        $member->position = $request->position;
-        $member->department_id = $request->department_id;
-
-        if ($request->hasFile('profile_picture')) {
-            // Delete old profile picture if exists
-            if ($member->profile_picture) {
-                Storage::disk('public')->delete($member->profile_picture);
-            }
+        try {
+            \Log::info('Updating member with data:', $request->all());
             
-            $path = $request->file('profile_picture')->store('members', 'public');
-            $member->profile_picture = $path;
-        }
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'position' => 'required|string|max:255',
+                'department_id' => 'required|exists:departments,id',
+                'sub_department' => 'nullable|string|max:255',
+                'role' => 'required|string|in:admin,manager,headstaff,staff',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cmu_account' => 'nullable|string|max:255'
+            ]);
 
-        $member->save();
+            // Check if email is a CMU account
+            if ($validated['email'] && str_ends_with(strtolower($validated['email']), '@cmu.ac.th')) {
+                $validated['cmu_account'] = $validated['email'];
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'อัปเดตข้อมูลบุคลากรสำเร็จ',
-            'member' => [
+            // Handle profile picture upload
+            if ($request->hasFile('profile_picture')) {
+                \Log::info('Processing profile picture upload');
+                
+                // Delete old profile picture if exists
+                if ($member->profile_picture) {
+                    Storage::disk('public')->delete($member->profile_picture);
+                }
+                
+                // Store new profile picture
+                $path = $request->file('profile_picture')->store('members', 'public');
+                \Log::info('New profile picture path:', ['path' => $path]);
+                
+                // Update the member's profile picture path
+                $member->profile_picture = $path;
+            }
+
+            // Update other member details
+            $member->fill(array_diff_key($validated, ['profile_picture' => '']));
+            $member->save();
+
+            \Log::info('Member updated successfully:', [
                 'id' => $member->id,
-                'first_name' => $member->first_name,
-                'last_name' => $member->last_name,
-                'position' => $member->position,
-                'department_name' => $member->department->name,
-                'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
-            ]
-        ]);
+                'profile_picture' => $member->profile_picture,
+                'cmu_account' => $member->cmu_account
+            ]);
+
+            // Load the department relation for the response
+            $member->load('department');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'อัปเดตข้อมูลบุคลากรสำเร็จ',
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department_name' => $member->department->name,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error updating member:', [
+                'member_id' => $member->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Member $member)
@@ -116,8 +201,10 @@ class MemberController extends Controller
 
     public function index()
     {
-        $members = Member::with('department')->orderBy('first_name')->get();
-        $departments = Department::orderBy('name')->get();
+        $user = auth()->user();
+        $members = $user->getVisibleMembers();
+        $departments = $user->getVisibleDepartments();
+
         return view('members.index', compact('members', 'departments'));
     }
 
@@ -138,5 +225,254 @@ class MemberController extends Controller
             ->get();
 
         return response()->json($members);
+    }
+
+    public function show(Member $member)
+    {
+        // Check if the current user can view this member
+        if (!auth()->user()->canView($member)) {
+            return redirect()->route('members.index')
+                ->with('error', 'คุณไม่มีสิทธิ์ในการดูข้อมูลบุคลากรนี้');
+        }
+
+        // Load the member with their department and assigned tasks
+        $member->load(['department', 'assignedTasks' => function($query) {
+            $query->with(['department', 'assignedBy', 'subTasks']);
+        }]);
+
+        $assignedTasks = $member->assignedTasks;
+        return view('individual', compact('member', 'assignedTasks'));
+    }
+
+    public function filterByDepartment(Department $department)
+    {
+        $members = Member::with('department')->get(); // Get all for the "all" view
+        $departments = Department::all();
+        return view('members.index', compact('members', 'departments', 'department'));
+    }
+
+    public function getMemberData(Member $member)
+    {
+        try {
+            $member->load(['department', 'assignedTasks']);
+            
+            return response()->json([
+                'success' => true,
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department_id' => $member->department_id,
+                    'sub_department' => $member->sub_department,
+                    'role' => $member->role,
+                    'email' => $member->email,
+                    'phone' => $member->phone,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null,
+                    'department' => [
+                        'id' => $member->department->id,
+                        'name' => $member->department->name
+                    ]
+                ],
+                'tasks' => $member->assignedTasks->map(function($task) {
+                    return [
+                        'id' => $task->id,
+                        'name' => $task->name,
+                        'description' => $task->description,
+                        'status' => $task->status
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching member data:', [
+                'member_id' => $member->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการโหลดข้อมูล'
+            ], 500);
+        }
+    }
+
+    public function getMemberDetails(Member $member)
+    {
+        try {
+            $member->load('department');
+            return response()->json([
+                'success' => true,
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department' => $member->department,
+                    'sub_department' => $member->sub_department,
+                    'email' => $member->email,
+                    'phone' => $member->phone,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch member details'
+            ], 500);
+        }
+    }
+
+    public function destroyWithTasks(Member $member)
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Delete all tasks associated with the member
+            $member->assignedTasks()->delete();
+            
+            // Delete the member
+            $member->delete();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Member and associated tasks deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete member and tasks: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getDetailsWithTasks(Member $member)
+    {
+        try {
+            // Load the member's tasks and department with error logging
+            \Log::info('Fetching member details with tasks', ['member_id' => $member->id]);
+            
+            $member->load(['assignedTasks', 'department']);
+            
+            return response()->json([
+                'success' => true,
+                'member' => [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'position' => $member->position,
+                    'department' => $member->department,
+                    'profile_picture' => $member->profile_picture ? Storage::url($member->profile_picture) : null
+                ],
+                'tasks' => $member->assignedTasks->map(function($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title,
+                        'description' => $task->description,
+                        'deadline' => $task->deadline,
+                        'status' => $task->status
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching member details', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching member details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function filter($departmentId)
+    {
+        $user = auth()->user();
+        $departments = $user->getVisibleDepartments();
+        
+        if ($departmentId === 'all') {
+            $members = $user->getVisibleMembers();
+        } else {
+            $members = Member::with('department')
+                ->where('department_id', $departmentId)
+                ->ordered()
+                ->get();
+        }
+
+        return view('members.index', compact('members', 'departments', 'departmentId'));
+    }
+
+    public function updateProfilePicture(Request $request, Member $member)
+    {
+        try {
+            $request->validate([
+                'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture if it exists
+                if ($member->profile_picture) {
+                    Storage::disk('public')->delete($member->profile_picture);
+                }
+
+                // Store new profile picture directly in public disk
+                $path = $request->file('profile_picture')->store('members', 'public');
+                $member->profile_picture = $path;  // Store just the path without 'storage/' prefix
+                $member->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile picture updated successfully',
+                    'path' => $path
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating profile picture: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function reorder(Request $request)
+    {
+        try {
+            $orders = $request->input('orders', []);
+            
+            foreach ($orders as $order) {
+                Member::where('id', $order['id'])->update(['order' => $order['order']]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Member order updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error reordering members:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update member order'
+            ], 500);
+        }
     }
 } 

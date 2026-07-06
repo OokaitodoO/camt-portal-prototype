@@ -1,0 +1,216 @@
+@import url("../components/animation.css");
+
+.content-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    grid-auto-flow: dense; /* This helps fill gaps */
+}
+
+.icon-action {
+    text-decoration: none;
+    color: #F48E2E;
+    transition: color 0.3s ease;
+}
+
+.icon-action:hover {
+    color: #d97a1e;
+}
+
+/* Style the search input */
+.serach-bar input[type="text"] {
+    padding: 8px 15px;
+    border: 2px solid #ECE3DB;
+    border-radius: 20px;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.serach-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+    width: 300px;
+}
+
+/* Add these new styles */
+.action-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.create-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 142, 46, 0.3);
+}
+
+.department-card.new {
+    animation: addCard 0.5s ease-out;
+}
+
+
+.department-card.updated {
+    animation: updateFlash 0.3s ease-out;
+}
+
+/* Improve input styling */
+.popup-form input[type="text"] {
+    padding: 10px;
+    border: 2px solid #ECE3DB;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.popup-form input[type="text"]:focus {
+    outline: none;
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+}
+
+.department-card.updated {
+    animation: successUpdate 0.3s ease-out;
+}
+
+/* Style for create new card */
+.create-card {
+    order: 999; /* High number to ensure it stays at the end */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px dashed #F48E2E;
+    background-color: rgba(244, 142, 46, 0.1);
+    transition: all 0.3s ease;
+}
+
+.create-card .card-content {
+    color: #F48E2E;
+    text-align: center;
+}
+
+.create-card:hover {
+    transform: translateY(-5px);
+    background-color: rgba(244, 142, 46, 0.2);
+    border-color: #d97a1e;
+}
+
+.create-card .fa-plus-circle {
+    margin-bottom: 1rem;
+}
+
+
+.action-container .create-btn {
+    display: none;
+}
+
+
+
+.department-card.deleting {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Image upload styles */
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.preview-image {
+    width: 128px;
+    height: 128px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #ECE3DB;
+}
+
+.image-input {
+    display: none;
+}
+
+.upload-label {
+    background-color: #F48E2E;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-label:hover {
+    background-color: #d97a1e;
+    transform: translateY(-2px);
+}
+
+.image-requirements {
+    font-size: 0.8rem;
+    color: #666;
+    text-align: center;
+    margin: 0;
+}
+
+/* Update department card image */
+.department-card .card-content img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+/* Target the card wrapper instead of card container */
+.card-wrapper {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Style for no results message */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.card-name {
+    padding: 10px 0;
+}
+
+/* Animation for cards */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,555 @@
+.content-container {
+    display: grid;
+    grid-template: 
+    'leftNav content' / 360px;
+}
+
+.side-nav-container{
+    grid-area: leftNav;
+    background-color: white;
+    height: 100%;
+}
+
+.side-nav {
+    display: grid;
+    background-image: linear-gradient(to right, #F48E2E, #F6B271);
+    color: white;
+    padding: 10px;
+    gap: 6px;
+}
+
+.department {
+    width: 100%;
+    padding-bottom: 30px;
+}
+
+.card-leader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    gap: 15px;
+}
+
+.cards-member {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 132.33px;
+    padding: 30px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Profile picture styles */
+.profile-picture {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    border: 3px solid #F48E2E;
+    transition: all 0.3s ease;
+}
+
+.profile-picture:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(244, 142, 46, 0.3);
+}
+
+/* Member information styles */
+.card-content h3 {
+    color: #333;
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.card-content p {
+    color: #666;
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+/* Create new member card */
+.create-card {
+    border: 3px dashed #F48E2E;
+    background-color: rgba(244, 142, 46, 0.1);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    order: 999;
+}
+
+.create-card:hover {
+    background-color: rgba(244, 142, 46, 0.2);
+    border-color: #d97a1e;
+    transform: translateY(-5px);
+}
+
+.create-card .fa-plus-circle {
+    margin-bottom: 1rem;
+    color: #F48E2E;
+}
+
+/* Popup form styles - inheriting from department.css */
+.popup-form select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #ECE3DB;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.popup-form select:focus {
+    outline: none;
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+}
+
+/* Image upload styles - matching department.css */
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.preview-image {
+    width: 128px;
+    height: 128px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #F48E2E;
+}
+
+.image-input {
+    display: none;
+}
+
+.upload-label {
+    background-color: #F48E2E;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-label:hover {
+    background-color: #d97a1e;
+    transform: translateY(-2px);
+}
+
+/* Animations - matching department.css */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.member-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Stagger effect for cards */
+.member-card:nth-child(1) { animation-delay: 0.1s; }
+.member-card:nth-child(2) { animation-delay: 0.3s; }
+.member-card:nth-child(3) { animation-delay: 0.5s; }
+
+/* Animation for new members */
+.member-card.new {
+    animation: addCard 0.5s ease-out;
+}
+
+@keyframes addCard {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Update animation */
+.member-card.updated {
+    animation: updateFlash 0.3s ease-out;
+}
+
+@keyframes updateFlash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Delete animation */
+.member-card.deleting {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    to { 
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Responsive adjustments - Updated for flex layout */
+@media (max-width: 1200px) {
+    .content-container {
+        grid-template: 'leftNav content' / 300px;
+    }
+}
+
+/* Search bar specific styles */
+.serach-bar input[type="text"] {
+    padding: 8px 15px;
+    border: 2px solid #ECE3DB;
+    border-radius: 20px;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.serach-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+    width: 300px;
+}
+
+.warning-message {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tasks-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.task-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.task-info h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.task-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.member-info {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.cards-headstaff {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 132.33px;
+    padding: 30px;
+    width: 100%;
+    /* max-width: 1200px; */
+    /* margin: 0 auto; */
+}
+
+.card-wrapper-headstaff {
+    flex: 0 1 300px; /* This ensures cards are ~300px wide but can shrink if needed */
+    min-width: 250px; /* Minimum width before wrapping */
+    max-width: 350px; /* Maximum width */    
+    /* animation: fadeInUp 0.5s ease-out; */
+}
+
+/* Ensure maximum of 3 cards per row */
+@media (min-width: 1200px) {
+    .card-wrapper-headstaff,
+    .card-wrapper {
+        flex-basis: calc(33.333% - 30px);
+    }
+}
+
+/* One card per row on mobile */
+@media (max-width: 767px) {
+    .card-wrapper-headstaff,
+    .card-wrapper {
+        flex-basis: 100%;
+    }
+}
+
+/* Add a subtle highlight for headstaff cards */
+.card-wrapper-headstaff{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* .card-wrapper-headstaff .card-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(244, 142, 46, 0.2);
+} */
+
+/* White divider after headstaff section */
+.divider-white {
+    width: 100%;
+    height: 2px;
+    background-color: #f48e2e2d;
+    margin: 20px 0;
+}
+
+/* Phone input styling */
+.phone-input {
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+.phone-input::placeholder {
+    letter-spacing: normal;
+}
+
+/* Card wrapper styles */
+.card-wrapper {
+    flex: 0 1 300px; /* This ensures cards are ~300px wide but can shrink if needed */
+    min-width: 250px; /* Minimum width before wrapping */
+    min-width: 350px; /* Maximum width */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* No results message */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    width: 100%;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Card container styles */
+.card-container {
+    max-width: 360px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+#departmentSections {
+    width: 100%;
+}
+
+/* Update section visibility handling */
+.department-section {
+    width: 100%;
+}
+
+.department-section[style*="display: none"] {
+    margin: 0;
+    padding: 0;
+    height: 0;
+}
+
+/* Update card wrapper visibility */
+.card-wrapper.hidden {
+    display: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Update headstaff section handling */
+.cards-headstaff:empty {
+    display: none;
+    margin: 0;
+    padding: 0;
+    height: 0;
+}
+
+/* Update divider handling */
+.divider-white[style*="display: none"] {
+    margin: 0;
+    padding: 0;
+    height: 0;
+}
+
+/* Email input container styles */
+.email-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #BFBFBF;
+    /* border-radius: 5px; */
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.email-input-container:focus-within {
+    border-color: #F48E2E;
+    box-shadow: 0 0 5px rgba(244, 142, 46, 0.2);
+}
+
+.email-prefix {
+    flex: 1;
+    border: none !important;
+    padding: 8px 12px;
+    width: calc(100% - 85px);
+    outline: none;
+}
+
+.email-suffix {
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    color: #666;
+    user-select: none;
+    border-left: 2px solid #ECE3DB;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+/* Ensure consistent height with other inputs */
+.email-input-container, 
+.email-prefix, 
+.email-suffix {
+    height: 40px;
+}
+
+/* Drag and Drop Styles */
+.card-wrapper[draggable="true"]:hover,
+.card-wrapper-headstaff[draggable="true"]:hover {
+    cursor: grab;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 142, 46, 0.3);
+    transition: all 0.2s ease;
+}
+
+.card-wrapper[draggable="true"]:active,
+.card-wrapper-headstaff[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.member-card-dragging {
+    opacity: 0.5 !important;
+    transform: rotate(5deg) scale(0.95) !important;
+    transition: all 0.2s ease !important;
+    z-index: 1000;
+}
+
+.member-card-drag-over {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+    transform: scale(1.02) !important;
+    transition: all 0.2s ease !important;
+    border: 2px dashed #F48E2E !important;
+}
+
+/* Notification styles */
+.member-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    max-width: 400px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.member-notification-success {
+    background-color: #4caf50;
+}
+
+.member-notification-error {
+    background-color: #f44336;
+}
+
+.member-notification-warning {
+    background-color: #ff9800;
+    color: black;
+}
+
+.member-notification-info {
+    background-color: #2196f3;
+}
+

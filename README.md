@@ -29,6 +29,90 @@ You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you
 
 If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
+## CAMT Portal Configuration
+
+### HTTPS Configuration
+
+This application is configured to force HTTPS in production environments. To enable HTTPS:
+
+1. **Environment Variables**: Set the following in your `.env` file:
+   ```
+   FORCE_HTTPS=true
+   SESSION_SECURE_COOKIE=true
+   APP_URL=https://yourdomain.com
+   ```
+
+2. **Docker Build**: The Dockerfile automatically runs `npm run build` during the build process to compile frontend assets.
+
+3. **Proxy Configuration**: The application is configured to trust proxies for proper HTTPS detection behind load balancers.
+
+### Environment Setup
+
+Key environment variables for production:
+- `FORCE_HTTPS`: Set to `true` to force HTTPS redirects
+- `SESSION_SECURE_COOKIE`: Set to `true` to ensure cookies are only sent over HTTPS
+- `CMU_CLIENT_ID`: CMU OAuth client ID
+- `CMU_CLIENT_SECRET`: CMU OAuth client secret
+- `CMU_REDIRECT_URI`: CMU OAuth callback URL
+
+### Troubleshooting
+
+**500 Internal Server Error:**
+If you encounter a 500 error after deployment, here are debugging steps:
+
+1. **Check application logs:**
+   ```bash
+   # View container logs
+   docker logs [container-name]
+   
+   # View Laravel logs inside container
+   docker exec [container-name] tail -f /var/www/html/storage/logs/laravel.log
+   ```
+
+2. **Enable debug mode temporarily:**
+   Add to your environment variables:
+   ```env
+   APP_DEBUG=true
+   LOG_LEVEL=debug
+   ```
+
+3. **Check required environment variables:**
+   ```env
+   APP_KEY=base64:your_key_here
+   DB_CONNECTION=sqlite  # or your database config
+   ```
+
+4. **Common fixes:**
+   ```bash
+   # Generate app key if missing
+   php artisan key:generate
+   
+   # Clear all caches
+   php artisan cache:clear
+   php artisan config:clear
+   php artisan route:clear
+   php artisan view:clear
+   
+   # Run database migrations
+   php artisan migrate
+   ```
+
+**Scripts not loading (CORS errors from localhost:5173):**
+If you see CORS errors trying to load scripts from `localhost:5173` in production, this means Laravel is trying to use the Vite development server instead of built assets. This is caused by the `public/hot` file existing. The Dockerfile automatically removes this file, but if deploying manually:
+
+```bash
+# Remove the hot file
+rm -f public/hot
+
+# Rebuild assets
+npm run build
+
+# Clear caches
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
 ## Laravel Sponsors
 
 We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).

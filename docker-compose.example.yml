@@ -1,0 +1,70 @@
+version: "3.6"
+
+services:
+  camt-portal:
+    image: "ook41t0doo/camt-portal:latest"
+    container_name: "camt-portal"
+    environment:
+      APP_ENV: production
+      APP_KEY: base64:83oO6Nsv82anPdyz8/9tZ5aMCpcmrnpLtINyeaROu/Y=
+      APP_NAME: "CAMT Portal"
+      APP_URL: https://portal.camt.ac.th
+
+      DB_CONNECTION: mysql
+      DB_HOST: camt-portal-mysql
+      DB_PORT: 3306
+      DB_DATABASE: camt_portal
+      DB_USERNAME: camt_user
+      DB_PASSWORD: camt_portal
+      #More environment variables here
+
+    ports:
+      - "21080:8080"
+    volumes:
+      # Application storage (logs, cache, sessions, uploads)
+      - "camt-portal-storage:/var/www/html/storage"
+      # Public storage (user uploads accessible via web)
+      - "camt-portal-public-storage:/var/www/html/public/storage"
+    restart: "always"
+    depends_on:
+      - camt-portal-mysql
+
+  camt-portal-mysql:
+    image: "mysql:5.7.22"
+    container_name: "camt-portal-mysql"
+    command: --default-authentication-plugin=mysql_native_password --skip-ssl
+    environment:
+      MYSQL_DATABASE: camt_portal
+      MYSQL_USER: camt_user
+      MYSQL_PASSWORD: camt_portal
+      MYSQL_ROOT_PASSWORD: camt_portal_root
+    tty: true
+    volumes:
+      - "camt-portal-mysql:/var/lib/mysql"
+    restart: "always"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    container_name: camt-portal-phpmyadmin
+    depends_on:
+      - camt-portal-mysql
+    environment:
+      PMA_HOST: camt-portal-mysql
+      MYSQL_ROOT_PASSWORD: camt_portal_root
+      UPLOAD_LIMIT: 300M      
+    ports:
+      - "21081:8080"
+
+volumes:
+  # MySQL database data
+  camt-portal-mysql:
+    driver: local
+  
+  # Laravel application storage (logs, cache, sessions, compiled views)
+  camt-portal-storage:
+    driver: local
+  
+  # Public storage for user uploads accessible via web
+  camt-portal-public-storage:
+    driver: local

@@ -1,0 +1,7 @@
+body.lock-scroll {
+    overflow: hidden;
+}
+
+body {
+    min-width: fit-content;
+}

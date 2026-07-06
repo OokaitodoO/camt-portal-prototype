@@ -1,0 +1,190 @@
+version: "3.8"
+
+services:
+  camt-portal:
+    image: "your-username/camt-portal:latest"
+    container_name: "camt-portal"
+    environment:
+      APP_ENV: production
+      APP_KEY: base64:your-app-key-here
+      APP_NAME: "CAMT Portal"
+      APP_URL: https://portal.camt.cmu.ac.th
+
+      # Force HTTPS in production
+      FORCE_HTTPS: true
+      
+      # Additional HTTPS configuration
+      APP_DEBUG: false
+
+      DB_CONNECTION: mysql
+      DB_HOST: camt-portal-mysql
+      DB_PORT: 3306
+      DB_DATABASE: camt_portal
+      DB_USERNAME: camt_user
+      DB_PASSWORD: your-secure-password
+      
+      # Cache and Session Configuration
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      
+      # File Storage Configuration
+      FILESYSTEM_DISK: local
+      
+      # Logging Configuration
+      LOG_CHANNEL: daily
+      LOG_LEVEL: info
+
+    ports:
+      - "8080:8080"
+    volumes:
+      # Application storage (logs, cache, sessions, uploads)
+      - "camt-portal-storage:/var/www/html/storage"
+      # Public storage (user uploads accessible via web)
+      - "camt-portal-public-storage:/var/www/html/public/storage"
+      # Configuration files (if you need to override configs)
+      - "./config/production:/var/www/html/config/production:ro"
+    restart: unless-stopped
+    depends_on:
+      - camt-portal-mysql
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - camt-network
+
+  camt-portal-mysql:
+    image: "mysql:8.0"
+    container_name: "camt-portal-mysql"
+    command: --default-authentication-plugin=mysql_native_password --skip-ssl --max_connections=1000
+    environment:
+      MYSQL_DATABASE: camt_portal
+      MYSQL_USER: camt_user
+      MYSQL_PASSWORD: your-secure-password
+      MYSQL_ROOT_PASSWORD: your-root-password
+      # Performance tuning
+      MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
+      MYSQL_INNODB_LOG_FILE_SIZE: 64M
+    volumes:
+      - "camt-portal-mysql:/var/lib/mysql"
+      # MySQL configuration override
+      - "./mysql/conf.d:/etc/mysql/conf.d:ro"
+      # Database initialization scripts
+      - "./mysql/init:/docker-entrypoint-initdb.d:ro"
+      # MySQL logs
+      - "camt-portal-mysql-logs:/var/log/mysql"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - camt-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: unless-stopped
+    container_name: camt-portal-phpmyadmin
+    depends_on:
+      - camt-portal-mysql
+    environment:
+      PMA_HOST: camt-portal-mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      MYSQL_ROOT_PASSWORD: your-root-password
+      UPLOAD_LIMIT: 300M
+      MEMORY_LIMIT: 512M
+      MAX_EXECUTION_TIME: 600
+    ports:
+      - "8081:80"
+    volumes:
+      # phpMyAdmin configuration
+      - "./phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:ro"
+    networks:
+      - camt-network
+
+  # Optional: Redis for caching and sessions (uncomment if needed)
+  # camt-portal-redis:
+  #   image: "redis:7-alpine"
+  #   container_name: "camt-portal-redis"
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes --requirepass your-redis-password
+  #   volumes:
+  #     - "camt-portal-redis:/data"
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - camt-network
+
+  # Optional: Backup service (uncomment if needed)
+  # backup:
+  #   image: "alpine:latest"
+  #   container_name: "camt-portal-backup"
+  #   volumes:
+  #     - "camt-portal-storage:/backup/storage:ro"
+  #     - "camt-portal-mysql:/backup/mysql:ro"
+  #     - "./backups:/backups"
+  #   command: |
+  #     sh -c "
+  #       while true; do
+  #         tar -czf /backups/storage-backup-$$(date +%Y%m%d_%H%M%S).tar.gz -C /backup storage
+  #         find /backups -name 'storage-backup-*.tar.gz' -mtime +7 -delete
+  #         sleep 86400
+  #       done
+  #     "
+  #   restart: unless-stopped
+  #   networks:
+  #     - camt-network
+
+volumes:
+  # MySQL database data
+  camt-portal-mysql:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/camt-portal/data/mysql
+  
+  # MySQL logs
+  camt-portal-mysql-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/camt-portal/logs/mysql
+  
+  # Laravel application storage (logs, cache, sessions, compiled views)
+  camt-portal-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/camt-portal/data/storage
+  
+  # Public storage for user uploads accessible via web
+  camt-portal-public-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/camt-portal/data/public-storage
+
+  # Optional: Redis data (uncomment if using Redis)
+  # camt-portal-redis:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: /opt/camt-portal/data/redis
+
+networks:
+  camt-network:
+    driver: bridge 

@@ -1,0 +1,84 @@
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+  
+  .dropdown-btn {
+    display: flex;
+    color: black;
+    height: 40px;
+    border: 1px solid #BFBFBF;
+    background-color: white;
+    padding: 5px 20px;
+    cursor: pointer;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #fafbfc;
+    width: 100%;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .dropdown-content a {
+    padding: 10px 16px;
+    display: block;
+    color: black;
+    text-decoration: none;
+  }
+  
+  .dropdown-content a:hover {
+    background-image: linear-gradient(to right, #F48E2E, #F6B271);
+    color: white;
+  }
+
+  .task-dropdown {
+    position: relative;
+    cursor: pointer;
+}
+
+.task-dropdown:hover .task-dropdown-menu {
+    display: block;
+}
+
+.task-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    min-width: 200px;
+    z-index: 1000;
+}
+
+.task-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s;
+}
+
+.task-dropdown-menu .dropdown-item:hover {
+    background-color: #f5f5f5;
+}
+
+.task-dropdown-menu .dropdown-item i {
+    width: 16px;
+}
+
+  
+  
